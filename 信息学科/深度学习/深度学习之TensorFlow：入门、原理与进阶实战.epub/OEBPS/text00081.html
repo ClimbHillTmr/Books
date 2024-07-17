@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">10.7　深度学习中自编码的常用方法</h3>
+<p class="ziti3">下面介绍深度学习中关于自编码的常用方法。</p>
+<h4 class="p3">10.7.1　代替和级联</h4>
+<p class="ziti3">栈式自编码会将网络中的中间层作为下一个网络的输入进行训练。我们可以得到网络中每一个中间层的原始值，为了能有更好的效果，还可以使用级联的方式进一步优化网络参数。</p>
+<p class="ziti3">在已有的模型上接着优化参数的步骤习惯上称为“微调”。该方法不仅在自编码网络，在整个深度学习里都是常见的技术。</p>
+<p class="ziti3">在什么时候应用微调呢？通常仅在有大量已标注训练数据的情况下使用。在这样的情况下，微调能显著提升分类器性能。但如果有大量未标注数据集（用于非监督特征学习/预训练），却只有相对较少的已标注训练集，则微调的作用非常有限。</p>
+<h4 class="p3">10.7.2　自编码的应用场景</h4>
+<p class="ziti3">本章使用MNIST举例，主要是为了得到一个很好的可视化效果。但在实际应用中，全连接的自编码网络并不适合处理图片类问题，原因在第8章的开头部分已经讲过了，这里不再赘述。</p>
+<p class="ziti3">自编码更像是一种技巧，任何一种网络及方法不可能不变化就可以满足所有的问题，现实环境中，需要使用具体的模型配合各种技巧来解决问题。明白其原理，知道它的优、劣势才是核心。在任何一个多维数据的分类中也可以用自编码，或在大型图片文类任务中，卷积池化后的特征数据进行自编码降维也是一个好方法。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

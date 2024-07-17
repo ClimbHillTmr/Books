@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">10.2　最简单的自编码网络</h3>
+<p class="ziti3">自编码（Auto-Encoder，AE）网络是输入等于输出的网络，最基本的模型可以视为三层的神经网络，即输入层、隐藏层、输出层。其中，输入层的样本也会充当输出层的标签角色。换句话说，这个神经网络就是一种尽可能复现输入信号的神经网络。具体的网络结构如图10-1所示。</p>
+<div class="pic"><img alt="" src="Image00201.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-1　让输出的信号等于输入</p>
+<p class="ziti3">其中，从输入到中间状态的过程叫做编码，从中间状态再回到输出的过程叫做解码。这样构成的自动编码器可以捕捉代表输入数据的最重要的因素，类似PCA算法（主成份分析），找到可以代表原信息的主要成分。</p>
+<p class="ziti3">自编码器要求输出尽可能等于输入，并且其隐藏层必须满足一定的稀疏性，是通过将隐藏层中的后一层个数比前一层神经元个数少的方式来实现稀疏效果的。相当于隐藏层对输入进行了压缩，并在输出层中解压缩。整个过程中肯定会丢失信息，但训练能够使丢失的信息尽量减少，最大化地保留其主要特征。</p>
+<p class="ziti3">如果激活函数不使用Sigmoid函数，而使用线性函数，那么便是PCA模型了。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

@@ -1,0 +1,68 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">2.3　GPU版本的安装方法</h3>
+<p class="ziti3">如果使用GPU版本，在执行pip之后，还需要安装CUDA和CuDNN。</p>
+<h4 class="p3">2.3.1　安装CUDA软件包</h4>
+<p class="ziti3">首先来到CUDA官方网站<a href="https://developer.nvidia.com/cuda-downloads" class="pcalibre calibre2">https://developer.nvidia.com/cuda-downloads</a>
+ ，单击Windows按钮后，如图2-8所示。</p>
+<div class="pic"><img alt="" src="Image00015.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图2-8　CUDA页面</p>
+<p class="ziti3">根据自己的环境选择对应的版本，.exe安装文件分为网络版和本地版。网络版安装包比较小，执行安装时再去下载需要的安装包；本地版安装包是直接下载完整的安装包。下载完成后正常安装就可以了。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ CUDA软件包也有很多个版本，必须与TensorFlow的版本对应才行。比如TensorFlow 1.0以后，直到TensorFlow 1.5的版本只支持CUDA 8.0。在本书中也是使用的CUDA 8.0版本来做演示的。可以根据链接<a href="https://developer.nvidia.%20com/cuda-toolkit-archive" class="pcalibre calibre2">https://developer.nvidia. com/cuda-toolkit-archive</a>
+ 找到更多版本。</p>
+<h4 class="p3">2.3.2　安装cuDNN库</h4>
+<p class="ziti3">输入<a href="https://developer.nvidia.com/cudnn" class="pcalibre calibre2">https://developer.nvidia.com/cudnn</a>
+ 网址来到下载页面，需要注册并填一些问卷才能下载这个安装包。</p>
+<p class="ziti3">cuDNN的版本选择也是有规定的。以Windows 10操作系统为例，TensorFlow 1.0到TensorFlow 1.2版本使用的是cuDNN的5.1版本（安装包文件为cudnn-8.0-windows10- x64-v5.1-zip），从TensorFlow 1.3版本之后使用的是cuDNN的6.0版本（cudnn-8.0-windows10- x64-v6.0.zip）。</p>
+<p class="ziti3">得到相关包后解压，直接复制到cuda路径对应的文件夹下面就行，如图2-9所示。</p>
+<div class="pic"><img alt="" src="Image00016.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图2-9　安装cuDNN</p>
+<h4 class="p3">2.3.3　测试显卡</h4>
+<p class="ziti3">这里再额外介绍两个小命令，它可以检测出在安装过程中产生的问题。</p>
+<p class="ziti4">
+<span class="yanse">1．使用nvidia-smi命令查看显卡信息</span>
+</p>
+<p class="ziti3">nvidia-smi指的是NVIDIA System Management Interface。在安装完成NVIDIA显卡驱动之后，对于Windows用户而言，cmd命令行界面还无法识别nvidia-smi命令，需要将相关环境变量添加进去。如果将NVIDIA显卡驱动安装在默认位置，nvidia-smi命令所在的完整路径应为：</p>
+<p class="ziti3">C：\Program Files\NVIDIA Corporation\NVSMI</p>
+<p class="ziti3">将上述路径添加进Path系统环境变量中。之后在cmd中运行nvidia-smi命令，可以看到显卡信息如图2-10所示。</p>
+<div class="pic"><img alt="" src="Image00017.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图2-10　显卡信息</p>
+<p class="ziti3">图2-10中第1行是笔者的驱动信息，第3行是笔者的显卡信息GeForce GTX 1070。第4行和第5行是当前使用显卡的进程。</p>
+<p class="ziti3">这些信息都存在了，表明笔者的安装是正确的。</p>
+<p class="ziti4">
+<span class="yanse">2．查看CUDA的版本</span>
+</p>
+<p class="ziti3">同样在cmd中使用命令nvcc –V，显示如图2-11所示。</p>
+<div class="pic"><img alt="" src="Image00018.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图2-11　查看CUDA版本</p>
+<p class="ziti4">
+<span class="yanse">3．在Linux和Mac平台上安装</span>
+</p>
+<p class="ziti3">关于在Linux和Mac上安装TensorFlow的方法，可以参考网址<a href="http://www.tensorfly.%20cn/tfdoc/%20get_started/%20os_setup.html" class="pcalibre calibre2">http://www.tensorfly. cn/tfdoc/ get_started/ os_setup.html</a>
+ ，这里不再展开讲述。</p>
+<p class="ziti4">
+<span class="yanse">4．问题处理</span>
+</p>
+<p class="ziti3">如果遇到问题的话，可以尝试下面的解决办法：</p>
+<p class="ziti3">在命令行里输入where MSVCP140.DLL看看本机是否有MSVCP140.DLL，如果没有可以按照如下网址安装Visual C++ Redistributable 2015。</p>
+<p class="ziti3">安装Visual C++ Redistributable 2015 x64（操作系统Windows10 64位），下载地址如下：</p>
+<p class="ziti3">
+<a href="https://www.microsoft.com/en-us/download/details.aspx%EF%BC%9Fid=53587" class="pcalibre calibre2">https://www.microsoft.com/en-us/download/details.aspx？id=53587</a>
+<br class="calibre3"/>
+</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

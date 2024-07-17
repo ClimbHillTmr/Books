@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h1 id="nav_point_113" class="not-in-toc">第 5 章　误差反向传播法</h1>
+<p class="calibre1">上一章中，我们介绍了神经网络的学习，并通过数值微分计算了神经网络的权重参数的梯度（严格来说，是损失函数关于权重参数的梯度）。数值微分虽然简单，也容易实现，但缺点是计算上比较费时间。本章我们将学习一个能够高效计算权重参数的梯度的方法——误差反向传播法。</p>
+<p class="calibre1">要正确理解误差反向传播法，我个人认为有两种方法：一种是基于数学式；另一种是基于<strong class="calibre2">计算图</strong>（computational graph）。前者是比较常见的方法，机器学习相关的图书中多数都是以数学式为中心展开论述的。因为这种方法严密且简洁，所以确实非常合理，但如果一上来就围绕数学式进行探讨，会忽略一些根本的东西，止步于式子的罗列。因此，本章希望大家通过计算图，直观地理解误差反向传播法。然后，再结合实际的代码加深理解，相信大家一定会有种“原来如此！”的感觉。</p>
+<p class="calibre1">此外，通过计算图来理解误差反向传播法这个想法，参考了 Andrej Karpathy 的博客 <sup class="calibre16">[4]</sup> 和他与 Fei-Fei Li 教授负责的斯坦福大学的深度学习课程 CS231n <sup class="calibre16">[5]</sup>。</p>
+</body></html>

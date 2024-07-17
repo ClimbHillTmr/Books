@@ -1,0 +1,583 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">4.1　编程模型</h3>
+<p class="ziti3">TensorFlow的命名来源于本身的运行原理。Tensor（张量）意味着N维数组，Flow（流）意味着基于数据流图的计算。TensorFlow是张量从图像的一端流动到另一端的计算过程，这也是TensorFlow的编程模型。</p>
+<h4 class="p3">4.1.1　了解模型的运行机制</h4>
+<p class="ziti3">TensorFlow的运行机制属于“定义”与“运行”相分离。从操作层面可以抽象成两种：模型构建和模型运行。</p>
+<p class="ziti3">在模型构建过程中，需要先了解几个概念，如表4-1所示。</p>
+<p class="middle-img">表4-1　模型构建中的概念</p>
+<div class="pic"><img alt="" src="Image00035.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">表4-1中定义的内容都是在一个叫做“图”的容器中完成的。关于“图”，有以下几点需要理解。</p>
+<p class="ziti4">·一个“图”代表一个计算任务。</p>
+<p class="ziti4">·在模型运行的环节中，“图”会在会话（session）里被启动。</p>
+<p class="ziti4">·session将图的OP分发到如CPU或GPU之类的设备上，同时提供执行OP的方法。这些方法执行后，将产生的tensor返回。在Python语言中，返回的tensor是numpy ndarray对象；在C和C++语言中，返回的tensor是TensorFlow：：Tensor实例。</p>
+<p class="ziti3">如图4-1所示为session与图的工作关系。</p>
+<div class="pic"><img alt="" src="Image00036.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图4-1　session与图的关系</p>
+<p class="ziti3">在实际环境中，这种运行情况会有3种应用场景，分别是训练场景、测试场景与使用场景。在训练场景下图的运行方式与其他两种不同，具体介绍如下。</p>
+<p class="ziti3">（1）训练场景：是实现模型从无到有的过程，通过对样本的学习训练，调整学习参数，形成最终的模型。其过程是将给定的样本和标签作为输入节点，通过大量的循环迭代，将图中的正向运算（从输入的样本通过OP运算得到输出的方向）得到的输出值，再进行反向运算（从输出到输入的方向），以更新模型中的学习参数，最终使模型产生的正向结果最大化地接近样本标签。这样就得到了一个可以拟合样本规律的模型。</p>
+<p class="ziti3">（2）测试场景和使用场景：测试场景是利用图的正向运算得到的结果与真实值进行比较的差别；使用场景也是利用图的正向运算得到结果，并直接使用。所以二者的运算过程是一样的。对于该场景下的模型与正常编程用到的函数特别相似。在函数中，可以分为实参、形参、函数体与返回值。同样在模型中，实参就是输入的样本，形参就是占位符，运算过程就相当于函数体，得到的结果相当于返回值。</p>
+<p class="ziti3">另外，session与图的交互过程中还定义了以下两种数据的流向机制。</p>
+<p class="ziti4">·注入机制（feed）：通过占位符向模式中传入数据。</p>
+<p class="ziti4">·取回机制（fetch）：从模式中得到结果。</p>
+<p class="ziti3">下面通过实例逐个演示session在各种情况下的用法。先从session的建立开始，接着演示session与图的交互机制，最后演示如何在session中指定GPU运算资源。</p>
+<h4 class="p3">4.1.2　实例5：编写hello world程序演示session的使用</h4>
+<p class="ziti3">下面先从一个hello world开始来理解session的作用。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">建立一个session，在session中输出hello，TensorFlow。</p>
+<p class="ziti3">代码4-1　sessionhello</p>
+<hr class="calibre6"/>
+<pre class="ziti5">import tensorflow as tf
+hello = tf.constant('Hello, TensorFlow!')  #定义一个常量
+sess = tf.Session()                        #建立一个session
+print (sess.run(hello))                   #通过session里面run函数来运行结果
+sess.close()                                #关闭session</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码4-1会得到如下输出：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">b'Hello, TensorFlow!'</pre>
+<hr class="calibre6"/>
+<p class="ziti3">tf.constant定义的是一个常量，hello的内容只有在session的run内才可以返回。</p>
+<p class="ziti3">可以试着在2和3行之间加入print（hello）看一下效果，这时并不能输出hello的内容。</p>
+<p class="ziti3">接下来换种写法，使用with语法来开启session。</p>
+<h4 class="p3">4.1.3　实例6：演示with session的使用</h4>
+<p class="ziti3">with session的用法是最常见的，它沿用了Python中with的语法，即当程序结束后会自动关闭session，而不需要再去写close。代码如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">使用with session方法建立session，并在session中计算两个变量（3和4）的相加与相乘值。</p>
+<p class="ziti3">代码4-2　with session</p>
+<hr class="calibre6"/>
+<pre class="ziti5">import tensorflow as tf
+a = tf.constant(3)                    #定义常量3
+b = tf.constant(4)                   #定义常量4
+with tf.Session() as sess:          #建立session
+    print ("相加: %i" % sess.run(a+b))
+    print( "相乘: %i" % sess.run(a*b))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行后得到如下输出：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">相加: 7
+相乘: 12</pre>
+<hr class="calibre6"/>
+<h4 class="p3">4.1.4　实例7：演示注入机制</h4>
+<p class="ziti3">扩展上面代码：使用注入机制，将具体的实参注入到相应的placeholder中。feed只在调用它的方法内有效，方法结束后feed就会消失。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">定义占位符，使用feed机制将具体数值（3和4）通过占位符传入，并进行相加和相乘运算。</p>
+<p class="ziti3">代码4-3　withsessionfeed</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01  import tensorflow as tf
+02  a = tf.placeholder(tf.int16)
+03  b = tf.placeholder(tf.int16)
+04  add = tf.add(a, b)
+05  mul = tf.multiply(a, b)                  #a与b相乘
+06  with tf.Session() as sess:
+07      #计算具体数值
+08      print ("相加: %i" % sess.run(add, feed_dict={a: 3, b: 4}))
+09      print ("相乘: %i" % sess.run(mul, feed_dict={a: 3, b: 4}))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，输出如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">相加:7
+相乘:12</pre>
+<hr class="calibre6"/>
+<p class="ziti3">标记的方法是：使用tf.placeholder为这些操作创建占位符，然后使用feed_dict把具体的值放到占位符里。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 关于feed中的feed_dict还有其他的方法，如update等，在后面的例子中用到时还会介绍，这里只是介绍最常用的方法。</p>
+<h4 class="p3">4.1.5　建立session 的其他方法</h4>
+<p class="ziti3">建立session还有以下两种方式。</p>
+<p class="ziti4">·交互式session方式：一般在Jupyter环境下使用较多，具体用法与前面的with session类似。代码如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">sess = tf.InteractiveSession()</pre>
+<hr class="calibre6"/>
+<p class="ziti4">·使用Supervisor方式：该方式会更高级一些，使用起来也更加复杂，可以自动来管理session中的具体任务，例如，载入/载出检查点文件、写入TensorBoard等，另外该方法还支持分布式训练的部署（在本书的后面会有介绍）。</p>
+<h4 class="p3">4.1.6　实例8：使用注入机制获取节点</h4>
+<p class="ziti3">在实例7中，其实还可以一次将多个节点取出来。例如，在最后一句可以加上以下代码（见代码4-3）：</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">使用fetch机制将定义在图中的节点数值算出来。</p>
+<p class="ziti3">代码4-3　withsessionfeed（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">10  ……
+11  mul = tf.multiply(a, b)
+12  with tf.Session() as sess:
+13      #将op运算通过run打印出来
+14      print ("相加: %i" % sess.run(add, feed_dict={a: 3, b: 4}))
+        #将add节点打印出来
+15      print ("相乘: %i" % sess.run(mul, feed_dict={a: 3, b: 4}))
+16      print (sess.run([mul, add], feed_dict={a: 3, b: 4}))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，输出如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">相加: 7
+相乘: 12
+[12, 7]</pre>
+<hr class="calibre6"/>
+<h4 class="p3">4.1.7　指定GPU运算</h4>
+<p class="ziti3">如果下载的是GPU版本，在运行过程中TensorFlow能自动检测。如果检测到GPU，TensorFlow会尽可能地利用找到的第一个GPU来执行操作。</p>
+<p class="ziti3">如果机器上有超过一个可用的GPU，除第一个之外的其他GPU默认是不参与计算的。为了让TensorFlow使用这些GPU，必须将OP明确指派给它们执行。with……device语句能用来指派特定的CPU或GPU执行操作：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">with tf.Session() as sess:
+  with tf.device("/gpu:1"):
+    a = tf.placeholder(tf.int16)
+b = tf.placeholder(tf.int16)
+add = tf.add(a, b)
+    ……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">设备用字符串进行标识。目前支持的设备包括以下几种。</p>
+<p class="ziti4">·cpu：0：机器的CPU。</p>
+<p class="ziti4">·gpu：0：机器的第一个GPU，如果有的话。</p>
+<p class="ziti4">·gpu：1：机器的第二个GPU，依此类推。</p>
+<p class="ziti3">类似的还有通过tf.ConfigProto来构建一个config，在config中指定相关的GPU，并且在session中传入参数config="自己创建的config"来指定GPU操作。</p>
+<p class="ziti3">#tf.ConfigProto函数的参数如下。</p>
+<p class="ziti4">·log_device_placement=True：是否打印设备分配日志。</p>
+<p class="ziti4">·allow_soft_placement=True：如果指定的设备不存在，允许TF自动分配设备。</p>
+<p class="ziti3">使用举例：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">config = tf.ConfigProto(log_device_placement=True,allow_soft_placement
+=True)
+session = tf.Session(config=config, ...)</pre>
+<hr class="calibre6"/>
+<h4 class="p3">4.1.8　设置GPU使用资源</h4>
+<p class="ziti3">上文的tf.ConfigProto函数生成config之后，还可以设置其属性来分配GPU的运算资源。如下代码就是按需分配的意思：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">config.gpu_options.allow_growth = True</pre>
+<hr class="calibre6"/>
+<p class="ziti3">使用allow_growth option，刚开始会分配少量的GPU容量，然后按需慢慢地增加，由于不会释放内存，所以会导致碎片。</p>
+<p class="ziti3">同样，上述代码也可以放在config创建的时指定，例如：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">gpu_options = tf.GPUOptions(allow_growth=True)
+config=tf.ConfigProto(gpu_options=gpu_options)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">以下代码还可以给GPU分配固定大小的计算资源。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">代表分配给tensorflow的GPU显存大小为：GPU实际显存×0.7。</p>
+<p class="ziti3">（该方法暂时用不到，读者在以后遇到这样的代码时明白是什么意思即可）</p>
+<h4 class="p3">4.1.9　保存和载入模型的方法介绍</h4>
+<p class="ziti3">一般而言，训练好的模型都需要保存。下面将举例演示如何保存和载入模型。</p>
+<p class="ziti4">
+<span class="yanse">1．保存模型</span>
+</p>
+<p class="ziti3">首先需要建立一个saver，然后在session中通过saver的save即可将模型保存起来。代码如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">#之前是各种构建模型graph的操作(矩阵相乘，sigmoid等)
+saver = tf.train.Saver()                           #生成saver
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer()) #先对模型初始化
+     #然后将数据丢入模型进行训练blablabla
+     #训练完以后，使用saver.save 来保存
+    saver.save(sess, "save_path/file_name")
+#file_name如果不存在，会自动创建</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．载入模型</span>
+</p>
+<p class="ziti3">将模型保存好以后，载入也比较方便。在session中通过调用saver的restore（）函数，会从指定的路径找到模型文件，并覆盖到相关参数中。代码如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">saver = tf.train.Saver()
+ 
+with tf.Session() as sess:
+    #参数可以进行初始化，也可不进行初始化。即使初始化了，初始化的值也会被restore的
+      值给覆盖
+    sess.run(tf.global_variables_initializer())     
+    saver.restore(sess, "save_path/file_name") #会将已经保存的变量值resotre到变量中。</pre>
+<hr class="calibre6"/>
+<h4 class="p3">4.1.10　实例9：保存/载入线性回归模型</h4>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">在代码“3-1线性回归.py”文件的基础上，添加模型的保存及载入功能。</p>
+<p class="ziti3">通过扩展上一章的例子，来演示一下模型的保存及载入。在代码“3-1线性回归.py”文件中生成模拟数据之后，加入对图变量的重置，在session创建之前定义saver及保存路径，在session中训练结束后，保存模型。</p>
+<p class="ziti3">代码4-4　线性回归模型保存及载入</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01  import tensorflow as tf
+02  import numpy as np
+03  import matplotlib.pyplot as plt
+04  
+05  #模拟数据
+06  ……
+07  plt.plot(train_X, train_Y, 'ro', label='Original data')
+08  plt.legend()
+09  plt.show()
+10  
+11  #重置图
+12  tf.reset_default_graph()
+13  
+14  #初始话等操作
+15  ……
+16  display_step = 2
+17  
+18  saver = tf.train.Saver()                            #生成saver
+19  savedir = "log/"                                     #生成模型的路径
+20  
+21  #启动session
+22  with tf.Session() as sess:
+23      sess.run(init)
+24      #在这里添加Sess中的训练代码
+25  ……
+26      print (" Finished!")
+27      saver.save(sess, savedir+"linermodel.cpkt") #保存模型
+￼28      print ("cost=", sess.run(cost, feed_dict=
+        {X: train_X, Y: train_Y}), 
+        "W=", sess.run(W), "b=", sess.run(b))
+29  #其他代码
+30  ……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行上面代码可以看到，在代码的同级目录下log文件夹里生成了几个文件，如图4-2所示。</p>
+<div class="pic"><img alt="" src="Image00037.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图4-2　模型文件</p>
+<p class="ziti3">再重启一个session，并命名为sess2，在代码里通过使用saver的restore函数将模型载入。</p>
+<p class="ziti3">代码4-4　线性回归模型保存及载入（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">31  with tf.Session()as sess2:
+32     sess2.run(tf.global_variables_initializer()) 
+33     saver.restore(sess2,savedir+"linermodel. 
+       cpkt")
+34     print ("x=0.2，z=", sess2.run(z, feed_dict={X: 0.2}))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">为了测试效果，可以将前面一个session注释掉，运行之后可以看到如下输出：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">INFO:tensorflow:Restoring parameters from log/linermodel.cpkt
+x=0.2，z= [ 0.42615247]</pre>
+<hr class="calibre6"/>
+<p class="ziti3">表明模型已经成功载入，并计算出正确的值了。</p>
+<h4 class="p3">4.1.11　实例10：分析模型内容，演示模型的其他保存方法</h4>
+<p class="ziti3">下面再来详细介绍下关于模型保存的其他细节。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">将4.1.10节生成的模型里面的内容打印出来，观察其存放的具体数据方式。同时演示如何将指定内容保存到模型文件中。</p>
+<p class="ziti4">
+<span class="yanse">1．模型内容</span>
+</p>
+<p class="ziti3">虽然模型已经保存了，但是仍然对我们不透明。下面通过编写代码将模型里的内容打印出来，看看到底保存了哪些东西，都是什么样的。</p>
+<p class="ziti3">代码4-5　模型内容</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01  from tensorflow.python.tools.inspect_checkpoint import print_tensors_ 
+    in_checkpoint_file
+02  savedir = "log/"
+03  print_tensors_in_checkpoint_file(savedir+"linermodel.cpkt", None, True)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，打印如下信息：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">tensor_name:  bias
+[ 0.01919404]
+tensor_name:  weight
+[ 2.03479218]</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到，tensor_name：后面跟的就是创建的变量名，接着是它的数值。</p>
+<p class="ziti4">
+<span class="yanse">2．保存模型的其他方法</span>
+</p>
+<p class="ziti3">前面的例子中Saver的创建比较简单，其实tf.train.Saver函数里面还可以放参数来实现更高级的功能，可以指定存储变量名字与变量的对应关系。可以写成这样：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">saver = tf.train.Saver({'weight': W, 'bias': b})</pre>
+<hr class="calibre6"/>
+<p class="ziti3">代表将w变量的值放到weight名字中。类似的写法还有以下两种：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">saver = tf.train.Saver([W, b])                     #放到一个list里
+saver = tf.train.Saver({v.op.name: v for v in [W, b]}) #将op的名字当作key</pre>
+<hr class="calibre6"/>
+<p class="ziti3">下面扩展上述的例子，给b和w分别指定一个固定值，并将它们颠倒放置。</p>
+<p class="ziti3">代码4-5　模型内容（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">03  W = tf.Variable(1.0, name="weight")
+04  b = tf.Variable(2.0, name="bias")
+05  
+06  #放到一个字典里
+07  saver = tf.train.Saver({'weight': b, 'bias': W})
+08  
+09  with tf.Session() as sess:
+10      tf.global_variables_initializer().run()
+11      saver.save(sess, savedir+"linermodel.cpkt")
+12  
+13  print_tensors_in_checkpoint_file(savedir+"linermodel.cpkt", None, True)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行上面代码，输出如下信息：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">tensor_name:  bias
+1.0
+tensor_name:  weight
+2.0</pre>
+<hr class="calibre6"/>
+<p class="ziti3">例子中，W值设为1.0，b的值设为2.0。在创建saver时将它们颠倒，保存的模型打印出来之后可以看到，bias变成了1.0，而weight变成了2.0。</p>
+<h4 class="p3">4.1.12　检查点（Checkpoint）</h4>
+<p class="ziti3">保存模型并不限于在训练之后，在训练之中也需要保存，因为TensorFlow训练模型时难免会出现中断的情况。我们自然希望能够将辛苦得到的中间参数保留下来，否则下次又要重新开始。</p>
+<p class="ziti3">这种在训练中保存模型，习惯上称之为保存检查点。</p>
+<h4 class="p3">4.1.13　实例11：为模型添加保存检查点</h4>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">为一个线性回归任务的模型添加“保存检查点”功能。通过该功能，可以生成载入检查点文件，并能够指定生成检测点文件的个数。</p>
+<p class="ziti3">该例与保存模型的功能类似，只是保存的位置发生了些变化，我们希望在显示信息时将检查点保存起来，于是就将保存位置放在了迭代训练中的打印信息后面。</p>
+<p class="ziti3">另外，本例用到了saver的另一个参数——max_to_keep=1，表明最多只保存一个检查点文件。在保存时使用了如下代码传入了迭代次数。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">saver.save(sess, savedir+"linermodel.cpkt", global_step=epoch)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">TensorFlow会将迭代次数一起放在检查点的名字上，所以在载入时，同样也要指定迭代次数。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">saver.restore(sess2, savedir+"linermodel.cpkt-" + str(load_epoch))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">完整的代码如下：</p>
+<p class="ziti3">代码4-6　保存检查点</p>
+<hr class="calibre6"/>
+<pre class="ziti5">import tensorflow as tf
+import numpy as np
+import matplotlib.pyplot as plt
+ 
+#定义生成loss可视化的函数
+plotdata = { "batchsize":[], "loss":[] }
+def moving_average(a, w=10):
+    if len(a) &lt; w: 
+        return a[:]    
+    return [val if idx &lt; w else sum(a[(idx-w):idx])/w for idx, val in 
+    enumerate(a)]
+ 
+#生成模拟数据
+train_X = np.linspace(-1, 1, 100)
+train_Y = 2 * train_X + np.random.randn(*train_X.shape) * 0.3 # y=2x，但是加入了噪声
+#图形显示
+plt.plot(train_X, train_Y, 'ro', label='Original data')
+plt.legend()
+plt.show()
+ 
+tf.reset_default_graph()
+ 
+# 创建模型
+# 占位符
+X = tf.placeholder("float")
+Y = tf.placeholder("float")
+# 模型参数
+W = tf.Variable(tf.random_normal([1]), name="weight")
+b = tf.Variable(tf.zeros([1]), name="bias")
+# 前向结构
+z = tf.multiply(X, W)+ b
+ 
+#反向优化
+cost =tf.reduce_mean( tf.square(Y - z))
+learning_rate = 0.01
+optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize 
+(cost) #梯度下降
+ 
+# 初始化所有变量
+init = tf.global_variables_initializer()
+# 定义学习参数
+training_epochs = 20
+display_step = 2
+saver = tf.train.Saver(max_to_keep=1) # 生成saver
+savedir = "log/"
+# 启动图
+with tf.Session() as sess:
+    sess.run(init)
+ 
+    # 向模型中输入数据
+    for epoch in range(training_epochs):
+        for (x, y) in zip(train_X, train_Y):
+            sess.run(optimizer, feed_dict={X: x, Y: y})
+ 
+        #显示训练中的详细信息
+        if epoch % display_step == 0:
+            loss = sess.run(cost,feed_dict={X: train_X,Y:train_Y})
+         print ("Epoch:",epoch+1,"cost=",loss,"W=",sess.run(W), "b=", 
+         sess.run(b))
+            if not (loss == "NA" ):
+                plotdata["batchsize"].append(epoch)
+                plotdata["loss"].append(loss)
+            saver.save(sess, savedir+"linermodel.cpkt", global_step=epoch)
+                
+    print (" Finished!")
+    
+    print ("cost=",sess.run(cost, feed_dict={X: train_X, Y: train_Y}), 
+    "W=", sess.run(W), "b=", sess.run(b))
+ 
+    #显示模型
+    plt.plot(train_X, train_Y, 'ro', label='Original data')
+    plt.plot(train_X, sess.run(W) * train_X + sess.run(b), label='Fitted 
+    Wline')
+    plt.legend()
+    plt.show()
+    
+    plotdata["avgloss"] = moving_average(plotdata["loss"])
+    plt.figure(1)
+    plt.subplot(211)
+    plt.plot(plotdata["batchsize"], plotdata["avgloss"], 'b--')
+    plt.xlabel('Minibatch number')
+    plt.ylabel('Loss')
+    plt.title('Minibatch run vs. Training loss')
+     
+    plt.show()
+    
+#重启一个session  ，载入检查点  
+load_epoch=18    
+with tf.Session() as sess2:
+    sess2.run(tf.global_variables_initializer())
+    saver.restore(sess2, savedir+"linermodel.cpkt-" + str(load_epoch))
+    print ("x=0.2，z=", sess2.run(z, feed_dict={X: 0.2}))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面代码运行完后，会看到在log文件夹下多了几个linermodel.cpkt-18*文件，就是检查点文件。</p>
+<p class="ziti3">这里使用tf.train.Saver（max_to_keep=1）代码创建saver时传入的参数max_to_keep=1代表：在迭代过程中只保存一个文件。这样，在循环训练过程中，新生成的模型就会覆盖以前的模型。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 如果觉得通过指定迭代次数比较麻烦，还有一个好方法可以快速获取到检查点文件。示例代码如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">ckpt = tf.train.get_checkpoint_state(ckpt_dir)
+if ckpt and ckpt.model_checkpoint_path:
+    saver.restore(sess, ckpt.model_checkpoint_path)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">还可以再简洁一些，写成以下这样：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">kpt = tf.train.latest_checkpoint(savedir)
+    if kpt!=None:
+        saver.restore(sess, kpt)</pre>
+<hr class="calibre6"/>
+<h4 class="p3">4.1.14　实例12：更简便地保存检查点</h4>
+<p class="ziti3">本例中介绍另一种更简便地保存检查点功能代码的方法——tf.train.MonitoredTraining Session函数。该函数可以直接实现保存及载入检查点模型的文件。与前面的方式不同，本例中并不是按照循环步数来保存，而是按照训练时间来保存的。通过指定save_checkpoint_secs参数的具体秒数，来设置每训练多久保存一次检查点。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">演示使用MonitoredTrainingSession函数来自动管理检查点文件。</p>
+<p class="ziti3">具体代码如下：</p>
+<p class="ziti3">代码4-7　trainMonitored</p>
+<hr class="calibre6"/>
+<pre class="ziti5">import tensorflow as tf
+tf.reset_default_graph()
+global_step = tf train.get_or_create_global_step()
+step = tf.assign_add(global_step, 1)
+#设置检查点路径为log/checkpoints
+with tf.train.MonitoredTrainingSession(checkpoint_dir='log/checkpoints', save_checkpoint_secs  = 2) as sess:
+    print(sess.run([global_step]))
+    while not sess.should_stop(): #启用死循环，当sess不结束时就不停止
+        i = sess.run( step)
+        print( i) </pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，得到如下输出：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">252 12851
+252 12852
+252 12853
+252 12854
+252 12855
+252 12856</pre>
+<hr class="calibre6"/>
+<p class="ziti3">将程序停止，可以看到log/checkpoints下面生成了检测点文件model.ckpt-8968.meta。再次运行代码，输出如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">252 8969
+252 8970
+252 8971</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可见，程序自动载入检查点文件是从第8969次开始运行的。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ （1）如果不设置save_checkpoint_secs参数，默认的保存时间间隔为10分钟。这种按照时间保存的模式更适用于使用大型数据集来训练复杂模型的情况。</p>
+<p class="ziti4">（2）使用该方法时，必须要定义global_step变量，否则会报错误。</p>
+<h4 class="p3">4.1.15　模型操作常用函数总结</h4>
+<p class="ziti3">下面将模型操作的相关函数进行系统的介绍，如表4-2所示。</p>
+<p class="middle-img">表4-2　模型操作相关函数</p>
+<div class="pic"><img alt="" src="Image00038.jpg" class="calibre4"/>
+</div>
+<div class="pic"><img alt="" src="Image00039.jpg" class="calibre4"/>
+</div>
+<h4 class="p3">4.1.16　TensorBoard可视化介绍</h4>
+<p class="ziti3">TensorFlow还提供了一个可视化工具TensorBoard。它可以将训练过程中的各种绘制数据展示出来，包括标量（Scalars）、图片（Images）、音频（Audio）、计算图（Graph）、数据分布、直方图（Histograms）和嵌入式向量。可以通过网页来观察模型的结构和训练过程中各个参数的变化。</p>
+<p class="ziti3">当然，TensorBoard不会自动把代码展示出来，其实它是一个日志展示系统，需要在session中运算图时，将各种类型的数据汇总并输出到日志文件中。然后启动TensorBoard服务，TensorBoard读取这些日志文件，并开启6006端口提供Web服务，让用户可以在浏览器中查看数据。</p>
+<p class="ziti3">TensorFlow提供了一系列API来生成这些数据，具体如表4-3所示。</p>
+<p class="middle-img">表4-3　模型操作相关函数</p>
+<div class="pic"><img alt="" src="Image00040.jpg" class="calibre4"/>
+</div>
+<h4 class="p3">4.1.17　实例13：线性回归的TensorBoard可视化</h4>
+<p class="ziti3">下面举例演示TensorBoard的可视化效果。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">为“3-1线性回归.py”代码文件添加支持输出TensorBoard信息的功能，演示通过TensorBoard来观察训练过程。</p>
+<p class="ziti3">本例还是以“3-1线性回归.py”文件的代码为原型，在上面添加支持TensorBoard的功能。该例子中，通过添加一个标量数据和一个直方图数据到log里，然后通过TensorBoard显示出来。代码改动量非常小，第一步加入到summary，第二步写入文件。</p>
+<p class="ziti3">将模型的生成值加入到直方图数据中，将损失值加入到标量数据中，代码如下：</p>
+<p class="ziti3">代码4-8　线性回归的TensorBoard可视化</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01  import tensorflow as tf
+02  import numpy as np
+03  import matplotlib.pyplot as plt
+04  
+05  ……
+06  # 前向结构
+07  z = tf.multiply(X, W)+ b
+08  tf.summary.histogram('z',z)                  #将预测值以直方图形式显示
+09  #反向优化
+20  cost =tf.reduce_mean( tf.square(Y - z))
+21  tf.summary.scalar('loss_function', cost)  #将损失以标量形式显示
+22  ……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">给直方图起名仍然叫z，标量的名字叫loss_function。</p>
+<p class="ziti3">下面的代码是在启动session之后加入代码，创建一个summary_writer，在迭代中将summary的值运行生成出来，同时添加到文件里。</p>
+<p class="ziti3">代码4-8　线性回归的 TensorBoard可视化（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">23  # 启动session
+24  with tf.Session() as sess:
+25     sess.run(init)
+26  
+27     merged_summary_op = tf.summary.merge_all()#合并所有summary
+28     #创建summary_writer，用于写文件
+29     summary_writer = 
+30  tf.summary.FileWriter('log/mnist_with_summaries',sess.graph)
+31  
+32     # 向模型中输入数据
+33     for epoch in range(training_epochs):
+34       for(x, y)in zip(train_X,train_Y):
+35         sess.run(optimizer, feed_dict={X: x, Y: y})
+36         
+37      #生成summary
+38      summary_str = sess.run(merged_summary_op,feed_dict={X: x, Y: y});
+39      summary_writer.add_summary(summary_str, epoch);#将summary 写入文件
+40
+￼41      ……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，显示的内容和以前一样没什么变化，来到生成的路径下可以看到多了一个文件，如图4-3所示。</p>
+<div class="pic"><img alt="" src="Image00041.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图4-3　summary文件</p>
+<p class="ziti3">然后单击“开始”|“运行”，输入cmd，启动“命令行”窗口。首先来到summary日志的上级路径下，输入如下命令：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">tensorboard --logdir D:\python\log/mnist_with_summaries</pre>
+<hr class="calibre6"/>
+<p class="ziti3">结果如图4-4所示。</p>
+<div class="pic"><img alt="" src="Image00042.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图4-4　启动TensorBoard</p>
+<p class="ziti3">接着打开Chrome浏览器，输入<a href="http://127.0.0.1:6006" class="pcalibre calibre2">http://127.0.0.1:6006</a>
+ ，会看到如图4-5所示界面。单击SCALARS，会看到之前创建的loss_fuction。这个loss_fuction也是可以点开的，点开后可以看到损失值随迭代次数的变化情况，如图4-6所示。</p>
+<p class="ziti3">在图4-6中可以调节平滑数来改变右边标量的曲线。类似的还可以点开图4-5中的GRAPHS看看神经网络的内部结构，还可以点开图4-5中的HISTOGRAMS来看例子中的另一个显示值z。</p>
+<div class="pic"><img alt="" src="Image00043.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图4-5　TensorBoard界面</p>
+<div class="pic"><img alt="" src="Image00044.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图4-6　TensorBoard标量</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 在显示TensorBoard界面的过程中，下面两点需要强调一下。</p>
+<p class="ziti4">·浏览器最好要使用Chrome。</p>
+<p class="ziti4">·在命令行里启动TensorBoard时，一定要先进入到日志所在的上级路径下，否则打开的页面里找不到创建好的信息。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

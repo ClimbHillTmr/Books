@@ -1,0 +1,80 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_164" class="calibre8">6.5　超参数的验证</h2>
+<p class="calibre1">神经网络中，除了权重和偏置等参数，<strong class="calibre2">超参数</strong>（hyper-parameter）也经常出现。这里所说的超参数是指，比如各层的神经元数量、batch 大小、参数更新时的学习率或权值衰减等。如果这些超参数没有设置合适的值，模型的性能就会很差。虽然超参数的取值非常重要，但是在决定超参数的过程中一般会伴随很多的试错。本节将介绍尽可能高效地寻找超参数的值的方法。</p>
+<h3 id="nav_point_165" class="calibre17">6.5.1　验证数据</h3>
+<p class="calibre1">之前我们使用的数据集分成了训练数据和测试数据，训练数据用于学习，测试数据用于评估泛化能力。由此，就可以评估是否只过度拟合了训练数据（是否发生了过拟合），以及泛化能力如何等。</p>
+<p class="calibre1">下面我们要对超参数设置各种各样的值以进行验证。这里要注意的是，不能使用测试数据评估超参数的性能。这一点非常重要，但也容易被忽视。</p>
+<p class="calibre1">为什么不能用测试数据评估超参数的性能呢？这是因为如果使用测试数据调整超参数，超参数的值会对测试数据发生过拟合。换句话说，用测试数据确认超参数的值的“好坏”，就会导致超参数的值被调整为只拟合测试数据。这样的话，可能就会得到不能拟合其他数据、泛化能力低的模型。</p>
+<p class="calibre1">因此，调整超参数时，必须使用超参数专用的确认数据。用于调整超参数的数据，一般称为<strong class="calibre2">验证数据</strong>（validation data）。我们使用这个验证数据来评估超参数的好坏。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00001.jpeg" alt="" width="5%" class="calibre11"/>　训练数据用于参数（权重和偏置）的学习，验证数据用于超参数的性能评估。为了确认泛化能力，要在最后使用（比较理想的是只用一次）测试数据。</p>
+</blockquote>
+<p class="calibre1">根据不同的数据集，有的会事先分成训练数据、验证数据、测试数据三部分，有的只分成训练数据和测试数据两部分，有的则不进行分割。在这种情况下，用户需要自行进行分割。如果是 MNIST 数据集，获得验证数据的最简单的方法就是从训练数据中事先分割 20% 作为验证数据，代码如下所示。</p>
+<pre class="calibre18"><code class="calibre20">(x_train, t_train), (x_test, t_test) = load_mnist()
+
+# 打乱训练数据
+x_train, t_train = shuffle_dataset(x_train, t_train)
+
+# 分割验证数据
+validation_rate = 0.20
+validation_num = int(x_train.shape[0] * validation_rate)
+
+x_val = x_train[:validation_num]
+t_val = t_train[:validation_num]
+x_train = x_train[validation_num:]
+t_train = t_train[validation_num:]
+
+</code></pre>
+<p class="calibre1">这里，分割训练数据前，先打乱了输入数据和教师标签。这是因为数据集的数据可能存在偏向（比如，数据从“0”到“10”按顺序排列等）。这里使用的 <code class="calibre15">shuffle_dataset</code> 函数利用了 <code class="calibre15">np.random.shuffle</code>，在 <code class="calibre15">common/util.py</code> 中有它的实现。</p>
+<p class="calibre1">接下来，我们使用验证数据观察超参数的最优化方法。</p>
+<h3 id="nav_point_166" class="calibre17">6.5.2　超参数的最优化</h3>
+<p class="calibre1">进行超参数的最优化时，逐渐缩小超参数的“好值”的存在范围非常重要。所谓逐渐缩小范围，是指一开始先大致设定一个范围，从这个范围中随机选出一个超参数（采样），用这个采样到的值进行识别精度的评估；然后，多次重复该操作，观察识别精度的结果，根据这个结果缩小超参数的“好值”的范围。通过重复这一操作，就可以逐渐确定超参数的合适范围。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00001.jpeg" alt="" width="5%" class="calibre11"/>　有报告 <sup class="calibre16">[15]</sup> 显示，在进行神经网络的超参数的最优化时，与网格搜索等有规律的搜索相比，随机采样的搜索方式效果更好。这是因为在多个超参数中，各个超参数对最终的识别精度的影响程度不同。</p>
+</blockquote>
+<p class="calibre1">超参数的范围只要“大致地指定”就可以了。所谓“大致地指定”，是指像 0.001（10<sup class="calibre16">-3</sup>）到 1000（10<sup class="calibre16">3</sup>）这样，以“10 的阶乘”的尺度指定范围（也表述为“用对数尺度（log scale）指定”）。</p>
+<p class="calibre1">在超参数的最优化中，要注意的是深度学习需要很长时间（比如，几天或几周）。因此，在超参数的搜索中，需要尽早放弃那些不符合逻辑的超参数。于是，在超参数的最优化中，减少学习的 epoch，缩短一次评估所需的时间是一个不错的办法。</p>
+<p class="calibre1">以上就是超参数的最优化的内容，简单归纳一下，如下所示。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><strong class="calibre2">步骤 0</strong></p>
+<p class="calibre1">设定超参数的范围。</p>
+<p class="calibre1"><strong class="calibre2">步骤 1</strong></p>
+<p class="calibre1">从设定的超参数范围中随机采样。</p>
+<p class="calibre1"><strong class="calibre2">步骤 2</strong></p>
+<p class="calibre1">使用步骤 1 中采样到的超参数的值进行学习，通过验证数据评估识别精度（但是要将 epoch 设置得很小）。</p>
+<p class="calibre1"><strong class="calibre2">步骤 3</strong></p>
+<p class="calibre1">重复步骤 1 和步骤 2（100 次等），根据它们的识别精度的结果，缩小超参数的范围。</p>
+</blockquote>
+<p class="calibre1">反复进行上述操作，不断缩小超参数的范围，在缩小到一定程度时，从该范围中选出一个超参数的值。这就是进行超参数的最优化的一种方法。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00001.jpeg" alt="" width="5%" class="calibre11"/>　这里介绍的超参数的最优化方法是实践性的方法。不过，这个方法与其说是科学方法，倒不如说有些实践者的经验的感觉。在超参数的最优化中，如果需要更精炼的方法，可以使用<strong class="calibre2">贝叶斯最优化</strong>（Bayesian optimization）。贝叶斯最优化运用以贝叶斯定理为中心的数学理论，能够更加严密、高效地进行最优化。详细内容请参考论文“Practical Bayesian Optimization of Machine Learning Algorithms”<sup class="calibre16">[16]</sup> 等。</p>
+</blockquote>
+<h3 id="nav_point_167" class="calibre17">6.5.3　超参数最优化的实现</h3>
+<p class="calibre1">现在，我们使用 MNIST 数据集进行超参数的最优化。这里我们将学习率和控制权值衰减强度的系数（下文称为“权值衰减系数”）这两个超参数的搜索问题作为对象。这个问题的设定和解决思路参考了斯坦福大学的课程“CS231n”。</p>
+<p class="calibre1">如前所述，通过从 0.001（10<sup class="calibre16">-3</sup>）到 1000（10<sup class="calibre16">3</sup>）这样的对数尺度的范围中随机采样进行超参数的验证。这在 Python 中可以写成 <code class="calibre15">10 ** np.random.uniform(-3, 3)</code>。在该实验中，权值衰减系数的初始范围为 10<sup class="calibre16">-8</sup> 到 10<sup class="calibre16">-4</sup>，学习率的初始范围为 10<sup class="calibre16">-6</sup> 到 10<sup class="calibre16">-2</sup>。此时，超参数的随机采样的代码如下所示。</p>
+<pre class="calibre18"><code class="calibre20">weight_decay = 10 ** np.random.uniform(-8, -4)
+lr = 10 ** np.random.uniform(-6, -2)
+
+</code></pre>
+<p class="calibre1">像这样进行随机采样后，再使用那些值进行学习。之后，多次使用各种超参数的值重复进行学习，观察合乎逻辑的超参数在哪里。这里省略了具体实现，只列出了结果。进行超参数最优化的源代码在 <code class="calibre15">ch06/hyperparameter_optimization.py</code> 中，请大家自由参考。</p>
+<p class="calibre1">下面我们就以权值衰减系数为 10<sup class="calibre16">-8</sup> 到 10<sup class="calibre16">-4</sup>、学习率为 10<sup class="calibre16">-6</sup> 到 10<sup class="calibre16">-2</sup> 的范围进行实验，结果如图 6-24 所示。</p>
+<p class="tu"><img src="../images/00279.jpeg" alt="" width="95%" class="calibre21"/></p>
+<p class="calibre1"><strong class="calibre2">图 6-24　实线是验证数据的识别精度，虚线是训练数据的识别精度</strong></p>
+<p class="calibre1">图 6-24 中，按识别精度从高到低的顺序排列了验证数据的学习的变化。从图中可知，直到“Best-5”左右，学习进行得都很顺利。因此，我们来观察一下“Best-5”之前的超参数的值（学习率和权值衰减系数），结果如下所示。</p>
+<pre class="calibre18"><code class="calibre20">Best-1 (val acc:0.83) | lr:0.0092, weight decay:3.86e-07
+Best-2 (val acc:0.78) | lr:0.00956, weight decay:6.04e-07
+Best-3 (val acc:0.77) | lr:0.00571, weight decay:1.27e-06
+Best-4 (val acc:0.74) | lr:0.00626, weight decay:1.43e-05
+Best-5 (val acc:0.73) | lr:0.0052, weight decay:8.97e-06
+
+</code></pre>
+<p class="calibre1">从这个结果可以看出，学习率在 0.001 到 0.01、权值衰减系数在 10<sup class="calibre16">-8</sup> 到 10<sup class="calibre16">-6</sup> 之间时，学习可以顺利进行。像这样，观察可以使学习顺利进行的超参数的范围，从而缩小值的范围。然后，在这个缩小的范围中重复相同的操作。这样就能缩小到合适的超参数的存在范围，然后在某个阶段，选择一个最终的超参数的值。</p>
+</body></html>

@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_122" class="calibre8">5.3　反向传播</h2>
+<p class="calibre1">上一节介绍了计算图的反向传播是基于链式法则成立的。本节将以“+”和“×”等运算为例，介绍反向传播的结构。</p>
+<h3 id="nav_point_123" class="calibre17">5.3.1　加法节点的反向传播</h3>
+<p class="calibre1">首先来考虑加法节点的反向传播。这里以 <em class="calibre7">z</em> = <em class="calibre7">x</em> + <em class="calibre7">y</em> 为对象，观察它的反向传播。<em class="calibre7">z</em> = <em class="calibre7">x</em> + <em class="calibre7">y</em> 的导数可由下式（解析性地）计算出来。</p>
+<p class="tu"><img src="../images/00174.gif" alt="\begin{aligned}\frac{\partial z}{\partial x}&amp;=1\\\frac{\partial z}{\partial y}&amp;=1\end{aligned}\quad\quad\quad\quad\quad(5.5)" class="calibre24"/></p>
+<p class="calibre1">如式（5.5）所示，<img src="../images/00160.gif" alt="\frac{\partial z}{\partial x}" class="calibre24"/> 和 <img src="../images/00175.gif" alt="\frac{\partial z}{\partial y}" class="calibre24"/> 同时都等于 1。因此，用计算图表示的话，如图 5-9 所示。</p>
+<p class="calibre1">在图 5-9 中，反向传播将从上游传过来的导数（本例中是 <img src="../images/00152.gif" alt="\frac{\partial L}{\partial x}" class="calibre24"/>）乘以 1，然后传向下游。也就是说，因为加法节点的反向传播只乘以 1，所以输入的值会原封不动地流向下一个节点。</p>
+<p class="tu"><img src="../images/00176.jpeg" alt="" width="95%" class="calibre21"/></p>
+<p class="calibre1"><strong class="calibre2">图 5-9　加法节点的反向传播：左图是正向传播，右图是反向传播。如右图的反向传播所示，加法节点的反向传播将上游的值原封不动地输出到下游</strong></p>
+<p class="calibre1">另外，本例中把从上游传过来的导数的值设为 <img src="../images/00152.gif" alt="\frac{\partial L}{\partial x}" class="calibre24"/>。这是因为，如图 5-10 所示，我们假定了一个最终输出值为 <em class="calibre7">L</em> 的大型计算图。<em class="calibre7">z</em> = <em class="calibre7">x</em> + <em class="calibre7">y</em> 的计算位于这个大型计算图的某个地方，从上游会传来 <img src="../images/00152.gif" alt="\frac{\partial L}{\partial x}" class="calibre24"/> 的值，并向下游传递 <img src="../images/00177.gif" alt="\frac{\partial L}{\partial z}" class="calibre24"/> 和 <img src="../images/00178.gif" alt="\frac{\partial L}{\partial y}" class="calibre24"/>。</p>
+<p class="tu"><img src="../images/00179.jpeg" alt="" width="98%" class="calibre31"/></p>
+<p class="calibre1"><strong class="calibre2">图 5-10　加法节点存在于某个最后输出的计算的一部分中。反向传播时，从最右边的输出出发，局部导数从节点向节点反方向传播</strong></p>
+<p class="calibre1">现在来看一个加法的反向传播的具体例子。假设有“10 + 5=15”这一计算，反向传播时，从上游会传来值 1.3。用计算图表示的话，如图 5-11 所示。</p>
+<p class="tu"><img src="../images/00180.jpeg" alt="" width="95%" class="calibre21"/></p>
+<p class="calibre1"><strong class="calibre2">图 5-11　加法节点的反向传播的具体例子</strong></p>
+<p class="calibre1">因为加法节点的反向传播只是将输入信号输出到下一个节点，所以如图 5-11 所示，反向传播将 1.3 向下一个节点传递。</p>
+<h3 id="nav_point_124" class="calibre17">5.3.2　乘法节点的反向传播</h3>
+<p class="calibre1">接下来，我们看一下乘法节点的反向传播。这里我们考虑 <em class="calibre7">z</em> = <em class="calibre7">xy</em>。这个式子的导数用式（5.6）表示。</p>
+<p class="tu"><img src="../images/00181.gif" alt="\begin{aligned}\frac{\partial z}{\partial x}&amp;=y\\\frac{\partial z}{\partial y}&amp;=x\end{aligned}\quad\quad\quad\quad\quad(5.6)" class="calibre24"/></p>
+<p class="calibre1">根据式（5.6），可以像图 5-12 那样画计算图。</p>
+<p class="tu"><img src="../images/00182.jpeg" alt="" width="95%" class="calibre21"/></p>
+<p class="calibre1"><strong class="calibre2">图 5-12　乘法的反向传播：左图是正向传播，右图是反向传播</strong></p>
+<p class="calibre1">乘法的反向传播会将上游的值乘以正向传播时的输入信号的“翻转值”后传递给下游。翻转值表示一种翻转关系，如图 5-12 所示，正向传播时信号是 <em class="calibre7">x</em> 的话，反向传播时则是 <em class="calibre7">y</em>；正向传播时信号是 <em class="calibre7">y</em> 的话，反向传播时则是 <em class="calibre7">x</em>。</p>
+<p class="calibre1">现在我们来看一个具体的例子。比如，假设有“10 × 5 = 50”这一计算，反向传播时，从上游会传来值 1.3。用计算图表示的话，如图 5-13 所示。</p>
+<p class="tu"><img src="../images/00183.jpeg" alt="" width="95%" class="calibre21"/></p>
+<p class="calibre1"><strong class="calibre2">图 5-13　乘法节点的反向传播的具体例子</strong></p>
+<p class="calibre1">因为乘法的反向传播会乘以输入信号的翻转值，所以各自可按 1.3 × 5 = 6.5、1.3 × 10 = 13 计算。另外，加法的反向传播只是将上游的值传给下游，并不需要正向传播的输入信号。但是，乘法的反向传播需要正向传播时的输入信号值。因此，实现乘法节点的反向传播时，要保存正向传播的输入信号。</p>
+<h3 id="nav_point_125" class="calibre17">5.3.3　苹果的例子</h3>
+<p class="calibre1">再来思考一下本章最开始举的购买苹果的例子（2 个苹果和消费税）。这里要解的问题是苹果的价格、苹果的个数、消费税这 3 个变量各自如何影响最终支付的金额。这个问题相当于求“支付金额关于苹果的价格的导数”“支付金额关于苹果的个数的导数”“支付金额关于消费税的导数”。用计算图的反向传播来解的话，求解过程如图 5-14 所示。</p>
+<p class="tu"><img src="../images/00184.jpeg" alt="" width="95%" class="calibre21"/></p>
+<p class="calibre1"><strong class="calibre2">图 5-14　购买苹果的反向传播的例子</strong></p>
+<p class="calibre1">如前所述，乘法节点的反向传播会将输入信号翻转后传给下游。从图 5-14 的结果可知，苹果的价格的导数是 2.2，苹果的个数的导数是 110，消费税的导数是 200。这可以解释为，如果消费税和苹果的价格增加相同的值，则消费税将对最终价格产生 200 倍大小的影响，苹果的价格将产生 2.2 倍大小的影响。不过，因为这个例子中消费税和苹果的价格的量纲不同，所以才形成了这样的结果（消费税的 1 是 100%，苹果的价格的 1 是 1 日元）。</p>
+<p class="calibre1">最后作为练习，请大家来试着解一下“购买苹果和橘子”的反向传播。在图 5-15 中的方块中填入数字，求各个变量的导数（答案在若干页后）。</p>
+<p class="tu"><img src="../images/00185.jpeg" alt="" width="90%" class="calibre33"/></p>
+<p class="calibre1"><strong class="calibre2">图 5-15　购买苹果和橘子的反向传播的例子：在方块中填入数字，完成反向传播</strong></p>
+</body></html>

@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h1 id="nav_point_218" class="not-in-toc">附录 A　Softmax-with-Loss 层的计算图</h1>
+<p class="calibre1">这里，我们给出 softmax 函数和交叉熵误差的计算图，来求它们的反向传播。softmax 函数称为 softmax 层，交叉熵误差称为 Cross Entropy Error 层，两者的组合称为 Softmax-with-Loss 层。先来看一下结果，Softmax-with-Loss 层可以画成图 A-1 所示的计算图。</p>
+<p class="tu"><img src="../images/00344.jpeg" alt="" width="95%" class="calibre21"/></p>
+<p class="calibre1"><strong class="calibre2">图 A-1　Softmax-with-Loss 层的计算图</strong></p>
+<p class="calibre1">图 A-1 的计算图中假定了一个进行 3 类别分类的神经网络。从前面的层输入的是 <img src="../images/00221.gif" alt="(a_1,a_2,a_3)" class="calibre24"/>，softmax 层输出 <img src="../images/00222.gif" alt="(y_1,y_2,y_3)" class="calibre24"/>。此外，教师标签是 <img src="../images/00223.gif" alt="(t_1,t_2,t_3)" class="calibre24"/>，Cross Entropy Error 层输出损失 <em class="calibre7">L</em>。</p>
+<p class="calibre1">如图 A-1 所示，在本附录中，Softmac-with-Loss 层的反向传播的结果为 <img src="../images/00225.gif" alt="(y_1-t_1,y_2-t_2,y_3-t_3)" class="calibre24"/>。</p>
+</body></html>

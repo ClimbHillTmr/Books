@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">11.3　残差网络（ResNet）</h3>
+<p class="ziti3">残差网络（ResNet），在ILSVRC 2015中取得了冠军，该框架能够大大简化模型网络的训练时间，使得在可接受时间内，模型能够更深。</p>
+<p class="ziti3">在深度学习领域中，网络越深意味着拟合越强，出现过拟合问题是正常的，训练误差越来越大却是不正常的。但是，网络逐渐加深会对网络的反向传播能力提出挑战，在反向传播中每一层的梯度都是在上一层的基础上计算的，层数多会导致梯度在多层传播时越来越小，直到梯度消失，于是表现的结果就是随着层数变多，训练的误差会越来越大。</p>
+<p class="ziti3">残差网络通过一个叫残差连接的技术解决了这个问题。所谓的残差连接就是在标准的前馈卷积网络上加一个跳跃，从而绕过一些层的连接方式。</p>
+<h4 class="p3">11.3.1　残差网络结构</h4>
+<p class="ziti3">残差网络的结构，如图11-7所示。</p>
+<div class="pic"><img alt="" src="Image00231.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图11-7　残差网络结构</p>
+<p class="ziti3">假设，经过两个神经层之后输出的H（x）如下所示：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">f(x)=relu(xw+b)
+H(x)=relu(f(x)w+b)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">H（x）和x之间存在一个函数的关系，如果这两层神经网络构成的是H（x）=2x的关系，则残差网络的定义如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">H(x)=relu(f(x)w+b)+x</pre>
+<hr class="calibre6"/>
+<h4 class="p3">11.3.2　残差网络原理</h4>
+<p class="ziti3">如图11-7所示，ResNet中，输入层与Addition之间存在着两个连接，左侧的连接是输入层通过若干神经层之后连接到Addition，右侧的连接是输入层直接传给Addition，在反向传播的过程中误差传到Input时会得到两个误差的相加和，一个是左侧一堆网络的误差，一个是右侧直接的原始误差。左侧的误差会随着层数变深而梯度越来越小，右侧则是由Addition直接连到Input，所以还会保留着Addition的梯度。这样Input得到的相加和后的梯度就没有那么小了，可以保证接着将误差往下传。</p>
+<p class="ziti3">这种方式看似解决了梯度越传越小的问题，但是残差连接在正向同样也发挥了作用。由于正向的作用，导致网络结构已经不再是深层了，而是一个并行的模型，即残差连接的作用是将网络串行改成了并行。这也可以理解为什么Inception v4结合了残差网络的原理后，却没有使用残差连接，反而做出了与Inception-ResNet v2等同的效果。</p>
+<p class="ziti3">介绍Resnet主要是为下面的Inception-ResNet v2做铺垫，下面就来看看ILSVRC 2016年的冠军Inception-ResNet v2网络。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

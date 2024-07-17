@@ -1,0 +1,127 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">8.7　实例50：用反卷积技术复原卷积网络各层图像</h3>
+<p class="ziti3">在了解了反卷积神经网络之后，下面通过一个例子将前面的卷积神经网络里的卷积层可视化出来，看看每一层到底学到了什么信息。</p>
+<p class="ziti4">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">将代码“8-9 cifar卷积.py”文件中的每层卷积结果进行反卷积并输出，通过tensorboard观察其结果。</p>
+<p class="ziti3">改写代码代码“8-9 cifar卷积.py”，将每层的卷积内容可视化并在tensroboard中查看，具体步骤如下。</p>
+<p class="ziti4">
+<span class="yanse">1．替换Maxpool池化函数</span>
+</p>
+<p class="ziti3">这里不再使用自己定义的max_pool_2x2池化函数，改成新加入的带mask返回值的max_pool_with_argmax函数，具体代码如下。</p>
+<p class="ziti3">代码8-17　cifar反卷积</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 ……
+02 x_image = tf.reshape(x, [-1,24,24,3])
+03 
+04 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
+05 h_pool1, mask1 = max_pool_with_argmax(h_conv1, 2)
+06 
+07 W_conv2 = weight_variable([5, 5, 64, 64])
+08 b_conv2 = bias_variable([64])
+09 
+10 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
+11 #############################################################
+12 h_pool2, mask = max_pool_with_argmax(h_conv2, 2)#(128, 6, 6, 64)
+13 print(h_pool2.shape)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 上面代码的最后一行是将h_pool2的形状打印出来，这也是在组建网络结构时常用的一种调试方法。反卷积和反池化对形状都很敏感（尤其层数太多时），这种方法可以让我们不用花费太多精力来推导到底当前的输入是什么形状。</p>
+<p class="ziti4">
+<span class="yanse">2．反卷积第二层卷积结果</span>
+</p>
+<p class="ziti3">以第二池化输出的变量h_pool2为开始部分，沿着h_pool2生成的方式反向操作一层一层推导，直到生成原始图t1_x_image。</p>
+<p class="ziti3">如图8-22所示，上半部分是h_pool2卷积的过程，下半部分为反卷积过程。为了便于分析，下半部分的名字与代码中的变量一致。</p>
+<div class="pic"><img alt="" src="Image00148.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图8-22　反卷积例子</p>
+<p class="ziti3">因为在卷积过程中，每个卷积后都要加上权重b，所以在反卷积过程中就要将b减去。由于Relu函数基本上是恒等变化（除了小于0的部分），所以在反向时不需要可逆操作，可以直接略去。</p>
+<p class="ziti3">代码8-17　cifar反卷积（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">14 t_conv2 = unpool(h_pool2, mask, 2)#(128, 12, 12, 64)
+15 t_pool1 = tf.nn.conv2d_transpose(t_conv2-b_conv2, W_conv2, h_pool1.
+shape,[1,1,1,1])#(128, 24, 24, 64)
+16 print(t_conv2.shape,h_pool1.shape,t_pool1.shape)
+17 t_conv1 = unpool(t_pool1, mask1, 2)
+18 t_x_image = tf.nn.conv2d_transpose(t_conv1-b_conv1, W_conv1, x_image.
+shape,[1,1,1,1])</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">3．反卷积第一层卷积结果</span>
+</p>
+<p class="ziti3">参考第二层的反卷积，第一层会更为简单，代码如下。</p>
+<p class="ziti3">代码8-17　cifar反卷积（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">19   #第一层卷积还原
+20      t1_conv1 = unpool(h_pool1, mask1, 2)
+21      t1_x_image = tf.nn.conv2d_transpose(t1_conv1-b_conv1, W_conv1, x_
+        image.shape,[1,1,1,1])</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">4．合并还原结果，并输出给TensorBoard输出</span>
+</p>
+<p class="ziti3">这次是将结果通过TensorBoard进行展示，所以将生成的第一层图片和第二层图片与原始图片合在一起，统一放入tf.summary.image里，这样在TensorBoard的image里就能看到了。</p>
+<p class="ziti3">代码8-17　cifar反卷积（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">22 # 生成最终图像
+23 stitched_decodings = tf.concat((x_image, t1_x_image,t_x_image), axis=2)
+24 decoding_summary_op = tf.summary.image('source/cifar', stitched_
+decodings)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">5．session中写入log</span>
+</p>
+<p class="ziti3">按照前面介绍过的TensorBoard步骤，在session中建立一个summary_writer，然后在代码结尾处通过session.run运行前面的tf.summary.image操作，使用summary_writer将得出的结果写入log。</p>
+<p class="ziti3">代码8-17　cifar反卷积（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">25 ……
+26 cross_entropy = -tf.reduce_sum(y*tf.log(y_conv)) +(tf.nn.l2_loss
+(W_conv1)+tf.nn.l2_loss(W_conv2)+tf.nn.l2_loss(W_conv3))
+27 
+28 train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+29 
+30 correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y,1))
+31 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+32 sess = tf.Session()
+33 sess.run(tf.global_variables_initializer())
+34 summary_writer = tf.summary.FileWriter('./log/', sess.graph)
+35 ……
+36 decoding_summary = sess.run(decoding_summary_op,feed_dict={x:image_
+batch, y: label_b})
+37 summary_writer.add_summary(decoding_summary)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">这里在计算cross_entropy时，对所有的w权重用了一次Loss2正则化。</p>
+<p class="ziti4">
+<span class="yanse">6．Tensorboard中查看结果</span>
+</p>
+<p class="ziti3">运行以上代码后，就可以在TensorBoard中查看结果了。</p>
+<p class="ziti3">上面的log是写在本代码同级目录下的log文件夹内，启动TensorBoard的步骤可以参考前面的介绍，这里不再多讲（一定要把路径要找对）。</p>
+<p class="ziti3">上面的代码中，image定义的路径是source/cifar，所以在TensorBoard中单击image就会看到source，点开后就能看到如图8-23所示的图片。</p>
+<div class="pic"><img alt="" src="Image00149.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图8-23　反卷积结果1</p>
+<p class="ziti3">图8-23中的数字是后面标注的。第1幅是原始图片，其很不清晰的原因是在cifar10_input.inputs代码中，将图片做的归一化（变成-1～1之间的数）。第2幅是第一个卷积层还原的图片，第3幅是最后一个卷积层还原的图片。可以看到，最后的卷积输出对图像的主要特征响应更强烈。</p>
+<p class="ziti3">为了让图片看得更清晰，我们去掉归一化的操作，使用原始图片在模型中“跑”一下。来到“cifar10_input.py”文件中将第241行代码修改如：</p>
+<hr class="calibre6"/>
+<pre class="ziti5"> float_image = resized_image
+  # Subtract off the mean and divide by the variance of the pixels.
+  #float_image = tf.image.per_image_standardization(resized_image)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">再次运行代码，在TensorBoard中如图8-24所示。这时1、2、3分别代表原图、1层卷积后和2层卷积后的图片。</p>
+<p class="ziti3">与归一化的效果对比，显然归一化后的图片卷积效果特征会更加明显，这也是为什么做归一化的原因。</p>
+<div class="pic"><img alt="" src="Image00150.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图8-24　反卷积结果2</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

@@ -1,0 +1,136 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">12.7　GAN-cls：具有匹配感知的判别器</h3>
+<p class="ziti3">本节介绍一种GAN网络增强技术——具有匹配感知的判别器。前面讲过，在InfoGAN中，使用了ACGAN的方式进行指导模拟数据与生成数据的对应关系。在GAN-cls中该效果会以更简单的方式来实现，即增强判别器的功能，令其不仅能判断图片真伪，还能判断匹配真伪。</p>
+<h4 class="p3">12.7.1　GAN-cls的具体实现</h4>
+<p class="ziti3">GAN-cls的具体做法是，在原有的GAN网络上，将判别器的输入变为图片与对应标签的连接数据。这样判别器的输入特征中就会有生成图像的特征与对应标签的特征。然后用这样的判别器分别对真实标签与真实图片、假标签与真实图片、真实标签与假图片进行判断，预期的结果依次为真、假、假，在训练的过程中沿着这个方向收敛即可。而对于生成器，则不需要做任何改动。这样简单的一步就完成了生成根据标签匹配的模拟数据功能。</p>
+<h4 class="p3">12.7.2　实例92：使用GAN-cls技术实现生成标签匹配的模拟数据</h4>
+<p class="ziti3">本例中直接修改“12-4 mnistLSgan.py”代码中的判别器函数。演示GAN-cls技术的使用。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">在代码“12-4 mnistLSgan.py”的基础上，使用GAN-cls技术对判别器进行改造，并通过输入错误的样本标签让判别器学习样本与标签的匹配，从而优化生成器，使生成器最终生成与标签一致的样本，实现与ACGAN等同的效果。</p>
+<p class="ziti3">下面给出具体步骤。</p>
+<p class="ziti4">
+<span class="yanse">1．修改判别器</span>
+</p>
+<p class="ziti3">在代码“12-4 mnistLSgan.py”的基础上，将判别器的输入改成x与y，新增加的y代表输入的样本标签；在内部处理中，先通过全连接网络将y变为与图片一样维度的映射，并调整为图片相同的形状，使用concat将二者连接到一起统一处理。后续的处理过程是一样的，两个卷积后再接两个全连接，最后一层输出disc。代码如下：</p>
+<p class="ziti3">代码12-5　GAN-cls</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 ……
+02 def discriminator(x,y):
+03     reuse = len([t for t in tf.global_variables() if t.name.startswith
+    ('discriminator')]) &gt; 0
+04     with tf.variable_scope('discriminator', reuse=reuse):
+05         y = slim.fully_connected(y, num_outputs=n_input, activation_
+        fn = leaky_relu)
+06         y = tf.reshape(y, shape=[-1, 28, 28, 1]) #将y统一成图片格式
+07         x = tf.reshape(x, shape=[-1, 28, 28, 1])
+08         #将二者连接到一起，统一处理
+09         x= tf.concat(axis=3, values=[x,y])
+10         x = slim.conv2d(x, num_outputs = 64, kernel_size=[4,4], 
+        stride=2, activation_fn=leaky_relu)
+11         x = slim.conv2d(x, num_outputs=128, kernel_size=[4,4], 
+        stride=2, activation_fn=leaky_relu)
+12         x = slim.flatten(x)
+13         shared_tensor = slim.fully_connected(x, num_outputs=1024, 
+        activation_fn = leaky_relu)
+14         disc = slim.fully_connected(shared_tensor, num_outputs=1, 
+        activation_fn=tf.nn.sigmoid)
+15         disc = tf.squeeze(disc, -1)
+16 
+17     return disc</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．添加错误标签输入符，构建网络结构</span>
+</p>
+<p class="ziti3">添加错误标签misy，同时在判别器中分别将真实样本与真实标签、生成的图像gen与真实标签、真实样本与错误标签组成的输入传入判别器中。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 这里是将3种输入的x与y分别按照batch_size维度连接变为判别器的一个输入的。生成结果后再使用split函数将其裁成3个结果disc_real、disc_fake和disc_mis，分别代表真实样本与真实标签、生成的图像gen与真实标签、真实样本与错误标签所对应的判别值。这么写会使代码看上去简洁一些，当然也可以一个一个地输入x、y，然后调用三次判别器，效果是一样的。</p>
+<p class="ziti3">由于本例中不需要InfoGAN模型，将“12-4 mnistLSgan.py”代码中的隐含信息z_con部分全部去掉。代码如下：</p>
+<p class="ziti3">代码12-5　GAN-cls（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">18 x = tf.placeholder(tf.float32, [None, n_input])      #输入样本
+19 y = tf.placeholder(tf.int32, [None])                   #正确标签
+20 misy = tf.placeholder(tf.int32, [None])                #错误标签
+21 
+22 z_rand = tf.random_normal((batch_size, rand_dim)) #38列
+23 z = tf.concat(axis=1, values=[tf.one_hot(y, depth = classes_dim), 
+z_rand])#50列
+24 gen = generator(z)
+25 genout= tf.squeeze(gen, -1)
+26 
+27 # 判别器discriminator
+28 xin=tf.concat([x, tf.reshape(gen, shape=[-1,784]),x],0)
+29 yin=tf.concat([tf.one_hot(y, depth = classes_dim),tf.one_hot(y, depth = classes_dim),tf.one_hot(misy, depth = classes_dim)],0)
+30 disc_all = discriminator(xin,yin)
+31 disc_real,disc_fake,disc_mis =tf.split(disc_all,3)
+32 
+33 #构建loss
+34 loss_d = tf.reduce_sum(tf.square(disc_real-1) + ( tf.square(disc_fake)
++tf.square(disc_mis))/2 )/2
+35 loss_g = tf.reduce_sum(tf.square(disc_fake-1))/2
+36 ……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在计算判别器的loss时，同样使用LSGAN方式，并且将错误部分的loss变为disc_fake与disc_mis的和，然后再除以2。因为对于生成器生成的样本与错误的输入标签，判别器都应该将其判断为错误。</p>
+<p class="ziti4">
+<span class="yanse">3．使用MonitoredTrainingSession创建sesson，开始训练</span>
+</p>
+<p class="ziti3">定义global_step，使用MonitoredTrainingSession创建sesson，来管理检查点文件，在session中构建错误标签数据，训练模型。</p>
+<p class="ziti3">代码12-5　GAN-cls（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">37 ……
+38 
+39 global_step = tf.train.get_or_create_global_step() #使用MonitoredTrainingSession，必须有
+40 
+41 train_disc = tf.train.AdamOptimizer(0.0001).minimize(loss_d , var_
+list = d_vars, global_step = global_step)
+42 train_gen = tf.train.AdamOptimizer(0.001).minimize(loss_g , var_
+list = g_vars, global_step = gen_global_step)
+43 
+44 training_epochs = 3         #整体数据集迭代3次
+45 display_step = 1             #每迭代一次显示一次输出信息
+46 
+47 with tf.train.MonitoredTrainingSession(checkpoint_dir='log/
+checkpointsnew',save_checkpoint_secs  =60) as sess:
+48 
+49     total_batch = int(mnist.train.num_examples/batch_size)
+50     print("global_step.eval(session=sess)",global_step.eval
+   (session=sess),int(global_step.eval(session=sess)/total_batch))
+51     for epoch in range( int(global_step.eval(session=sess)/total_
+    batch),training_epochs):
+52         avg_cost = 0.
+53 
+54         # 遍历全部数据集
+55         for i in range(total_batch):
+56             batch_xs, batch_ys = mnist.train.next_batch(batch_size) #取数据
+57             _, mis_batch_ys = mnist.train.next_batch(batch_size) #取错误标签数据
+58             feeds = {x: batch_xs, y: batch_ys,misy:mis_batch_ys}
+59 
+60             # 输入数据，运行优化器
+61             l_disc, _, l_d_step = sess.run([loss_d, train_disc, global_
+            step],feeds)
+62             l_gen, _, l_g_step = sess.run([loss_g, train_gen, gen_global_
+            step],feeds)
+63 ……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，生成如下结果，输出图片如图12-11所示。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">完成!
+result: 1.17139 0.829812 </pre>
+<hr class="calibre6"/>
+<div class="pic"><img alt="" src="Image00274.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图12-11　GAN-cls结果</p>
+<p class="ziti3">如图12-11所示，使用GAN-cls技术同样也实现了生成与标签对应的样本，而且整体代码的运算要比ACGAN简洁很多。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

@@ -1,0 +1,282 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">9.6　实例69：利用RNN训练语言模型</h3>
+<p class="ziti3">下面来做一个实验，用RNN预测语言模型，并让它输出一句话，具体业务描述如下。</p>
+<p class="ziti3">先让RNN学习一段文字，之后模型可以根据我们的输入再自动预测后面的文字。同时将模型预测出来的文字当成输入，再放到模型里，模型就会预测出下一个文字，这样循环下去，可以看到RNN能够输出一句话。</p>
+<p class="ziti3">那么RNN是怎么样来学习这段文字呢？这里将整段文字都看成一个个的序列。在模型里预设值只关注连续的4个序列，这样在整段文字中，每次随意拿出4个连续的文字放到模型里进行训练，然后把第5个连续的值当成标签，与输出的预测值进行loss的计算，形成一个可训练的模型，通过优化器来迭代训练。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">通过让RNN网络对一段文字的训练学习来生成模型，最终可以使用机器生成的模型来表达自己的意思。</p>
+<p class="ziti3">下面看看具体实现过程。</p>
+<h4 class="p3">9.6.1　准备样本</h4>
+<p class="ziti3">这个环节很简单，随便复制一段话放到txt里即可。在例子中使用的样本如下：</p>
+<p class="ziti4">在尘世的纷扰中，只要心头悬挂着远方的灯光，我们就会坚持不懈地走，理想为我们灌注了精神的蕴藉。所以，生活再平凡、再普通、再琐碎，我们都要坚持一种信念，默守一种精神，为自己积淀站立的信心，前行的气力。</p>
+<p class="ziti3">这是笔者随意下载的一段文字，把该段文字放到代码同级目录下，起名为wordstest.txt。</p>
+<p class="ziti4">
+<span class="yanse">1．定义基本工具函数</span>
+</p>
+<p class="ziti3">具体的基本工具函数与语音识别例子差不多，都是与文本处理相关的，首先引入头文件，然后定义相关函数，其中get_ch_lable函数从文件里获取文本，get_ch_lable_v函数将文本数组转换成向量。具体如下。</p>
+<p class="ziti3">代码9-25　rnnwordtest</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import numpy as np
+02 import tensorflow as tf
+03 from tensorflow.contrib import rnn
+04 import random
+05 import time
+06 from collections import Counter
+07 start_time = time.time()
+08 def elapsed(sec):
+09     if sec&lt;60:
+10       return str(sec) + " sec"
+11     elif sec&lt;(60*60):
+12         return str(sec/60) + " min"
+13     else:
+14         return str(sec/(60*60)) + " hr"
+15 
+16 tf.reset_default_graph()
+17 training_file = 'wordstest.txt'
+18 
+19 #处理多个中文文件
+20 def readalltxt(txt_files):
+21     labels = []
+22     for txt_file in txt_files:
+23         
+24         target = get_ch_lable(txt_file)
+25         labels.append(target)  
+26     return labels
+27     
+28 #处理汉字
+29 def get_ch_lable(txt_file):  
+30     labels= “”
+31     with open(txt_file, 'rb') as f:
+32         for label in f: 
+33         
+34           labels = labels +label.decode('gb2312')
+35           
+36     return  labels
+37    
+38  #优先转文件里的字符到向量
+39  def get_ch_lable_v(txt_file,word_num_map,txt_label=None):
+40       
+41     words_size = len(word_num_map)   
+42     to_num = lambda word: word_num_map.get(word, words_size) 
+43     if txt_file!= None:
+44         txt_label = get_ch_lable(txt_file)
+45  
+46     labels_vector = list(map(to_num, txt_label)) 
+47      return labels_vector  </pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．样本预处理</span>
+</p>
+<p class="ziti3">样本预处理工作主要是读取整体样本，并存放到training_data里，获取全部的字表words，并生成样本向量wordlabel和与向量对应关系的word_num_map。具体代码如下。</p>
+<p class="ziti3">代码9-25　rnnwordtest（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">48  training_data =get_ch_lable(training_file)
+49 print("Loaded training data...")
+50     
+51 counter = Counter(training_data)  
+52 words = sorted(counter)
+53 words_size= len(words)
+54 word_num_map = dict(zip(words, range(words_size))) 
+55 
+56 print('字表大小:', words_size)     
+57 wordlabel = get_ch_lable_v(training_file,word_num_map)</pre>
+<hr class="calibre6"/>
+<h4 class="p3">9.6.2　构建模型</h4>
+<p class="ziti3">本例中使用多层RNN模型，后面接入一个softmax分类，对下一个字属于哪个向量进行分类，这里认为一个字就是一类。整个例子步骤如下。</p>
+<p class="ziti4">
+<span class="yanse">1．设置参数定义占位符</span>
+</p>
+<p class="ziti3">学习率为0.001，迭代10000次，每1000次输出一次中间状态。每次输入4个字，来预测第5个字。</p>
+<p class="ziti3">网络模型使用了3层的LSTM RNN，第一层为256个cell，第二层和第三层都是512个cell。</p>
+<p class="ziti3">代码9-25　rnnwordtest（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">58 # 定义参数
+59 learning_rate = 0.001
+60 training_iters = 10000
+61 display_step = 1000
+62 n_input = 4
+63 
+64 n_hidden1 = 256
+65 n_hidden2 = 512
+66 n_hidden3 = 512
+67 #定义占位符
+68 x = tf.placeholder("float", [None, n_input,1])
+69 wordy = tf.placeholder("float", [None, words_size])</pre>
+<hr class="calibre6"/>
+<p class="ziti3">代码中定义了两个占位符x和wordy，其中，x代表输入的4个连续文字，wordy则代表一个字，由于用的是字索引向量的one_hot编码，所以其大小为words_size，代表总共的字数。</p>
+<p class="ziti4">
+<span class="yanse">2．定义网络结构</span>
+</p>
+<p class="ziti3">将x形状变换并按找时间序列裁分，然后放入3层LSTM网络，最终通过一个全连接生成words_size个节点，为后面的softmax做准备。具体代码如下。</p>
+<p class="ziti3">代码9-25　rnnwordtest（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">70 x1 = tf.reshape(x, [-1, n_input])
+71 x2 = tf.split(x1,n_input,1)
+72 # 2-layer LSTM，每层有 n_hidden 个units
+73 rnn_cell = rnn.MultiRNNCell([rnn.LSTMCell(n_hidden1),rnn.LSTMCell
+(n_hidden2),rnn.LSTMCell(n_hidden3)])
+74 
+75 # 通过RNN得到输出
+76 outputs, states = rnn.static_rnn(rnn_cell, x2, dtype=tf.float32)
+77 
+78 #  通过全连接输出指定维度
+79 pred = tf.contrib.layers.fully_connected(outputs[-1],words_size,
+activation_fn = None)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">3．定义优化器</span>
+</p>
+<p class="ziti3">优化器同样使用AdamOptimizer，loss使用的是softmax的交叉熵，正确率是统计one_hot中索引对应的位置相同的个数。</p>
+<p class="ziti3">代码9-25　rnnwordtest（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">80 # 定义loss与优化器
+81 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits
+(logits=pred, labels=wordy))
+82 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).
+minimize(loss)
+83 
+84 # 模型评估
+85 correct_pred = tf.equal(tf.argmax(pred,1), tf.argmax(size_input,1))
+86 accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">4．训练模型</span>
+</p>
+<p class="ziti3">在训练过程中同样添加保存检查点功能。在session中每次随机取一个偏移量，然后取后面4个文字向量当作输入，第5个文字向量当作标签用来计算loss。</p>
+<p class="ziti3">代码9-25　rnnwordtest（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">87 savedir = "log/rnnword/"
+88 saver = tf.train.Saver(max_to_keep=1)             # 生成saver
+89 
+90 # 启动session
+91 with tf.Session() as session:
+92     session.run(tf.global_variables_initializer())
+93     step = 0
+94     offset = random.randint(0,n_input+1)
+95     end_offset = n_input + 1
+96     acc_total = 0
+97     loss_total = 0
+98     
+99     kpt = tf.train.latest_checkpoint(savedir)
+100     print("kpt:",kpt)
+101     startepo= 0
+102     if kpt!=None:
+103         saver.restore(session, kpt) 
+104         ind = kpt.find("-")
+105         startepo = int(kpt[ind+1:])
+106         print(startepo)
+107         step = startepo
+108 
+109     while step &lt; training_iters:
+110 
+111         # 随机取一个位置偏移
+112         if offset &gt; (len(training_data)-end_offset):
+113             offset = random.randint(0, n_input+1)
+114        
+115         inwords = [ [wordlabel[ i]] for i in range(offset, offset+n_
+         input) ] # 按照指定的位置偏移获得后4个文字向量，当作输入
+116 
+117         inwords = np.reshape(np.array(inwords), [-1, n_input, 1])
+118 
+119         out_onehot= np.zeros([words_size], dtype=float)
+120         out_onehot[wordlabel[offset+n_input]] = 1.0
+121         out_onehot = np.reshape(out_onehot,[1,-1])#所有的字都变成onehot
+122 
+123         _, acc, lossval, onehot_pred = session.run([optimizer, accuracy, 
+        loss, pred],feed_dict={x: inwords, wordy: out_onehot})
+124         loss_total += lossval
+125         acc_total += acc
+126         if (step+1) % display_step == 0:
+127             print("Iter= " + str(step+1) + ", Average Loss= " + \
+128                   "{:.6f}".format(loss_total/display_step) + ", Average 
+                  Accuracy= " + \
+129                   "{:.2f}%".format(100*acc_total/display_step))
+130             acc_total = 0
+131             loss_total = 0
+132             in2 = [words [wordlabel[i]] for i in range(offset, offset + 
+            n_input)]
+133             out2 = words [wordlabel[offset + n_input]]
+134             out_pred=words[int(tf.argmax(onehot_pred, 1).eval())]
+135             print("%s - [%s] vs [%s]" % (in2,out2,out_pred)) 
+136             saver.save(session, savedir+"rnnwordtest.cpkt", global_
+            step=step)
+137         step += 1
+138         offset += (n_input+1) #调整下一次迭代使用的偏移量
+139         
+140     print("Finished!")
+141     saver.save(session, savedir+"rnnwordtest.cpkt", global_step=step)
+142     print("Elapsed time: ", elapsed(time.time() - start_time))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">由于检查点文件是建立在log/rnnword/目录下的，所以在运行程序之前需要先在代码文件的当前目录下依次建立log/rnnword/文件夹（有兴趣的读者可以改成自动创建）。</p>
+<p class="ziti3">运行代码，训练模型得到如下输出：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">……
+Type is unsupported, or the types of the items don't match field type in 
+CollectionDef.
+'dict' object has no attribute 'name'
+Iter= 9000, Average Loss=0.585445, Average Accuracy=79.10%
+['注','了','精','神'] - [的]vs[了]
+WARNING:tensorflow:Error encountered when serializing LAYER_NAME_UIDS.
+Type is unsupported, or the types of the items don't match field type in 
+CollectionDef.
+'dict' object has no attribute 'name'
+Iter= 10000, Average Loss= 0.409709, Average Accuracy= 85.60%
+['平','凡','、','再'] - [普]vs[普]
+WARNING:tensorflow:Error encountered when serializing LAYER_NAME_UIDS.
+Type is unsupported, or the types of the items don't match field type in 
+CollectionDef.
+'dict' object has no attribute 'name'
+Finished!
+WARNING:tensorflow:Error encountered when serializing LAYER_NAME_UIDS.
+Type is unsupported, or the types of the items don't match field type in 
+CollectionDef.
+'dict' object has no attribute 'name'
+Elapsed time:  1.3609554409980773 min</pre>
+<hr class="calibre6"/>
+<p class="ziti3">迭代10 000次的正确率达到了85%。达到了模型基本可用的状态。当然这只是个例子，读者可以尝试在模型中添加全连接及更多节点的LSTM或是更深层的LSTM来优化识别率，并且当学习的字数变多时，还会有更强大的拟合功能。</p>
+<p class="ziti4">
+<span class="yanse">5．运行模型生成句子</span>
+</p>
+<p class="ziti3">启用一个循环，等待输入文字，当收到输入的文本后，通过eval计算onehot_pred节点，并进行文字的转义，得到预测文字。接下来将预测文字再循环输入模型中，预测下一个文字。代码中设定循环32次，输出32个文字。</p>
+<p class="ziti3">代码9-25　rnnwordtest（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">143 while True:
+144         prompt = "请输入%s个字: " % n_input
+145         sentence = input(prompt)
+146         inputword = sentence.strip()
+147         
+148         if len(inputword) != n_input:
+149             print("您输入的字符长度为：",len(inputword),"请输入4个字")
+150             continue
+151         try:
+152             inputword = get_ch_lable_v(None,word_num_map,inputword)
+153            
+154             for i in range(32):
+155                 keys = np.reshape(np.array(inputword), [-1, n_input, 1])
+156                 onehot_pred = session.run(pred, feed_dict={x: keys})
+157                 onehot_pred_index = int(tf.argmax(onehot_pred, 1).eval())
+158                 sentence = "%s%s" % (sentence,words[onehot_predindex])
+159                 inputword = inputword[1:]
+160                 inputword.append(onehot_pred_index)
+161             print(sentence)
+162         except:
+163             print("该字我还没学会")</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，输出如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">请输入4个字: 生活平凡
+生活平凡，要坚持一种信念，默守一种精神，为自己积淀站立的信心，默守一种精</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在本例中，输入了“生活平凡”4个字，可以看到神经网络自动按照这个开头开始往下输出句子，看起来语句还算通顺。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

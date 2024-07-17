@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>数据科学入门</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<p id="filepos730881" class="calibre_15"><span class="calibre6"><span class="bold"> 23.9　索引 </span></span></p><p class="calibre_">为了找出包含特定值（比如名字是“Hero”）的行，NotQuiteABase 需要检查表的每一行。如果表有很多行，得花费很长时间。</p><p class="calibre_">同样，我们的 <tt class="calibre7">join</tt> 算法也极端低效。为了确认一个匹配，对左表的每一行，都需要检查右表的每一行。如果对象是两个大规模的表，这样的计算几乎没有结束的时候。</p><p class="calibre_">并且，你有时会需要对某些列加以约束。比如，在表 <tt class="calibre7">user</tt> 中，你很可能不希望两个不同的用户共用一个 <tt class="calibre7">user_id</tt> 。</p><p class="calibre_">索引可以解决以上问题。如果表 <tt class="calibre7">user_interests</tt> 有一个基于 <tt class="calibre7">user_id</tt> 的索引，那么使用一个智能的 <tt class="calibre7">join</tt> 算法就可以不用遍历全表而直接完成匹配。如果表 <tt class="calibre7">users</tt> 已有基于 <tt class="calibre7">user_id</tt> 的“唯一”索引，你再插入重复记录时会报错。</p><p class="calibre_">数据库中的每个表都有一个或多个索引，这让你可以通过关键词列快速查找行，可以有效并表，以及可以对行或者行集合施加唯一约束。</p><p class="calibre_">设计好、用好索引从某种程度上来讲更像魔术（还会因具体数据库的不同而情况各异），但如果你需要处理大量数据库工作，学习一下索引还是值得的。</p><div class="mbp_pagebreak" id="calibre_pb_167"></div>
+<div class="calibre5">本书由「<a href="https://epubw.com" class="calibre3">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="calibre3">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body></html>

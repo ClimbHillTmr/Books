@@ -1,0 +1,160 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">10.10　条件变分自编码</h3>
+<p class="ziti3">前面的变分自编码是为了本节条件变分自编码器做铺垫的，在实际中条件变分自编码的应用更广泛一些，下面来介绍条件变分自编码器。</p>
+<h4 class="p3">10.10.1　什么是条件变分自编码</h4>
+<p class="ziti3">变分自编码存在一个问题——虽然可以生成一个样本，但只能输出与输入图片相同类别的样本。虽然也可以随机从符合模型生成的高斯分布中取数据来还原成样本，但是这样的话我们并不知道生成的样本属于哪个类别。条件变分解码则可以解决这个问题，让网络按指定的类别生成样本。</p>
+<p class="ziti3">在变分自编码的基础上，再去理解条件变分自编码会很容易。主要的改动是，在训练、测试时加入一个one-hot向量，用于表示标签向量。其实，就是给变分自编码网络加入了一个条件，让网络学习图片分布时加入了标签因素，这样可以按照标签的数值生成指定的图片。</p>
+<h4 class="p3">10.10.2　实例83：使用标签指导变分自编码网络生成MNIST数据</h4>
+<p class="ziti3">了解完原理，再来介绍下具体做法。在编码阶段需要在输入端添加标签对应的特征，在解码阶段同样也需要将标签加入输入，这样，再解码的结果向原始的输入样本不断逼近，最终得到的模型将会把输入的标签特征当成MNIST数据的一部分，从而实现通过标签生成MNIST数据。</p>
+<p class="ziti3">在输入端添加标签时，一般是通过一个全连接层的变换将得到的结果使用contact函数连接到原始输入的地方，在解码阶段也将标签作为样本输入，与高斯分布的随机值一并运算，生成模拟样本。条件变为自编码结构如图10-21所示。</p>
+<div class="pic"><img alt="" src="Image00221.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-21　条件变分自编码结构</p>
+<p class="ziti3">具体代码步骤如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">使用条件变分自编码模型，通过指定标签输入生成对应类别的MNIST模拟数据。</p>
+<p class="ziti4">
+<span class="yanse">1．添加标签占位符</span>
+</p>
+<p class="ziti3">在“10-8变分自编码.py”代码基础上修改，添加占位符y。</p>
+<p class="ziti3">代码10-9　条件变分自编码</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 ……
+02 y = tf.placeholder(tf.float32, [None, n_labels])
+03 ……</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．添加输入全连接权重</span>
+</p>
+<p class="ziti3">添加全连接层的权重'wlab1'与'blab1'，作为输入标签的特征转换。这里输入的标签也转换成256个输出，因为最终要连接到原始的图片全连接输出，所以到第二层全连接时，输入就变成了256×2，因此也需要将mean_w1和log_sigma_w1的输入修改成n_hidden_1×2。</p>
+<p class="ziti3">代码10-9　条件变分自编码（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">04 weights = {
+05 
+06     'w1': tf.Variable(tf.truncated_normal([n_input, n_hidden_1],
+07                                    stddev=0.001)),
+08     'b1': tf.Variable(tf.zeros([n_hidden_1])),
+09 
+10     'wlab1': tf.Variable(tf.truncated_normal([n_labels, n_hidden_1],
+11                                    stddev=0.001)),
+12     'blab1': tf.Variable(tf.zeros([n_hidden_1])),
+13     'mean_w1': tf.Variable(tf.truncated_normal([n_hidden_1*2, n_
+    hidden_2],
+14                                    stddev=0.001)),
+15     'log_sigma_w1': tf.Variable(tf.truncated_normal([n_hidden_1*2, n_
+    hidden_2],
+16                                    stddev=0.001)),   
+17     'w2': tf.Variable(tf.truncated_normal([n_hidden_2+n_labels, n_
+    hidden_1],
+18                                    stddev=0.001)), 
+19 ……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">同样，对于生成的z也要与label连接后输入加码器，所以w2的输入维度需要被改成n_hidden_2+n_labels。</p>
+<p class="ziti4">
+<span class="yanse">3．修改模型，将标签输出接入编码</span>
+</p>
+<p class="ziti3">定义新节点hlab1为输入标签的输出，接着使用concat函数将它与原来的h1合并到一起，变成hall1。此时，hall1的shape为[batch_size，n_hidden_1×2]。接着，将合成好的hall1代替原来的h1输入z_mean与z_log_sigma_sq中。</p>
+<p class="ziti3">代码10-9　条件变分自编码（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">20 h1=tf.nn.relu(tf.add(tf.matmul(x, weights['w1']), weights['b1']))
+21 
+22 hlab1=tf.nn.relu(tf.add(tf.matmul(y, weights['wlab1']), weights
+['blab1']))
+23 
+24 hall1= tf.concat([h1,hlab1],1)#256*2
+25 
+26 z_mean = tf.add(tf.matmul(hall1, weights['mean_w1']), weights
+['mean_b1'])
+27 z_log_sigma_sq = tf.add(tf.matmul(hall1, weights['log_sigma_w1']), 
+weights['log_sigma_b1'])</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">4．修改模型将标签接入解码</span>
+</p>
+<p class="ziti3">这一步里中间的z不用变化，在z之后同样连接上y的特征，一起输入到解码器中。这里需要同时修改reconstruction和reconstructionout节点，一个用来训练，一个用来生成。</p>
+<p class="ziti3">代码10-9　条件变分自编码（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">28 ……
+29 zall=tf.concat([z,y],1)
+30 h2=tf.nn.relu( tf.matmul(zall, weights['w2'])+ weights['b2'])
+31 reconstruction = tf.matmul(h2, weights['w3'])+ weights['b3']
+32 
+33 zinputall = tf.concat([zinput,y],1)
+34 h2out=tf.nn.relu( tf.matmul(zinputall, weights['w2'])+ weights['b2'])
+35 reconstructionout = tf.matmul(h2out, weights['w3'])+ weights['b3']</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">5．修改session中的feed部分</span>
+</p>
+<p class="ziti3">优化器不用变化，直接修改session的feed部分即可，在feed中加入标签占位符及对应的数据。</p>
+<p class="ziti3">代码10-9　条件变分自编码（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">36 with tf.Session() as sess:
+37     sess.run(tf.global_variables_initializer())
+38     
+39     for epoch in range(training_epochs):
+40         avg_cost = 0.
+41         total_batch = int(mnist.train.num_examples/batch_size)
+42 
+43         # 遍历全部数据集
+44         for i in range(total_batch):
+45             batch_xs, batch_ys = mnist.train.next_batch(batch_size)#取数据
+46             
+47             # 输入数据，运行优化器
+48             _,c = sess.run([optimizer,cost], feed_dict={x: batch_xs,
+            y:batch_ys})
+49             
+50         # 显示训练中的详细信息
+51         if epoch % display_step == 0:
+52             print("Epoch:", '%04d' % (epoch + 1), "cost=", "{:.9f}".
+            format(c))
+53 
+54     print("完成!")
+55     
+56     # 测试
+57     print ("Result:", cost.eval({x: mnist.test.images,y:mnist.
+    test.labels}))</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">6．运行模型生成模拟数据</span>
+</p>
+<p class="ziti3">这一步是最有意思的部分了。随意生成一个高斯分布随机数，并通过指定的one_hot输入标签，就可以命令模型生成指定的MNIST图片数据了。</p>
+<p class="ziti3">代码10-9　条件变分自编码（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">58 ……
+59     # 根据label模拟生产图片可视化结果
+60     show_num = 10
+61     z_sample = np.random.randn(10,2)
+62     
+63     pred = sess.run(
+64         reconstructionout, feed_dict={zinput:z_sample,y: mnist.test.
+        labels[:show_num]})
+65 
+66     f, a = plt.subplots(2, 10, figsize=(10, 2))
+67     for i in range(show_num):
+68         a[0][i].imshow(np.reshape(mnist.test.images[i], (28, 28)))
+69         a[1][i].imshow(np.reshape(pred[i], (28, 28)))
+70     plt.draw()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面代码取了10个测试样本数据，将样本数据的label随高斯分布值z_sample一起生成了模拟的MNIST数据。运行代码，生成如图10-22和图10-23所示的数据。</p>
+<div class="pic"><img alt="" src="Image00222.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-22　根据原数据生成模拟数据</p>
+<div class="pic"><img alt="" src="Image00223.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-23　根据标签生成模拟数据</p>
+<p class="ziti3">图10-22为根据原始图片生成的自编码数据，第一行为原始数据，第二行为自编码数据。</p>
+<p class="ziti3">图10-23为根据label生成的模拟数据，第一行为label对应的原始数据，第二行为解码器生成的模拟数据。</p>
+<p class="ziti3">比较两幅图片可以看出，使用原图生成的自编码数据还会带有一些原来的样子，而以标签生成的解码数据，已经彻底地学会了数据的分布，并生成截然不同却带有相同意义的数据。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

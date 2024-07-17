@@ -1,0 +1,107 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_129" class="calibre8">5.5　激活函数层的实现</h2>
+<p class="calibre1">现在，我们将计算图的思路应用到神经网络中。这里，我们把构成神经网络的层实现为一个类。先来实现激活函数的 <code class="calibre15">ReLU</code> 层和 <code class="calibre15">Sigmoid</code> 层。</p>
+<h3 id="nav_point_130" class="calibre17">5.5.1　ReLU层</h3>
+<p class="calibre1">激活函数 ReLU（Rectified Linear Unit）由下式（5.7）表示。</p>
+<p class="tu"><img src="../images/00188.jpeg" alt="" width="60%" class="calibre29"/></p>
+<p class="calibre1">通过式（5.7），可以求出 <em class="calibre7">y</em> 关于 <em class="calibre7">x</em> 的导数，如式（5.8）所示。</p>
+<p class="tu"><img src="../images/00189.jpeg" alt="" width="60%" class="calibre29"/></p>
+<p class="calibre1">在式（5.8）中，如果正向传播时的输入 <em class="calibre7">x</em> 大于 0，则反向传播会将上游的值原封不动地传给下游。反过来，如果正向传播时的 <em class="calibre7">x</em> 小于等于 0，则反向传播中传给下游的信号将停在此处。用计算图表示的话，如图 5-18 所示。</p>
+<p class="calibre1">现在我们来实现 <code class="calibre15">ReLU</code> 层。在神经网络的层的实现中，一般假定 <code class="calibre15">forward()</code> 和 <code class="calibre15">backward()</code> 的参数是 <code class="calibre15">NumPy</code> 数组。另外，实现 <code class="calibre15">ReLU</code> 层的源代码在 <code class="calibre15">common/layers.py</code> 中。</p>
+<p class="tu"><img src="../images/00190.jpeg" alt="" width="95%" class="calibre21"/></p>
+<p class="calibre1"><strong class="calibre2">图 5-18　ReLU 层的计算图</strong></p>
+<pre class="calibre18"><code class="calibre20">class Relu:
+    def __init__(self):
+        self.mask = None
+
+    def forward(self, x):
+        self.mask = (x &lt;= 0)
+        out = x.copy()
+        out[self.mask] = 0
+
+        return out
+
+    def backward(self, dout):
+        dout[self.mask] = 0
+        dx = dout
+
+        return dx
+
+</code></pre>
+<p class="calibre1"><code class="calibre15">Relu</code> 类有实例变量 <code class="calibre15">mask</code>。这个变量 <code class="calibre15">mask</code> 是由 <code class="calibre15">True/False</code> 构成的 NumPy 数组，它会把正向传播时的输入 <code class="calibre15">x</code> 的元素中小于等于 0 的地方保存为 <code class="calibre15">True</code>，其他地方（大于 0 的元素）保存为 <code class="calibre15">False</code>。如下例所示，<code class="calibre15">mask</code> 变量保存了由 <code class="calibre15">True/False</code> 构成的 NumPy 数组。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">x = np.array( [[1.0, -0.5], [-2.0, 3.0]] )</b>
+&gt;&gt;&gt; <b class="calibre19">print(x)</b>
+[[ 1.  -0.5]
+ [-2.   3. ]]
+&gt;&gt;&gt; <b class="calibre19">mask = (x &lt;= 0)</b>
+&gt;&gt;&gt; <b class="calibre19">print(mask)</b>
+[[False  True]
+ [ True False]]
+</pre>
+
+<p class="calibre1">如图 5-18 所示，如果正向传播时的输入值小于等于 0，则反向传播的值为 0。因此，反向传播中会使用正向传播时保存的 <code class="calibre15">mask</code>，将从上游传来的 <code class="calibre15">dout</code> 的 <code class="calibre15">mask</code> 中的元素为 <code class="calibre15">True</code> 的地方设为 0。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00001.jpeg" alt="" width="5%" class="calibre11"/>　ReLU 层的作用就像电路中的开关一样。正向传播时，有电流通过的话，就将开关设为 ON；没有电流通过的话，就将开关设为 OFF。反向传播时，开关为 ON 的话，电流会直接通过；开关为 OFF 的话，则不会有电流通过。</p>
+</blockquote>
+<h3 id="nav_point_131" class="calibre17">5.5.2　Sigmoid 层</h3>
+<p class="calibre1">接下来，我们来实现 sigmoid 函数。sigmoid 函数由式（5.9）表示。</p>
+<p class="tu"><img src="../images/00191.gif" alt="y=\frac{1}{1+\exp(-x)}\quad\quad\quad\quad\quad(5.9)" class="calibre24"/></p>
+<p class="calibre1">用计算图表示式（5.9）的话，则如图 5-19 所示。</p>
+<p class="tu"><img src="../images/00192.jpeg" alt="" width="95%" class="calibre21"/></p>
+<p class="calibre1"><strong class="calibre2">图 5-19　sigmoid 层的计算图（仅正向传播）</strong></p>
+<p class="calibre1">图 5-19 中，除了“×”和“+”节点外，还出现了新的“exp”和“/”节点。“exp”节点会进行 <em class="calibre7">y</em> = exp(<em class="calibre7">x</em>) 的计算，“/”节点会进行 <img src="../images/00193.gif" alt="y=\frac{1}{x}" class="calibre24"/> 的计算。</p>
+<p class="calibre1">如图 5-19 所示，式（5.9）的计算由局部计算的传播构成。下面我们就来进行图 5-19 的计算图的反向传播。这里，作为总结，我们来依次看一下反向传播的流程。</p>
+<p class="calibre1"><strong class="calibre2">步骤 1</strong></p>
+<p class="calibre1">“/”节点表示 <img src="../images/00193.gif" alt="y=\frac{1}{x}" class="calibre24"/>，它的导数可以解析性地表示为下式。</p>
+<p class="tu"><img src="../images/00194.gif" alt="\begin{aligned}\frac{\partial y}{\partial x}&amp;=-\frac{1}{x^2}\\&amp;=-y^2\end{aligned}\quad\quad\quad\quad\quad(5.10)" class="calibre24"/></p>
+<p class="calibre1">根据式（5.10），反向传播时，会将上游的值乘以 <img src="../images/00195.gif" alt="-y^2" class="calibre24"/>（正向传播的输出的平方乘以 -1 后的值）后，再传给下游。计算图如下所示。</p>
+<p class="tu"><img src="../images/00196.jpeg" alt="" width="95%" class="calibre21"/></p>
+<p class="calibre1"><strong class="calibre2">步骤 2</strong></p>
+<p class="calibre1">“+”节点将上游的值原封不动地传给下游。计算图如下所示。</p>
+<p class="tu"><img src="../images/00197.jpeg" alt="" width="95%" class="calibre21"/></p>
+<p class="calibre1"><strong class="calibre2">步骤 3</strong></p>
+<p class="calibre1">“exp”节点表示 <em class="calibre7">y</em> = exp(<em class="calibre7">x</em>)，它的导数由下式表示。</p>
+<p class="tu"><img src="../images/00198.gif" alt="\frac{\partial y}{\partial x}=\exp(x)\quad\quad\quad\quad\quad(5.11)" class="calibre24"/></p>
+<p class="calibre1">计算图中，上游的值乘以正向传播时的输出（这个例子中是 exp(-<em class="calibre7">x</em>)）后，再传给下游。</p>
+<p class="tu"><img src="../images/00199.jpeg" alt="" width="95%" class="calibre21"/></p>
+<p class="calibre1"><strong class="calibre2">步骤 4</strong></p>
+<p class="calibre1">“×”节点将正向传播时的值翻转后做乘法运算。因此，这里要乘以 -1。</p>
+<p class="tu"><img src="../images/00200.jpeg" alt="" width="95%" class="calibre21"/></p>
+<p class="calibre1"><strong class="calibre2">图 5-20　Sigmoid 层的计算图</strong></p>
+<p class="calibre1">根据上述内容，图 5-20 的计算图可以进行 Sigmoid 层的反向传播。从图 5-20 的结果可知，反向传播的输出为 <img src="../images/00201.gif" alt="\frac{\partial L}{\partial y}y^2\exp(-x)" class="calibre24"/>，这个值会传播给下游的节点。这里要注意，<img src="../images/00201.gif" alt="\frac{\partial L}{\partial y}y^2\exp(-x)" class="calibre24"/> 这个值只根据正向传播时的输入 <em class="calibre7">x</em> 和输出 <em class="calibre7">y</em> 就可以算出来。因此，图 5-20 的计算图可以画成图 5-21 的集约化的“sigmoid”节点。</p>
+<p class="tu"><img src="../images/00202.jpeg" alt="" width="85%" class="calibre22"/></p>
+<p class="calibre1"><strong class="calibre2">图 5-21　Sigmoid 层的计算图（简洁版）</strong></p>
+<p class="calibre1">图 5-20 的计算图和简洁版的图 5-21 的计算图的计算结果是相同的，但是，简洁版的计算图可以省略反向传播中的计算过程，因此计算效率更高。此外，通过对节点进行集约化，可以不用在意 Sigmoid 层中琐碎的细节，而只需要专注它的输入和输出，这一点也很重要。</p>
+<p class="calibre1">另外，<img src="../images/00201.gif" alt="\frac{\partial L}{\partial y}y^2\exp(-x)" class="calibre24"/> 可以进一步整理如下。</p>
+<p class="tu"><img src="../images/00203.gif" alt="\begin{aligned}\frac{\partial L}{\partial y}y^2\exp(-x)&amp;=\frac{\partial L}{\partial y}\frac{1}{(1+\exp(-x))^2}\exp(-x)\\&amp;=\frac{\partial L}{\partial y}\frac{1}{1+\exp(-x)}\frac{\exp(-x)}{1+\exp(-x)}\\&amp;=\frac{\partial L}{\partial y}y(1-y)\end{aligned}\quad\quad\quad\quad\quad(5.12)" class="calibre24"/></p>
+<p class="calibre1">因此，图 5-21 所表示的 Sigmoid 层的反向传播，只根据正向传播的输出就能计算出来。</p>
+<p class="tu"><img src="../images/00204.jpeg" alt="" width="85%" class="calibre22"/></p>
+<p class="calibre1"><strong class="calibre2">图 5-22　Sigmoid 层的计算图：可以根据正向传播的输出 <img src="../images/00205.gif" alt="\boldsymbol{y}" class="calibre24"/> 计算反向传播</strong></p>
+<p class="calibre1">现在，我们用 Python 实现 Sigmoid 层。参考图 5-22，可以像下面这样实现（实现的代码在 <code class="calibre15">common/layers.py</code> 中）。</p>
+<pre class="calibre18"><code class="calibre20">class Sigmoid:
+    def __init__(self):
+        self.out = None
+
+    def forward(self, x):
+        out = 1 / (1 + np.exp(-x))
+        self.out = out
+
+        return out
+
+    def backward(self, dout):
+        dx = dout * (1.0 - self.out) * self.out
+
+        return dx
+
+</code></pre>
+<p class="calibre1">这个实现中，正向传播时将输出保存在了实例变量 <code class="calibre15">out</code> 中。然后，反向传播时，使用该变量 <code class="calibre15">out</code> 进行计算。</p>
+</body></html>

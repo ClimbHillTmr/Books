@@ -1,0 +1,148 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">6.5　softmax算法与损失函数的综合应用</h3>
+<p class="ziti3">在神经网络中使用softmax计算loss时对于初学者常常会犯很多错误，下面通过具体的实例代码来演示需要注意的关键地方与具体的用法。</p>
+<h4 class="p3">6.5.1　实例22：交叉熵实验</h4>
+<p class="ziti3">交叉熵这个比较生僻的术语，在深度学习领域中却是最常见的。由于其常用性，在TensorFlow中会被封装成多个版本，有的公式里直接带了交叉熵，有的需要自己单独求出，而在构建模型时，如果读者对这块知识不扎实，出现问题时会很难分析是模型的问题还是交叉熵的使用问题。因此这里有必要通过几个小实例将其弄得更明白一些。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">下面一段代码，假设有一个标签labels和一个网络输出值logits。</p>
+<p class="ziti3">这个实例就是以这两个值来进行以下3次实验。</p>
+<p class="ziti3">（1）两次softmax实验：将输出值logits分别进行1次和2次softmax，观察两次的区别及意义。</p>
+<p class="ziti3">（2）观察交叉熵：将步骤（1）中的两个值分别进行softmax_cross_entropy_with_logits，观察它们的区别。</p>
+<p class="ziti3">（3）自建公式实验：将做两次softmax的值放到自建组合的公式里得到正确的值。</p>
+<p class="ziti3">代码6-1　softmax应用</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import tensorflow as tf
+02 
+03 labels = [[0,0,1],[0,1,0]]
+04 logits = [[2,  0.5,6],
+05           [0.1,0,  3]]
+06 logits_scaled = tf.nn.softmax(logits)
+07 logits_scaled2 = tf.nn.softmax(logits_scaled)
+08 
+09 result1 = tf.nn.softmax_cross_entropy_with_logits(labels=labels,
+  logits=logits)
+10 result2 = tf.nn.softmax_cross_entropy_with_logits(labels=labels,
+   logits=logits_scaled)
+11 result3 = -tf.reduce_sum(labels*tf.log(logits_scaled),1)
+12 
+13 with tf.Session() as sess:
+14     print ("scaled=",sess.run(logits_scaled))    
+15     print ("scaled2=",sess.run(logits_scaled2))
+#经过第二次的softmax后，分布概率会有变化
+16         
+17     print ("rel1=",sess.run(result1),"\n") #正确的方式
+18     print ("rel2=",sess.run(result2),"\n")
+#如果将softmax变换完的值放进去会，就相当于算第二次softmax的loss，所以会出错
+19     print ("rel3=",sess.run(result3)) </pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行上面代码，输出结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">scaled= [[ 0.01791432  0.00399722  0.97808844]
+ [ 0.04980332  0.04506391  0.90513283]]
+scaled2= [[ 0.21747023  0.21446465  0.56806517]
+ [ 0.2300214   0.22893383  0.54104471]]
+rel1= [ 0.02215516  3.09967351] 
+rel2= [ 0.56551915  1.47432232] 
+rel3= [ 0.02215518  3.09967351]</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到：logits里面的值原本加和都是大于1的，但是经过softmax之后，总和变成了1。样本中第一个是跟标签分类相符的，第二与标签分类不符，所以第一个的交叉熵比较小，是0.02215516，而第二个比较大，是3.09967351。</p>
+<p class="ziti3">下面开始验证下前面所说的实验：</p>
+<p class="ziti4">·比较scaled和scaled2可以看到：经过第二次的softmax后，分布概率会有变化，而scaled才是我们真实转化的softmax值。</p>
+<p class="ziti4">·比较rel1和rel2可以看到：传入softmax_cross_entropy_with_logits的logits是不需要进行softmax的。如果将softmax后的值scaled传入softmax_cross_entropy_with_ logits就相当于进行了两次的softmax转换。</p>
+<p class="ziti3">对于已经用softmax转换过的scaled，在计算loss时就不能在用TensorFlow里面的softmax_cross_entropy_with_logits了。读者可以自己写一个loss函数，参见rel3的生成，通过自己组合的函数实现了softmax_cross_entropy_with_logits一样的结果。</p>
+<h4 class="p3">6.5.2　实例23：one_hot实验</h4>
+<p class="ziti3">输入的标签也可以不是标准的one-hot。下面用一组总和也是1但是数组中每个值都不等于0或1的数组来代替标签，看看效果。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">对非one-hot编码为标签的数据进行交叉熵的计算，比较其与one-hot编码的交叉熵之间的差别。</p>
+<p class="ziti3">接上述代码，将标签换为[[0.4，0.1，0.5]，[0.3，0.6，0.1]]与原始的[[0，0，1]，[0，1，0]]代表的分类意义等价，将这个标签代入交叉熵。</p>
+<p class="ziti3">代码6-1　softmax应用（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">20 #标签总概率为1
+21 labels = [[0.4,0.1,0.5],[0.3,0.6,0.1]]
+22 result4 = tf.nn.softmax_cross_entropy_with_logits(labels=labels, 
+logits=logits)
+23 with tf.Session() as sess:
+24     print ("rel4=",sess.run(result4),"\n")</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行上面的代码，生成结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">rel4= [ 2.17215538  2.76967359]</pre>
+<hr class="calibre6"/>
+<p class="ziti3">比较前面的rel1发现，对于正确分类的交叉熵和错误分类的交叉熵，二者的结果差别没有标准one-hot那么明显。</p>
+<h4 class="p3">6.5.3　实例24：sparse交叉熵的使用</h4>
+<p class="ziti3">下面再举个例子看一下sparse_softmax_cross_entropy_with_logits函数的用法，它需要使用非one-hot的标签，所以，要把前面的标签换成具体数值[2，1]，具体代码如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">使用sparse_softmax_cross_entropy_with_logits函数，对非one-hot的标签进行交叉熵计算，比较其与one-hot标签在使用上的区别。</p>
+<p class="ziti3">代码6-1　softmax应用（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">25 #sparse 标签
+26 labels = [2,1] #表明labels中总共分为3个类： 0 、1、 2。[2,1]等价于onehot
+编码中的001与010
+27 result5 = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels,
+logits=logits)
+28 with tf.Session() as sess:
+29     print ("rel5=",sess.run(result5),"\n")</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，生成结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">rel5= [ 0.02215516  3.09967351]<br class="calibre3"/>
+</pre>
+<hr class="calibre6"/>
+<p class="ziti3">发现rel5与前面的rel1结果完全一样。</p>
+<h4 class="p3">6.5.4　实例25：计算loss值</h4>
+<p class="ziti3">在真正的神经网络中，得到代码6-1中的一个数组并不能满足要求，还需要对其求均值，使其最终变成一个具体的数值。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">演示通过分别对前面交叉熵结果result1与softmax后的结果logits_scaled计算loss，验证如下结论：</p>
+<p class="ziti3">（1）对于softmax_cross_entropy_with_logits后的结果求loss直接取均值。</p>
+<p class="ziti3">（2）对于softmax后的结果使用-tf.reduce_sum（labels * tf.log（logits_scaled））求loss。</p>
+<p class="ziti3">（3）对于softmax后的结果使用-tf.reduce_sum（labels*tf.log（logits_scaled），1）等同于softmax_cross_entropy_with_logits结果。</p>
+<p class="ziti3">（4）由（1）和（3）可以推出对（3）进行求均值也可以得出正确的loss值，合并起来的公式为：tf.reduce_sum（-tf.reduce_sum（labels*tf.log（logits_scaled），1））=loss（该结论是由前面的验证推导出来，有兴趣的读者可以自行验证）</p>
+<p class="ziti3">代码6-1　softmax应用（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">30 loss=tf.reduce_sum(result1)
+31      with tf.Session() as sess:
+32          print ("loss=",sess.run(loss))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行上面的代码，生成结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">loss= 3.12183</pre>
+<hr class="calibre6"/>
+<p class="ziti3">这便是我们最终要得到的损失值了。</p>
+<p class="ziti3">而对于rel3这种已经求得softmax的情况求loss，可以把公式进一步简化成：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">loss2 = -tf.reduce_sum(labels * tf.log(logits_scaled))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">接着添加示例代码。</p>
+<p class="ziti3">代码6-1　softmax应用（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">33 labels = [[0,0,1],[0,1,0]]    
+34 loss2 = -tf.reduce_sum(labels * tf.log(logits_scaled))
+35 with tf.Session() as sess:
+36     print ("loss2=",sess.run(loss2))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行上面代码，输出结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">loss2= 3.12183</pre>
+<hr class="calibre6"/>
+<p class="ziti3">与loss的值完全吻合。</p>
+<h4 class="p3">6.5.5　练习题</h4>
+<p class="ziti3">试着将上一章的代码（5-2minist分类.py）改成使用sparse_softmax_cross_entropy_with_ logits函数来运算交叉熵。</p>
+<p class="ziti3">答案请参考本书源代码中的代码“6-2 sparesoftmaxwithminist.py”。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">5.2　分析图片的特点，定义变量</h3>
+<p class="ziti3">由于输入图片是个550000×784的矩阵，所以先创建一个[None，784]的占位符x和一个[None，10]的占位符y，然后使用feed机制将图片和标签输入进去。具体代码如下。</p>
+<p class="ziti3">代码5-2　MNIST分类</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import tensorflow as tf  # 导入tensorflow库
+02 from tensorflow.examples.tutorials.mnist import input_data
+03 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
+04 import pylab
+05 
+06 tf.reset_default_graph()
+07 # 定义占位符
+08 x = tf.placeholder(tf.float32, [None, 784]) # MNIST数据集的维度是
+  28×28=784
+09 y = tf.placeholder(tf.float32, [None, 10])  # 数字0～9 ，共10个类别</pre>
+<hr class="calibre6"/>
+<p class="ziti3">代码中第8行的None，表示此张量的第一个维度可以是任何长度的。x就代表能够输入任意数量的MNIST图像，每一张图展平成784维的向量。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_136" class="calibre8">5.7　误差反向传播法的实现</h2>
+<p class="calibre1">通过像组装乐高积木一样组装上一节中实现的层，可以构建神经网络。本节我们将通过组装已经实现的层来构建神经网络。</p>
+<h3 id="nav_point_137" class="calibre17">5.7.1　神经网络学习的全貌图</h3>
+<p class="calibre1">在进行具体的实现之前，我们再来确认一下神经网络学习的全貌图。神经网络学习的步骤如下所示。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><strong class="calibre2">前提</strong></p>
+<p class="calibre1">神经网络中有合适的权重和偏置，调整权重和偏置以便拟合训练数据的过程称为学习。神经网络的学习分为下面 4 个步骤。</p>
+<p class="calibre1"><strong class="calibre2">步骤 1（mini-batch</strong>）</p>
+<p class="calibre1">从训练数据中随机选择一部分数据。</p>
+<p class="calibre1"><strong class="calibre2">步骤 2（计算梯度）</strong></p>
+<p class="calibre1">计算损失函数关于各个权重参数的梯度。</p>
+<p class="calibre1"><strong class="calibre2">步骤 3（更新参数）</strong></p>
+<p class="calibre1">将权重参数沿梯度方向进行微小的更新。</p>
+<p class="calibre1"><strong class="calibre2">步骤 4（重复）</strong></p>
+<p class="calibre1">重复步骤 1、步骤 2、步骤 3。</p>
+</blockquote>
+<p class="calibre1">之前介绍的误差反向传播法会在步骤 2 中出现。上一章中，我们利用数值微分求得了这个梯度。数值微分虽然实现简单，但是计算要耗费较多的时间。和需要花费较多时间的数值微分不同，误差反向传播法可以快速高效地计算梯度。</p>
+<h3 id="nav_point_138" class="calibre17">5.7.2　对应误差反向传播法的神经网络的实现</h3>
+<p class="calibre1">现在来进行神经网络的实现。这里我们要把2层神经网络实现为<code class="calibre15">TwoLayerNet</code>。首先，将这个类的实例变量和方法整理成表 5-1 和表 5-2。</p>
+<p class="calibre1"><strong class="calibre2">表 5-1 TwoLayerNet类的实例变量</strong></p>
+<table width="90%" border="1" class="calibre36">
+<thead class="calibre37">
+<tr class="calibre38">
+<th class="calibre39"><p class="calibre40">实例变量</p></th>
+<th class="calibre39"><p class="calibre40">说明</p></th>
+</tr>
+</thead>
+<tbody class="calibre41">
+<tr class="calibre38">
+<td class="calibre42"><p class="calibre40"><code class="calibre43">params</code></p></td>
+<td class="calibre42"><p class="calibre40">保存神经网络的参数的字典型变量。<br class="calibre44" id="calibre_pb_72"/>
+</p></td>
+</tr>
+</tbody>
+</table>
+</body></html>

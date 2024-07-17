@@ -1,0 +1,90 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_48" class="calibre8">2.3　感知机的实现</h2>
+<h3 id="nav_point_49" class="calibre17">2.3.1　简单的实现</h3>
+<p class="calibre1">现在，我们用 Python 来实现刚才的逻辑电路。这里，先定义一个接收参数 <code class="calibre15">x1</code> 和 <code class="calibre15">x2</code> 的 <code class="calibre15">AND</code> 函数。</p>
+<pre class="calibre18"><code class="calibre20">def AND(x1, x2):
+    w1, w2, theta = 0.5, 0.5, 0.7
+    tmp = x1*w1 + x2*w2
+    if tmp &lt;= theta:
+        return 0
+    elif tmp &gt; theta:
+        return 1
+
+</code></pre>
+<p class="calibre1">在函数内初始化参数 <code class="calibre15">w1</code>、<code class="calibre15">w2</code>、<code class="calibre15">theta</code>，当输入的加权总和超过阈值时返回 <code class="calibre15">1</code>，否则返回 <code class="calibre15">0</code>。我们来确认一下输出结果是否如图 2-2 所示。</p>
+<pre class="calibre18"><code class="calibre20">AND(0, 0) # 输出0
+AND(1, 0) # 输出0
+AND(0, 1) # 输出0
+AND(1, 1) # 输出1
+
+</code></pre>
+<p class="calibre1">果然和我们预想的输出一样！这样我们就实现了与门。按照同样的步骤，也可以实现与非门和或门，不过让我们来对它们的实现稍作修改。</p>
+<h3 id="nav_point_50" class="calibre17">2.3.2　导入权重和偏置</h3>
+<p class="calibre1">刚才的与门的实现比较直接、容易理解，但是考虑到以后的事情，我们将其修改为另外一种实现形式。在此之前，首先把式（2.1）的 <em class="calibre7">θ</em> 换成 -<em class="calibre7">b</em>，于是就可以用式（2.2）来表示感知机的行为。</p>
+<p class="tu"><img src="../images/00022.jpeg" alt="" width="65%" class="calibre26"/></p>
+<p class="calibre1">式（2.1）和式（2.2）虽然有一个符号不同，但表达的内容是完全相同的。此处，<em class="calibre7">b</em> 称为<strong class="calibre2">偏置</strong>，<img src="../images/00010.gif" alt="w_1" class="calibre24"/> 和 <img src="../images/00011.gif" alt="w_2" class="calibre24"/> 称为<strong class="calibre2">权重</strong>。如式（2.2）所示，感知机会计算输入信号和权重的乘积，然后加上偏置，如果这个值大于 0 则输出 1，否则输出 0。下面，我们使用 NumPy，按式（2.2）的方式实现感知机。在这个过程中，我们用 Python 的解释器逐一确认结果。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">import numpy as np</b>
+&gt;&gt;&gt; <b class="calibre19">x = np.array([0, 1])</b>     # 输入
+&gt;&gt;&gt; <b class="calibre19">w = np.array([0.5, 0.5])</b> # 权重
+&gt;&gt;&gt; <b class="calibre19">b = -0.7</b>                 # 偏置
+&gt;&gt;&gt; <b class="calibre19">w*x</b>
+array([ 0. , 0.5])
+&gt;&gt;&gt; <b class="calibre19">np.sum(w*x)</b>
+0.5
+&gt;&gt;&gt; <b class="calibre19">np.sum(w*x) + b</b>
+-0.19999999999999996   # 大约为-0.2（由浮点小数造成的运算误差）
+</pre>
+
+<p class="calibre1">如上例所示，在 NumPy 数组的乘法运算中，当两个数组的元素个数相同时，各个元素分别相乘，因此 <code class="calibre15">w*x</code> 的结果就是它们的各个元素分别相乘（<code class="calibre15">[0, 1] * [0.5, 0.5] =&gt; [0, 0.5]</code>）。之后，<code class="calibre15">np.sum(w*x)</code> 再计算相乘后的各个元素的总和。最后再把偏置加到这个加权总和上，就完成了式（2.2）的计算。</p>
+<h3 id="nav_point_51" class="calibre17">2.3.3　使用权重和偏置的实现</h3>
+<p class="calibre1">使用权重和偏置，可以像下面这样实现与门。</p>
+<pre class="calibre18"><code class="calibre20">def AND(x1, x2):
+    x = np.array([x1, x2])
+    w = np.array([0.5, 0.5])
+    b = -0.7
+    tmp = np.sum(w*x) + b
+    if tmp &lt;= 0:
+       return 0
+    else:
+       return 1
+
+</code></pre>
+<p class="calibre1">这里把 -<em class="calibre7">θ</em> 命名为偏置 <em class="calibre7">b</em>，但是请注意，偏置和权重 <img src="../images/00010.gif" alt="w_1" class="calibre24"/>、<img src="../images/00011.gif" alt="w_2" class="calibre24"/> 的作用是不一样的。具体地说，<img src="../images/00010.gif" alt="w_1" class="calibre24"/> 和 <img src="../images/00011.gif" alt="w_2" class="calibre24"/> 是控制输入信号的重要性的参数，而偏置是调整神经元被激活的容易程度（输出信号为 1 的程度）的参数。比如，若 <em class="calibre7">b</em> 为 -0.1，则只要输入信号的加权总和超过 0.1，神经元就会被激活。但是如果 <em class="calibre7">b</em> 为 -20.0，则输入信号的加权总和必须超过 20.0，神经元才会被激活。像这样，偏置的值决定了神经元被激活的容易程度。另外，这里我们将 <img src="../images/00010.gif" alt="w_1" class="calibre24"/> 和 <img src="../images/00011.gif" alt="w_2" class="calibre24"/> 称为权重，将 <em class="calibre7">b</em> 称为偏置，但是根据上下文，有时也会将 <em class="calibre7">b</em>、<img src="../images/00010.gif" alt="w_1" class="calibre24"/>、<img src="../images/00011.gif" alt="w_2" class="calibre24"/> 这些参数统称为权重。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00001.jpeg" alt="" width="5%" class="calibre11"/>　偏置这个术语，有“穿木屐”<span class="zhu_shi_bian_hao">2</span>的效果，即在没有任何输入时（输入为 0 时），给输出穿上多高的木屐（加上多大的值）的意思。实际上，在式 (2.2) 的 <img src="../images/00023.gif" alt="b+w_1x_1+w_2x_2" class="calibre24"/> 的计算中，当输入 <img src="../images/00008.gif" alt="x_1" class="calibre24"/> 和 <img src="../images/00009.gif" alt="x_2" class="calibre24"/> 为 0 时，只输出偏置的值。</p>
+</blockquote>
+<p class="zhu_shi_nei_rong"><span class="zhu_shi_bian_hao_xia">2</span>因为木屐的底比较厚，穿上它后，整个人也会显得更高。——译者注</p>
+<p class="calibre1">接着，我们继续实现与非门和或门。</p>
+<pre class="calibre18">
+def NAND(x1, x2):
+    x = np.array([x1, x2])
+    <b class="calibre19">w = np.array([-0.5, -0.5])</b> # 仅权重和偏置与AND不同！
+    <b class="calibre19">b = 0.7</b>
+    tmp = np.sum(w*x) + b
+    if tmp &lt;= 0:
+        return 0
+    else:
+        return 1
+
+def OR(x1, x2):
+    x = np.array([x1, x2])
+    <b class="calibre19">w = np.array([0.5, 0.5])</b> # 仅权重和偏置与AND不同！
+    <b class="calibre19">b = -0.2</b>
+    tmp = np.sum(w*x) + b
+    if tmp &lt;= 0:
+        return 0
+    else:
+        return 1
+</pre>
+
+<p class="calibre1">我们在 2.2 节介绍过，与门、与非门、或门是具有相同构造的感知机，区别只在于权重参数的值。因此，在与非门和或门的实现中，仅设置权重和偏置的值这一点和与门的实现不同。</p>
+</body></html>

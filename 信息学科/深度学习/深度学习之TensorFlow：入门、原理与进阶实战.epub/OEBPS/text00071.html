@@ -1,0 +1,1799 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">9.8　处理Seq2Seq任务</h3>
+<p class="ziti3">本节继续介绍RNN的使用场景，处理Seq2Seq任务。Seq2Seq任务，即从一个序列映射到另一个序列的任务。在生活中会有很多符合这样特性的例子：前面的语言模型、语音识别例子，都可以理解成一个Seq2Seq的例子，类似的应用还有机器翻译、词性标注、智能对话等。下面就来学一下Seq2Seq任务的处理方法。</p>
+<h4 class="p3">9.8.1　Seq2Seq任务介绍</h4>
+<p class="ziti3">Seq2Seq（Sequence 2 Sequence）任务可以理解为，从一个Sequence做某些工作映射到（to）另外一个Sequence的任务，泛指一些Sequence到Sequence的映射问题。</p>
+<p class="ziti3">Sequence可以理解为一个字符串序列，在给定一个字符串序列后，希望得到与之对应的另一个字符串序列（如翻译后的、语义上对应的）。Seq2Seq不关心输入和输出的序列是否长度对应。</p>
+<p class="ziti3">Seq2Seq如果再细分，可以分成输入、输出序列不一一对应和一一对应两种。前面的语言模型就是一一对应的，类似的还有词性标注，可以用图9-26所示的网络结构来理解。如果给定的每个输入都会有对应的输出，这种情况使用简单的RNN模型就可以解决。而输入输出序列不对应时会比较复杂一些，除了像前面语音识别模型中双向RNN+TensorFlow中的ctc_loss组合的方式之外，还有一种相对比较主流的解决方法——Encoder-Decoder框架。</p>
+<div class="pic"><img alt="" src="Image00190.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-26　多对多RNN</p>
+<h4 class="p3">9.8.2　Encoder-Decoder框架</h4>
+<p class="ziti4">
+<span class="yanse">1．Encoder-Decoder框架介绍</span>
+</p>
+<p class="ziti3">Encoder-Decoder框架的工作机制是：先使用Encoder将输入编码映射到语义空间（通过Encoder网络生成的特征向量），得到一个固定维数的向量，这个向量就表示输入的语义；然后再使用Decoder将这个语义向量解码，获得所需要的输出。如果输出是文本，则Decoder通常就是语言模型。其内部结构如图9-27所示。</p>
+<div class="pic"><img alt="" src="Image00191.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-27　Encoder-Decoder结构</p>
+<p class="ziti3">图9-27中Encoder-Decoder框架有两个输入：一个是x输入作为Encoder的输入，另一个是y输入作为Decoder输入，x和y依次按照各自的顺序传入网络。</p>
+<p class="ziti3">可以看出在Seq2Seq的训练中，标签y既参与计算loss，又参与节点运算，而不是像前面学习的其他网络只用来做loss监督。在Encoder与Decoder之间的C节点就是码器Encoder输出的解码向量，将它作为解码Decoder中cell的初始状态，进行对输出的解码。</p>
+<p class="ziti3">这种机制的优点如下：</p>
+<p class="ziti4">·非常灵活，并不限制Encoder、Decoder使用何种神经网络，也不限制输入和输出的内容（例如image caption任务，输入是图像，输出是文本）。</p>
+<p class="ziti4">·这是一个端到端（end-to-end）的过程，将语义理解和语言生成合在了一起，而不是分开处理。</p>
+<p class="ziti4">
+<span class="yanse">2．TensorFlow中的Seq2Seq</span>
+</p>
+<p class="ziti3">在TensorFlow中有两套Seq2Seq的接口。一套是TensorFlow 1.0版本之前的旧接口。在tf.contrib.legacy_seq2seq下；另一套为TensorFlow 1.0版本之后推出的新接口，在tf.contrib.seq2seq下。</p>
+<p class="ziti3">旧接口的功能相对简单，是静态展开的网络模型。而新接口的功能更加强大，使用的是动态展开的网络模型，并提供了训练和应用两种场景的Helper类封装。从使用角度来看，旧接口同样也是比较简单。而新接口会更加灵活，需要自己组建Encoder和Decoder并通过函数把它们手动连接起来。</p>
+<p class="ziti3">为了便于理解，本书主要以旧接口中Seq2Seq框架来举例介绍。关于Seq2Seq的更多例子，及新接口的应用演示，可以参考如下网址中的实例：</p>
+<p class="ziti3">
+<a href="https://github.com/ematvey/tensorflow-seq2seq-tutorials" class="pcalibre calibre2">https://github.com/ematvey/tensorflow-seq2seq-tutorials</a>
+<br class="calibre3"/>
+</p>
+<p class="ziti3">旧接口中基本Seq2Seq函数的定义如下。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">tf.contrib.legacy_seq2seq.basic_rnn_seq2seq(encoder_inputs,
+                               decoder_inputs,
+                               cell,
+                               dtype=dtypes.float32,
+                               scope=None)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">参数说明如下。</p>
+<p class="ziti4">·encoder_inputs：一个形状为[batch_size x input_size]的list。</p>
+<p class="ziti4">·decoder_inputs：同encoder_inputs。</p>
+<p class="ziti4">·cell：定义的cell网络。</p>
+<p class="ziti4">·dtype：encoder_inputs和decoder_inputs中的类型（默认是tf.float32）。</p>
+<p class="ziti4">·返回值：outputs和state。outputs为 [batch_size，output_size]的张量；state为[batch_size，cell.state_size]；cell.state_size可以表示一个或者多个子cell的状态，视输入参数cell而定。</p>
+<p class="ziti3">其函数的实现只有如下几行代码：</p>
+<hr class="calibre6"/>
+<pre class="ziti5"> with variable_scope.variable_scope(scope or "basic_rnn_seq2seq"):
+    enc_cell = copy.deepcopy(cell)
+    _, enc_state = core_rnn.static_rnn(enc_cell, encoder_inputs, dtype=dtype)
+    return rnn_decoder(decoder_inputs, enc_state, cell)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">现将传入的cell做一次深拷贝（deepcopy），用来当做Encoder的网络，将生成的结果和原来的cell再加上输入的decoder_inputs一起放到Decoder中，并输出生成结果。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 在使用过程中，由于需要通过输入x来预测y，没有标签，这种情况就需要手动填充Decoder来代替训练时的标签。</p>
+<h4 class="p3">9.8.3　实例72：使用basic_rnn_seq2seq拟合曲线</h4>
+<p class="ziti3">TensorFlow虽然对Seq2Seq的框架的封装只用一个函数就完成了。但是，Seq2Seq的这个函数用起来并不友好，跟我们以前使用的TensorFlow中的函数并不是一样，所以有必要通过例子来演示一下。本例中使用2层的GRU循环网络，每层有12个节点。编码器与解码器中使用同样的网络结构。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">通过sin与con进行叠加变形生成无规律的模拟曲线，使用Seq2Seq模式对其进行学习，拟合特征，从而达到可以预测下一时刻数据的效果。</p>
+<p class="ziti3">该例子共分为以下几步。</p>
+<p class="ziti4">
+<span class="yanse">1．定义模拟样本函数</span>
+</p>
+<p class="ziti3">本例中通过函数制作规则的曲线来验证网络模型；定义两个曲线sin和con，通过随机值将其变形偏移，将两个曲线叠加。具体代码如下。</p>
+<p class="ziti3">代码9-30　基本Seq2Seq</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import random
+02 import math
+03         
+04 import tensorflow as tf 
+05 import numpy as np
+06 import matplotlib.pyplot as plt  
+07 
+08 def do_generate_x_y(isTrain, batch_size, seqlen):
+09     batch_x = []
+10     batch_y = []
+11     for _ in range(batch_size):
+12         offset_rand = random.random() * 2 * math.pi
+13         freq_rand = (random.random() - 0.5) / 1.5 * 15 + 0.5
+14         amp_rand = random.random() + 0.1
+15 
+16         sin_data = amp_rand * np.sin(np.linspace(
+17             seqlen / 15.0 * freq_rand * 0.0 * math.pi + offset_rand,
+18             seqlen / 15.0 * freq_rand * 3.0 * math.pi + offset_rand, seqlen 
+            * 2)  )
+19 
+20         offset_rand = random.random() * 2 * math.pi
+21         freq_rand = (random.random() - 0.5) / 1.5 * 15 + 0.5
+22         amp_rand = random.random() * 1.2
+23 
+24         sig_data = amp_rand * np.cos(np.linspace(
+25             seqlen / 15.0 * freq_rand * 0.0 * math.pi + offset_rand,
+26             seqlen / 15.0 * freq_rand * 3.0 * math.pi + offset_rand, seqlen 
+            * 2)) + sin_data
+27 
+28         batch_x.append(np.array([ sig_data[:seqlen] ]).T)
+29         batch_y.append(np.array([ sig_data[seqlen:] ]).T)
+30 
+31     # 当前shape: (batch_size, seq_length, output_dim)
+32     batch_x = np.array(batch_x).transpose((1, 0, 2))
+33     batch_y = np.array(batch_y).transpose((1, 0, 2))
+34     # 转换后shape: (seq_length, batch_size, output_dim)
+35 
+36     return batch_x, batch_y
+37 
+38 #生成15个连续序列，将con和sin随机偏移变化后的值叠加起来
+39 def generate_data(isTrain, batch_size):
+40     seq_length =15
+41     if isTrain :
+42         return do_generate_x_y(isTrain, batch_size, seq_length=seq_
+        length)
+43     else:
+44         return do_generate_x_y(isTrain, batch_size, seq_length=seq_
+        length*2)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">将该曲线按照30个序列一组的样式组成训练用的样本。30个序列分成了两部分：一部分当成现在的序列batch_x，一部分当成将来的序列batch_y。</p>
+<p class="ziti4">
+<span class="yanse">2．定义参数及网络结构</span>
+</p>
+<p class="ziti3">前面介绍过basic_rnn_seq2seq的输入是一个list，这与我们平时遇到过的模型不太一样，所以需要构建一个list，以方便传入basic_rnn_seq2seq中。</p>
+<p class="ziti3">在代码中，定义3个list（encoder_input、expected_output、decode_input），按照时间序列的数量来循环创建占位符，并使用append方法放入到list中。</p>
+<p class="ziti3">网络模型定义为2层的循环网络，每层12个GRUcell。用MultiRNNCell将cell定义好后与前面的list一起传入basic_rnn_seq2seq中。</p>
+<p class="ziti3">生成的结果为dec_outputs，dec_outputs中为每个时刻有12个GRUcell的输出，所以还需要通过循环在每个时刻下加一个全连接层，将其转为输出维度output_dim（output_dim=1）的节点。</p>
+<p class="ziti3">代码9-30　基本Seq2Seq（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">45 sample_now, sample_f = generate_data(isTrain=True, batch_size=3)
+46 print("training examples : ")
+47 print(sample_now.shape)
+48 print("(seq_length, batch_size, output_dim)")
+49 
+50 seq_length = sample_now.shape[0]
+51 batch_size = 10
+52 
+53 output_dim = input_dim = sample_now.shape[-1]
+54 hidden_dim = 12  
+55 layers_stacked_count = 2
+56 
+57 # 学习率
+58 learning_rate =0.04
+59 nb_iters = 100
+60 
+61 lambda_l2_reg = 0.003                        # L2 正则参数
+62         
+63 tf.reset_default_graph()
+64 
+65 encoder_input = []
+66 expected_output = []
+67 decode_input =[]
+68 for i in range(seq_length):
+69     encoder_input.append( tf.placeholder(tf.float32, shape=( None, 
+    input_dim)) )
+70     expected_output.append( tf.placeholder(tf.float32, shape=( None, 
+    output_dim)) )
+71     decode_input.append( tf.placeholder(tf.float32, shape=( None, 
+    input_dim)) )
+72     
+73 tcells = []
+74 for i in range(layers_stacked_count):
+75     tcells.append(tf.contrib.rnn.GRUCell(hidden_dim))
+76 Mcell = tf.contrib.rnn.MultiRNNCell(tcells)
+77 
+78 dec_outputs, dec_memory
+tf.contrib.legacy_seq2seq.basic_rnn_seq2seq
+(encoder_input,decode_input,Mcell)
+79 
+80 reshaped_outputs = []
+81 for ii in dec_outputs :
+82     reshaped_outputs.append( tf.contrib.layers.fully_connected(ii,
+    output_
+dim,activation_fn=None))</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">3．定义loss函数及优化器</span>
+</p>
+<p class="ziti3">为了防止过拟合，对basic_rnn_seq2seq循环网络中的参数使用了l2_loss正则，由于最后一个全连接只是起到转化作用，就忽略不做l2_loss正则了（也可以加上，效果没有影响）。L2的调节因子设为0.003，学习率设为0.04。</p>
+<p class="ziti3">代码9-30　基本Seq2Seq（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">83 #计算L2的loss值 
+84 output_loss = 0
+85 for _y, _Y in zip(reshaped_outputs, expected_output):
+86     output_loss += tf.reduce_mean( tf.pow(_y - _Y, 2) )
+87    
+88 # 求正则化loss值
+89 reg_loss = 0
+90 for tf_var in tf.trainable_variables():
+91     if not ("fully_connected" in tf_var.name ):
+92         
+93         reg_loss += tf.reduce_mean(tf.nn.l2_loss(tf_var))
+94 
+95 loss = output_loss + lambda_l2_reg * reg_loss
+96 train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">预测结果与真实结果的平方差再加上l2的loss值，作为输出的loss值。优化器同样使用AdamOptimizer。</p>
+<p class="ziti4">
+<span class="yanse">4．启用session开始训练</span>
+</p>
+<p class="ziti3">在session中将训练和测试单独封装成了两个函数。在train_batch函数里先取指定批次的数据，通过循环来填充到encoder_input和expected_output列表里。</p>
+<p class="ziti3">代码9-30　基本Seq2Seq（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">97 sess = tf.InteractiveSession()
+98         
+99 def train_batch(batch_size):
+100 
+101     X, Y = generate_data(isTrain=True, batch_size=batch_size)
+102     feed_dict = {encoder_input[t]: X[t] for t in range(len(encoder_
+    input))}
+103     feed_dict.update({expected_output[t]: Y[t] for t in range(len
+    (expected_output))})
+104 
+105     c =np.concatenate(( [np.zeros_like(Y[0])],Y[:-1]),axis = 0)
+106 
+107     feed_dict.update({decode_input[t]: c[t] for t in range(len(c))})
+108 
+109     _, loss_t = sess.run([train_op, loss], feed_dict)
+110     return loss_t
+111 
+112 def test_batch(batch_size):
+113     X, Y = generate_data(isTrain=True, batch_size=batch_size)
+114     feed_dict = {encoder_input[t]: X[t] for t in range(len(encoder_
+    input))}
+115     feed_dict.update({expected_output[t]: Y[t] for t in range(len
+    (expected_output))})
+116     c =np.concatenate(( [np.zeros_like(Y[0])],Y[:-1]),axis = 0) #来预测最后一个序列
+117     feed_dict.update({decode_input[t]: c[t] for t in range(len(c))})    
+118     output_lossv,reg_lossv,loss_t = sess.run([output_loss,reg_loss,
+    loss], feed_dict)
+119     print("-----------------")    
+120     print(output_lossv,reg_lossv)
+121     return loss_t
+122 
+123 # 训练
+124 train_losses = []
+125 test_losses = []
+126 
+127 sess.run(tf.global_variables_initializer())
+128 for t in range(nb_iters + 1):
+129     train_loss = train_batch(batch_size)
+130     train_losses.append(train_loss)
+131     if t % 50 == 0:
+132         test_loss = test_batch(batch_size)
+133         test_losses.append(test_loss)
+134         print("Step {}/{}, train loss: {}, \tTEST loss: {}".format
+        (t,nb_iters, train_loss, test_loss))
+135 print("Fin. train loss: {}, \tTEST loss: {}".format(train_loss, 
+test_loss))
+136     
+137 # 输出loss图例
+138 plt.figure(figsize=(12, 6))
+139 plt.plot(np.array(range(0, len(test_losses))) /
+140     float(len(test_losses) - 1) * (len(train_losses) - 1),
+141     np.log(test_losses),label="Test loss")
+142     
+143 plt.plot(np.log(train_losses),label="Train loss")
+144 plt.title("Training errors over time (on a logarithmic scale)")
+145 plt.xlabel('Iteration')
+146 plt.ylabel('log(Loss)')
+147 plt.legend(loc='best')
+148 plt.show()  </pre>
+<hr class="calibre6"/>
+<p class="ziti3">对于decode_input的输入要重点说明一下，将其第一个序列的输入变为0，作为起始输入的标记，接上后续的Y数据（未来序列）作为解码器部分的Decoder来输入。由于第一个序列被占用了，保证总长度不变的情况下，Y的最后一个序列没有作为Decoder的输入。但是输出时会有关于未来序列预测的全部序列值，并在计算loss时与真实值Y进行平方差。</p>
+<p class="ziti3">最终将loss值通过plot打印出来，生成结果如下，loss结果曲线如图9-28所示。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">training examples : 
+(15, 3, 1)
+(seq_length, batch_size, output_dim)
+-----------------
+7.66522 113.373
+Step 0/100,train loss: 8.341724395751953,   TEST loss:8.005338668823242
+-----------------
+1.11881 99.788
+Step 50/100,train loss:2.0858113765716553,   TEST loss:1.418175220489502
+-----------------
+0.618375 83.6507
+Step 100/100,train loss:0.9577032327651978,   TEST loss:0.8693273067474365
+Fin. train loss:0.9577032327651978,    TEST loss:0.8693273067474365</pre>
+<hr class="calibre6"/>
+<div class="pic"><img alt="" src="Image00192.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-28　loss结果曲线</p>
+<p class="ziti4">
+<span class="yanse">5．准备可视化数据</span>
+</p>
+<p class="ziti3">一般情况下，将整个输出值进行显示即可。但这里考虑到要配合使用时的演示，因此我们需要模型来预测未来序列，即没有decode_input的输入。前面说了，这种情况可以将decode_input全设为0，但其识别效果不客观。为了模型可用，可以将预测值范围稍加改变，只预测之后一次时间序列的值。例如，知道前面的所有序列，预测当天股票的收盘价格、开盘价格等。这也是非常实际的应用。</p>
+<p class="ziti3">于是在可视化部分，取时间序列2倍的样本，前一倍用于输入模型，会产生最后一天的预测值，同时也将后一倍的数据显示出来，用于比对每个序列的预测值。</p>
+<p class="ziti3">代码9-30　基本Seq2Seq（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">149 # 测试
+150 nb_predictions = 4
+151 print("visualize {} predictions data:".format(nb_predictions))
+152 
+153 preout =[]
+154 X, Y = generate_data(isTrain=False, batch_size=nb_predictions)
+155 print(np.shape(X),np.shape(Y))
+156 for tt in  range(seq_length):
+157     feed_dict = {encoder_input[t]: X[t+tt] for t in range(seq_length)}
+158     feed_dict.update({expected_output[t]: Y[t+tt] for t in range
+    (len(expected_output))})
+159     c =np.concatenate(( [np.zeros_like(Y[0])],Y[tt:seq_length+tt-1]),
+    axis = 0)   #从前15个序列的最后一个开始预测  
+160 
+161     feed_dict.update({decode_input[t]: c[t] for t in range(len(c))})
+162     outputs = np.array(sess.run([reshaped_outputs], feed_dict)[0])
+163     preout.append(outputs[-1])
+164 
+165 print(np.shape(preout)) #将每个未知预测值收集起来准备显示出来
+166 preout =np.reshape(preout,[seq_length,nb_predictions,output_dim])</pre>
+<hr class="calibre6"/>
+<p class="ziti3">前15次时间序列用于输入，后15次循环来使用模型预测，每次都将输出的最后一个时间序列收集起来，最终得到15个时间序列批次的预测结果preout。</p>
+<p class="ziti4">
+<span class="yanse">6．画图显示数据</span>
+</p>
+<p class="ziti3">将批次设为4，随机取4个序列片段，每个片段的15个序列预测以图像形式显示出来。</p>
+<p class="ziti3">代码9-30　基本Seq2Seq（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">167 for j in range(nb_predictions):
+168     plt.figure(figsize=(12, 3))
+169 
+170     for k in range(output_dim):
+171         past = X[:, j, k]
+172         expected = Y[seq_length-1:, j, k] #对应预测值的打印
+173 
+174         pred = preout[:, j, k]
+175 
+176         label1 = "past" if k == 0 else "_nolegend_"
+177         label2 = "future" if k == 0 else "_nolegend_"
+178         label3 = "Pred" if k == 0 else "_nolegend_"
+179         plt.plot(range(len(past)), past, "o--b", label=label1)
+180         plt.plot(range(len(past), len(expected) + len(past)),
+181                  expected, "x--b", label=label2)
+182         plt.plot(range(len(past), len(pred) + len(past)),
+183                  pred, "o--y", label=label3)
+184 
+185     plt.legend(loc='best')
+186     plt.title("Predictions vs. future")
+187     plt.show()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">为了跟真实的序列值比较，这里将真实的序列值也从15个序列开始打印出来，index=14的值即为预测的第一个值。运行上面的代码，结果如图9-29所示。</p>
+<div class="pic"><img alt="" src="Image00193.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-29　基于Seg2Seg实例结果</p>
+<div class="pic"><img alt="" src="Image00194.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-29　基于Seg2Seg实例结果（续）</p>
+<p class="ziti3">可以看到，生成的预测数据与真实数据相差并不大。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 这里使用了feed_dict的update方法来处理复杂的feed_dict的情况，通过Update可以在原有的feed_dict中加入新的feed数据，将一行语句变为多行输入。</p>
+<h4 class="p3">9.8.4　实例73：预测当天的股票价格</h4>
+<p class="ziti3">既然前面我们用预测股票来打比方，那么这里就演示一个预测股票的例子。直接修改实例72中的数据源即可。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">使用Seq2Seq模式对某个股票数据的训练学习，拟合特征，从而达到可以预测第二天股票价格的效果。</p>
+<p class="ziti4">
+<span class="yanse">1．准备数据</span>
+</p>
+<p class="ziti3">需要准备一个股票的数据，本例中的格式是CSV，也可使用本书的配套例子中的数据“600000.csv”（笔者只是随意爬取了A股中的第一个股票，没有其他特殊意义），本书配套代码中提供了一个爬虫代码文件，见代码“9-31 STOCKDATA.py”文件。</p>
+<p class="ziti4">
+<span class="yanse">2．导入股票数据</span>
+</p>
+<p class="ziti3">直接在“9-30：基本seq2seq.py”文件基础上修改代码，添加载入股票函数loadstock，里面使用了pandas，所以要将该库导入进去。实例中将close收盘价格载入内存用于做样本生成。当然读者也可以自行修改字段，可以将开盘价、最高价格和最低价格等都载入内存作为样本数据，只需将对应的列名放入predictor_names数组中即可。</p>
+<p class="ziti3">代码9-32　seq2seqstock</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import pandas as pd
+02 pd.options.mode.chained_assignment = None  # default='warn'
+03 def loadstock(window_size):
+04     names = ['date',
+05          'code',
+06          'name',
+07          'Close',
+08          'top_price',
+09          'low_price',
+10          'opening_price',
+11          'bef_price',
+12          'floor_price',
+13          'floor',
+14          'exchange',
+15          'Volume',
+16          'amount',
+17          '总市值',
+18          '流通市值']
+19     data = pd.read_csv('600000.csv', names=names, header=None,encoding
+  = "gbk")
+20     
+21     predictor_names = ["Close"]
+22     training_features = np.asarray(data[predictor_names], dtype = 
+    "float32")
+23     kept_values = training_features[1000:]
+24 
+25     X = []
+26     Y = []
+27     for i in range(len(kept_values) - window_size * 2):
+#  x为前window_size个序列，y为后window_size一个序列
+28         X.append(kept_values[i:i + window_size])
+29         Y.append(kept_values[i + window_size:i + window_size * 2])
+30 
+31     X = np.reshape(X,[-1,window_size,len(predictor_names)])
+32     Y = np.reshape(Y,[-1,window_size,len(predictor_names)])
+33     print(np.shape(X))
+34 
+35     return X, Y</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">3．生成样本</span>
+</p>
+<p class="ziti3">直接修改代码中生成样本的函数generate_data，和其对应的内部调用的do_generate_ x_y函数，代码如下。</p>
+<p class="ziti3">代码9-32　seq2seqstock（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">36 def generate_data(isTrain, batch_size):        
+37     # 用前40个样本来预测后40个样本
+38     
+39     seq_length = 40   
+40     seq_length_test = 80
+41 
+42     global Y_train
+43     global X_train
+44     global X_test
+45     global Y_test
+46     # 载入内存
+47     if len(Y_train) == 0:       
+48         X, Y= loadstock( window_size=seq_length)
+49 
+50         # Split 80-20:
+51         X_train = X[:int(len(X) * 0.8)]
+52         Y_train = Y[:int(len(Y) * 0.8)]
+53 
+54     if len(Y_test) == 0:
+55         X, Y  = loadstock( window_size=seq_length_test)
+56 
+57         # Split 80-20:
+58         X_test = X[int(len(X) * 0.8):]
+59         Y_test = Y[int(len(Y) * 0.8):]
+60 
+61     if isTrain:
+62         return do_generate_x_y(X_train, Y_train, batch_size)
+63     else:
+64         return do_generate_x_y(X_test,  Y_test,  batch_size)
+65 
+66 def do_generate_x_y(X, Y, batch_size):
+67     assert X.shape == Y.shape, (X.shape, Y.shape)
+68     idxes = np.random.randint(X.shape[0], size=batch_size)
+69     X_out = np.array(X[idxes]).transpose((1, 0, 2))
+70     Y_out = np.array(Y[idxes]).transpose((1, 0, 2))
+71     return X_out, Y_out</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">4．运行程序查看效果</span>
+</p>
+<p class="ziti3">由于股票数据没有固定的规则而言，并且数据量又较大，所以加大batch到100，加大迭代次数到100000，代码片段如下。</p>
+<p class="ziti3">代码9-32　seq2seqstock（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">72 ……
+73 seq_length = sample_now.shape[0]
+74 batch_size = 100
+75 
+76 output_dim = input_dim = sample_now.shape[-1]
+77 hidden_dim = 12  
+78 layers_num = 2
+79 
+80 # 学习率
+81 learning_rate =0.04
+82 nb_iters = 100000
+83 lambda_l2_reg = 0.003 # L2 regularization of weights - avoids overfitting
+84 ……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">其他地方均不用变，直接运行代码即可，输出如图9-30所示。</p>
+<div class="pic"><img alt="" src="Image00195.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-30　股票示例结果</p>
+<div class="pic"><img alt="" src="Image00196.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-30　股票示例结果（续）</p>
+<p class="ziti3">可见损失值还是比较高的，中间有两次还出现了飙升，由于没有对数据进行清洗和修正，所以会看到序列中有突然变为0的情况，这是由于或许当天是停牌或者数据缺失等情况照成的。恰好我们可以把它当成噪声数据来泛化网络。图9-30中序列80～120之间的点（即图中灰色的点）代表预测的结果，X代表真实的结果，可以看到，虽然不是很精确，但是总体还是与真实数据很接近的。在真实使用场景中，可以修改显示部分的测试代码，不用随机取样本数据，而是把最后一段时间序列取出来并放到模型里，输出的最后一个预测值即是当天的收盘价预测。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 提示：</span>
+ 股市有风险，用机器炒股也要谨慎。这里演示的只是一个模型，其精确度和拟合度还有待提高，并不能当作炒股指导工具。</p>
+<p class="ziti3">通过两个例子的练习，希望读者可以掌握Seq2Seq的基本使用。其实，这种简单的Seq2Seq框架在实际应用中对超长序列数据的学习效果并不是很好。这是因为无论输入端有多大变化，Encoder给出的都是一个固定维数的向量，存在信息损失，所以输入的序列越长，Encoder的输出丢失的原始信息就越多，传入Decoder后，很难在Decoder中有太多的特征表现。</p>
+<p class="ziti3">对于这个问题，引出了下面的基于注意力的Seq2Seq。</p>
+<h4 class="p3">9.8.5　基于注意力的Seq2Seq</h4>
+<p class="ziti3">本节就来介绍一下这个基于注意力的Seq2Seq网络。</p>
+<p class="ziti4">
+<span class="yanse">1．attention_seq2seq介绍</span>
+</p>
+<p class="ziti3">注意力机制，即在生成每个词时，对不同的输入词给予不同的关注权重。如图9-31所示，右侧序列是输入序列，上方序列是输出序列。在注意力机制下，对于一个输出网络会自动学习与其对应的输入关系的权重。如How下面一列。</p>
+<div class="pic"><img alt="" src="Image00197.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-31　注意力表现</p>
+<p class="ziti3">在训练过程中，模型会通过注意力机制把某个输出对应的所有输入列出来，学习其关系并更新到权重上。如图9-31所示，“you”下面那一列（80、5、0、15、0），就是模型在生成you这个词时的概率分布，对应列的表格中值最大的地方对应的是输入的“你”（对应图中第1行第4列，值为80），说明模型在生成you这个词时最为关注的输入词是“你”。这样在预测时，该机制就会根据输入及其权重反向推出更有可能的预测值了。</p>
+<p class="ziti3">注意力机制是在原有Seq2Seq中的Encoder与Decoder框架中修改而来，具体结构如图9-32所示。</p>
+<p class="ziti3">修改后的模型特点是序列中每个时刻Encoder生成的c，都将要参与Decoder中解码的各个时刻，而不是只参与初始时刻。当然对于生成的结果节点c，参与到Decoder的每个序列运算都会经过权重w，那么这个w就可以以loss的方式通过优化器来调节了，最终会逐渐逼近与它紧密的那个词，这就是注意力的原理。添加入了Attention注意力分配机制后，使得Decoder在生成新的Target Sequence时，能得到之前Encoder编码阶段每个字符的隐藏层的信息向量Hidden State，使得新生成序列的准确度提高。</p>
+<div class="pic"><img alt="" src="Image00198.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-32　Seq2Seq attention</p>
+<p class="ziti4">
+<span class="yanse">2．TensorFlow中的attention_seq2seq</span>
+</p>
+<p class="ziti3">在TensorFlow中也有关于带有注意力机制的Seq2Seq定义，封装后的Seq2Seq与前面basic_rnn_seq2seq差不多，具体函数如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">tf.contrib.legacy_seq2seq.embedding_attention_seq2seq (encoder_inputs,
+                                decoder_inputs,
+                                cell,
+                                num_encoder_symbols,
+                                num_decoder_symbols,
+                                embedding_size,
+                                num_heads=1,
+                                output_projection=None,
+                                feed_previous=False,
+                                dtype=None,
+                                scope=None,
+                                initial_state_attention=False):</pre>
+<hr class="calibre6"/>
+<p class="ziti3">参数说明如下。</p>
+<p class="ziti4">·encoder_inputs：一个形状为[batch_size]的list。</p>
+<p class="ziti4">·decoder_inputs：同encoder_inputs。</p>
+<p class="ziti4">·cell：定义的cell网络。</p>
+<p class="ziti4">·num_encoder_symbols：输入数据对应的词总个数。</p>
+<p class="ziti4">·num_decoder_symbols：输出数据对应的词的总个数。</p>
+<p class="ziti4">·embedding_size：每个输入对应的词向量编码大小。</p>
+<p class="ziti4">·num_heads：从注意力状态里读取的个数。</p>
+<p class="ziti4">·output_projection：对输出结果是否进行全连接的维度转化，如果需要转化，则传入全连接对应的w和b。</p>
+<p class="ziti4">·feed_previous：为True时，表明只有第一个Decoder输入以Go开始，其他都使用前面的状态。如果为False时，每个Decoder的输入都会以Go开始。Go为自己定义模型时定义的一个起始符，一般用0或1来指定。</p>
+<p class="ziti4">
+<span class="yanse">3．Seq2Seq中桶（bucket）的实现机制</span>
+</p>
+<p class="ziti3">在Seq2Seq模型中，由于输入、输出都是可变长的，这就给计算带来了很大的效率影响。在TensorFlow中使用了一个“桶”（bucket）的观念来权衡这个问题，思想就是初始化几个bucket，对数据预处理，按照每个序列的长短，将其放到不同的bucket中，小于bucket size部分统一补0来完成对齐的工作，之后就可以进行不同bucket的批处理计算了。</p>
+<p class="ziti3">由于该问题与Seq2Seq模型关联比较紧密，在TensorFlow中就将其封装成整体的框架模式，开发者只需要将输入、输出、网络模型传入函数中，其他的都交给函数自己来处理，大大简化了开发过程，其定义如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">model_with_buckets(encoder_inputs,
+                       decoder_inputs,
+                       targets,
+                       weights,
+                       buckets,
+                       seq2seq,
+                       softmax_loss_function=None,
+                       per_example_loss=False,
+                       name=None):</pre>
+<hr class="calibre6"/>
+<p class="ziti3">参数说明如下。</p>
+<p class="ziti4">·encoder_inputs：一个形状为[batch_size]的list。</p>
+<p class="ziti4">·decoder_inputs：同encoder_inputs，作为解码器部分的输入。</p>
+<p class="ziti4">·targets：最终输出结果的label。</p>
+<p class="ziti4">·weights：传入的权重值，必须与decoder_inputs的size相同。</p>
+<p class="ziti4">·buckets：传入的桶，描述为[（xx，xx），（xx，xx）…]每一对有两个数，第一个数为输入的size，第二个数为输出的size。</p>
+<p class="ziti4">·seq2seq：带有Seq2Seq结构的网络，以函数名的方式传入。在Seq2Seq里可以载入定义的cell网络。</p>
+<p class="ziti4">·softmax_loss_function：是否使用自己指定的loss函数。</p>
+<p class="ziti4">·per_example_loss：是否对每个样本求loss。</p>
+<p class="ziti3">这里面有疑问的部分就是weights，为什么会多了个weights？它是做什么的呢？跟进代码里可以看到，它会调用sequence_loss_by_example函数，在sequence_loss_by_example函数中weights是用来做loss计算的。具体见tensorflow\contrib\legacy_seq2seq\python\ops\ seq2seq.py文件中第1048行函数sequence_loss_by_example的实现，代码如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">……
+with ops.name_scope(name, "sequence_loss_by_example",
+                      logits + targets + weights):
+    log_perp_list = []
+    for logit, target, weight in zip(logits, targets, weights):
+      if softmax_loss_function is None:
+        # TODO(irving,ebrevdo):为了符合调用sequence_loss_by_example时的需要，需要对张量进行reshape
+        target = array_ops.reshape(target, [-1])
+        crossent = nn_ops.sparse_softmax_cross_entropy_with_logits(
+            labels=target, logits=logit)
+      else:
+        crossent = softmax_loss_function(labels=target, logits=logit)
+      log_perp_list.append(crossent * weight)
+    log_perps = math_ops.add_n(log_perp_list)
+    if average_across_timesteps:
+      total_size = math_ops.add_n(weights)
+      total_size += 1e-12   # 避免除数为0
+      log_perps /= total_size
+  return log_perps</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可见在求每个样本loss时对softmax_loss的结果乘了weight，同时又将乘完weight后的总和结果除以weights的总和（log_perps /= total_size）。这种做法就是叫做基于权重的交叉熵计算（weighted cross_entropy loss）（具体细节不再展开，读者简单了解即可）。</p>
+<h4 class="p3">9.8.6　实例74：基于Seq2Seq注意力模型实现中英文机器翻译</h4>
+<p class="ziti3">本例中将使用前面介绍的函数，将它们组合在一起实现一个具有机器翻译功能的例。该例中共涉及4个代码文件，各文件说明如下。</p>
+<p class="ziti4">·文件“9-33　datautil.py”：样本预处理文件。</p>
+<p class="ziti4">·文件“9-34　seq2seq_model.py”：模型文件，该文件是在GitHub上TensorFlow的例子基础上修改而来。</p>
+<p class="ziti4">·文件“9-35　train.py”：模型的训练文件。</p>
+<p class="ziti4">·文件“9-36　test.py”：模型的测试使用文件。</p>
+<p class="ziti3">本例同样也是先从样本入手，然后搭建模型、训练、测试，具体步骤如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">准备一部分中英对照的翻译语料，使用Seq2Seq模式对其进行学习，拟合特征，从而实现机器翻译。</p>
+<p class="ziti4">
+<span class="yanse">1．样本准备</span>
+</p>
+<p class="ziti3">对于样本的准备，本书配套资源中提供了一个“中英文平行语料库.rar”文件，如果读者需要更多、更全的样本，需要自己准备。解压后有两个文件，一个是英文文件，一个是对应的中文文件。</p>
+<p class="ziti3">如果想与本书同步路径，可以将英文文件放到代码同级文件夹fanyichina\yuliao\from下；中文文件放在代码同级文件夹fanyichina\yuliao\to下。</p>
+<p class="ziti4">
+<span class="yanse">2．生成中、英文字典</span>
+</p>
+<p class="ziti3">编写代码，分别载入两个文件，并生成正反向字典。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 样本的编码是UTF-8，如果读者使用自己定义的样本，不是UTF-8编码，则在读取文件时会报错，需要改成正确的编码。如果是Windows编辑的样本，编码为GB2312。</p>
+<p class="ziti3">代码9-33　datautil</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 data_dir = "fanyichina/"
+02 raw_data_dir = "fanyichina/yuliao/from"
+03 raw_data_dir_to = "fanyichina/yuliao/to"
+04 vocabulary_fileen ="dicten.txt"
+05 vocabulary_filech = "dictch.txt"
+06 
+07 plot_histograms = plot_scatter =True
+08 vocab_size =40000
+09 
+10 max_num_lines =1
+11 max_target_size = 200
+12 max_source_size = 200
+13 
+14 def main():
+15     vocabulary_filenameen = os.path.join(data_dir, vocabulary_fileen)
+16     vocabulary_filenamech = os.path.join(data_dir, vocabulary_filech)
+17 ##############################
+18 #  创建英文字典
+19     training_dataen, counten, dictionaryen, reverse_dictionaryen,
+    textsszen =create_vocabulary(vocabulary_filenameen
+20                                                        ,raw_data_dir,vocab_
+size,Isch=False,normalize_digits = True)
+21     print("training_data",len(training_dataen))
+22     print("dictionary",len(dictionaryen)) 
+23 #########################
+24     #创建中文字典    
+25     training_datach, countch, dictionarych, reverse_dictionarych,
+    textsszch =create_vocabulary(vocabulary_filenamech
+26                                                     ,raw_data_dir_to,vocab_
+    size,Isch=True,normalize_digits = True)
+27     print("training_datach",len(training_datach))
+28     print("dictionarych",len(dictionarych))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">执行完上面的代码后，会在当前目录下的fanyichina文件夹里找到dicten.txt与dictch.txt两个字典文件。</p>
+<p class="ziti3">其中所调用的部分代码定义如下，严格来讲本例中生成的应该是词点，因为在中文处理中用了jieba分词库将文字分开了，是以词为单位存储对应索引的。</p>
+<p class="ziti3">代码9-33　datautil（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">29 import jieba
+30 jieba.load_userdict("myjiebadict.txt")
+31 
+32 def fenci(training_data):
+33     seg_list = jieba.cut(training_data)         # 默认是精确模式
+34     training_ci = " ".join(seg_list)
+35     training_ci = training_ci.split()
+36     return training_ci
+37 
+38 import collections
+39 #系统字符，创建字典时需要加入
+40 _PAD = "_PAD"
+41 _GO = "_GO"
+42 _EOS = "_EOS"
+43 _UNK = "_UNK"
+44 
+45 PAD_ID = 0
+46 GO_ID = 1
+47 EOS_ID = 2
+48 UNK_ID = 3
+49 
+50 #文字字符替换，不属于系统字符
+51 _NUM = "_NUM"
+52 #Isch=true 中文<span class="calibre5">，</span>
+
+false 英文
+53  #创建词典，max_vocabulary_size=500代表字典中有500个词  
+54 def create_vocabulary(vocabulary_file, raw_data_dir, max_vocabulary_
+size,Isch=True, normalize_digits=True):
+55     texts,textssz = get_ch_path_text(raw_data_dir,Isch,normalize_
+    digits)
+56     print( texts[0],len(texts)) 
+57     print("行数",len(textssz),textssz)
+58 # 处理多行文本texts 
+59     all_words = []  
+60     for label in texts:  
+61         print("词数",len(label))   
+62         all_words += [word for word in label]     
+63     print("词数",len(all_words))
+64     
+65     training_label, count, dictionary, reverse_dictionary = build_
+    dataset(all_words,max_vocabulary_size)
+66     print("reverse_dictionary",reverse_dictionary,len(reverse_
+      dictionary))
+67     if not gfile.Exists(vocabulary_file):
+68         print("Creating vocabulary %s from data %s" % (vocabulary_file, 
+        data_dir))
+69         if len(reverse_dictionary) &gt; max_vocabulary_size:
+70             reverse_dictionary = reverse_dictionary[:max_vocabulary_
+            size]
+71         with gfile.GFile(vocabulary_file, mode="w") as vocab_file:
+72             for w in reverse_dictionary:
+73                 print(reverse_dictionary[w])
+74                 vocab_file.write(reverse_dictionary[w] + "\n")
+75     else:
+76         print("already have vocabulary!  do nothing !!!!!!!!!!!!!!!!!
+        !!!!!!!!!!!!")
+77     return training_label, count, dictionary, reverse_dictionary,
+    textssz
+78 
+79 def build_dataset(words, n_words):
+80   """Process raw inputs into a dataset."""
+81   count = [[_PAD, -1],[_GO, -1],[_EOS, -1],[_UNK, -1]]
+82   count.extend(collections.Counter(words).most_common(n_words - 1))
+83   dictionary = dict()
+84   for word, _ in count:
+85     dictionary[word] = len(dictionary)
+86   data = list()
+87   unk_count = 0
+88   for word in words:
+89     if word in dictionary:
+90       index = dictionary[word]
+91     else:
+92       index = 0  # dictionary['UNK']
+93       unk_count += 1
+94     data.append(index)
+95   count[0][1] = unk_count
+96   reversed_dictionary = dict(zip(dictionary.values(), dictionary.
+  keys()))
+97   return data, count, dictionary, reversed_dictionary</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在字典中添加额外的字符标记PAD、_GO、_EOS、_UNK是为了在训练模型时起到辅助标记的作用。</p>
+<p class="ziti4">·PAD用于在桶机制中为了对齐填充占位。</p>
+<p class="ziti4">·_GO是解码输入时的开头标志位。</p>
+<p class="ziti4">·_EOS是用来标记输出结果的结尾。</p>
+<p class="ziti4">·_UNK用来代替处理样本时出现字典中没有的字符。</p>
+<p class="ziti3">另外还有_NUM，用来代替文件中的数字（_NUM是根据处理的内容可选项，如果内容与数字高度相关，就不能用NUM来代替）。</p>
+<p class="ziti3">在jieba的分词库中，附加一个字典文件myjiebadict.txt，以免自定义的字符标记被分开。myjiebadict.txt里的内容如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">_NUM nz
+_PAD nz
+_GO nz
+_EOS nz
+_UNK nz</pre>
+<hr class="calibre6"/>
+<p class="ziti3">每一行有两项，用空格分开，第一项为指定的字符，第二项nz代表不能被分开的意思。</p>
+<p class="ziti4">
+<span class="yanse">3．将数据转成索引格式</span>
+</p>
+<p class="ziti3">原始的中英文是无法让机器认知的，所以要根据字典中对应词的索引对原始文件进行相应的转化，方便读取。在本地建立两个文件夹fanyichina\fromids和fanyichina\toids，用于存放生成的ids文件。在main函数中编写以下代码，先通过initialize_vocabulary将前面生成的字典读入内存中，然后使用textdir_to_idsdir函数将文本转成ids文件。</p>
+<p class="ziti3">textdir_to_idsdir函数中最后的两个参数说明如下。</p>
+<p class="ziti4">·normalize_digits：代表是否将数字替换掉。</p>
+<p class="ziti4">·Isch：表示是否是按中文方式处理。</p>
+<p class="ziti3">中文方式会在处理过程中对读入的文本进行一次jieba分词。</p>
+<p class="ziti3">代码9-33　datautil（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">98   def main():
+99      ……
+100         vocaben, rev_vocaben =initialize_vocabulary(vocabulary_
+            filenameen)
+101         vocabch, rev_vocabch =initialize_vocabulary(vocabulary_
+            filenamech)
+102     
+103         print(len(rev_vocaben))
+104         textdir_to_idsdir(raw_data_dir,data_dir+"fromids/",vocaben,
+            normalize_digits=True,Isch=False)
+105         textdir_to_idsdir(raw_data_dir_to,data_dir+"toids/",vocabch,
+            normalize_digits=True,Isch=True)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">所使用的函数定义如下：</p>
+<p class="ziti3">代码9-33　datautil（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">106 def initialize_vocabulary(vocabulary_path):
+107   if gfile.Exists(vocabulary_path):
+108     rev_vocab = []
+109     with gfile.GFile(vocabulary_path, mode="r") as f:
+110       rev_vocab.extend(f.readlines())
+111     rev_vocab = [line.strip() for line in rev_vocab]
+112     vocab = dict([(x, y) for (y, x) in enumerate(rev_vocab)])
+113     return vocab, rev_vocab
+114   else:
+115     raise ValueError("Vocabulary file %s not found.", vocabulary_path)
+116 #将文件批量转成ids文件
+117 def textdir_to_idsdir(textdir,idsdir,vocab, normalize_digits=True,
+Isch=True):
+118     text_files,filenames = getRawFileList(textdir)
+119     
+120     if len(text_files)== 0:
+121         raise ValueError("err:no files in ",raw_data_dir)
+122         
+123     print(len(text_files),"files,one is",text_files[0])
+124     
+125     for text_file,name in zip(text_files,filenames):
+126         print(text_file,idsdir+name)
+127         textfile_to_idsfile(text_file,idsdir+name,vocab, normalize_
+          digits,Isch)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">其他用到的底层函数代码如下：</p>
+<p class="ziti3">代码9-33　datautil（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">128 #获取文件列表
+129 def getRawFileList( path):
+130     files = []
+131     names = []
+132     for f in os.listdir(path):
+133         if not f.endswith("~") or not f == "":
+134             files.append(os.path.join(path, f))
+135             names.append(f)
+136     return files,names
+137 #读取分词后的中文词
+138 def get_ch_lable(txt_file,Isch=True,normalize_digits=False):  
+139     labels= list()#""
+140     labelssz = []
+141     with open(txt_file, 'rb') as f:
+142         for label in f: 
+143             linstr1 =label.decode('utf-8')
+144             if normalize_digits :
+145                 linstr1=re.sub('\d+',_NUM,linstr1)
+146             notoken = basic_tokenizer(linstr1 )
+147             if Isch:
+148                 notoken = fenci(notoken)
+149             else:
+150                 notoken = notoken.split()
+151 
+152             labels.extend(notoken)
+153             labelssz.append(len(labels))
+154     return  labels,labelssz
+155    
+156 #获取文件中的文本
+157 def get_ch_path_text(raw_data_dir,Isch=True,normalize_digits=False):
+158     text_files,_ = getRawFileList(raw_data_dir)
+159     labels = []
+160     
+161     training_dataszs = list([0])
+162     
+163     if len(text_files)== 0:
+164         print("err:no files in ",raw_data_dir)
+165         return labels
+166     print(len(text_files),"files,one is",text_files[0])
+167     shuffle(text_files)
+168     
+169     for text_file in text_files:
+170         training_data,training_datasz =get_ch_lable(text_file,Isch,
+            normalize_digits)
+171         
+172         training_ci = np.array(training_data)
+173         training_ci = np.reshape(training_ci, [-1, ])
+174         labels.append(training_ci)
+175         
+176         training_datasz =np.array( training_datasz)+training_dataszs[-1]
+177         training_dataszs.extend(list(training_datasz))
+178         print("here",training_dataszs)
+179     return labels,training_dataszs
+180        
+181 def basic_tokenizer(sentence):    
+182     _WORD_SPLIT = "([.,!?\"':;)(])"
+183     _CHWORD_SPLIT = '、|。|，|‘|’'
+184     str1 = ""
+185     for i in re.split(_CHWORD_SPLIT,  sentence):
+186         str1 = str1 +i
+187     str2 = ""
+188     for i in re.split(_WORD_SPLIT ,  str1):
+189         str2 = str2 +i
+190     return str2
+191 #将句子转成索引ids
+192 def sentence_to_ids(sentence, vocabulary,
+193                            normalize_digits=True,Isch=True):
+194 
+195     if normalize_digits :
+196         sentence=re.sub('\d+',_NUM,sentence)
+197     notoken = basic_tokenizer(sentence )
+198     if Isch:
+199         notoken = fenci(notoken)
+200     else:
+201         notoken = notoken.split()
+202   
+203     idsdata = [vocabulary.get( w, UNK_ID) for w in notoken]
+204   
+205     return idsdata
+206 
+207 #将文件中的内容转成ids，不是Windows下的文件要使用utf8编码格式
+208 def textfile_to_idsfile(data_file_name, target_file_name, vocab,
+209                        normalize_digits=True,Isch=True):
+210   
+211   if not gfile.Exists(target_file_name):
+212     print("Tokenizing data in %s" % data_file_name)
+213     with gfile.GFile(data_file_name, mode="rb") as data_file:
+214       with gfile.GFile(target_file_name, mode="w") as ids_file:
+215         counter = 0
+216         for line in data_file:
+217           counter += 1
+218           if counter % 100000 == 0:
+219             print("  tokenizing line %d" % counter)
+220           token_ids = sentence_to_ids(line.decode('utf8'), vocab,
+          normalize_digits,Isch)
+221           ids_file.write(" ".join([str(tok) for tok in token_ids]) + 
+          "\n")
+222 def ids2texts( indices,rev_vocab):
+223     texts = []
+224     for index in indices:
+225         
+226         texts.append(rev_vocab[index])
+227     return texts</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行上述代码后，可以在本地路径fanyichina\fromids、fanyichina\toids文件夹下面找到同名的txt文件，打开后能够看到里面全是索引值。</p>
+<p class="ziti4">
+<span class="yanse">4．对样本文件进行分析图示</span>
+</p>
+<p class="ziti3">为了使bucket的设置机制较合理，我们把样本的数据用图示方式显示出来，直观地看一下每个样本的各个行长度分布情况，在main函数中接着添加以下代码：</p>
+<p class="ziti3">代码9-33　datautil（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">228 def main():
+229 ……
+230 #分析样本分布
+231     filesfrom,_=getRawFileList(data_dir+"fromids/")
+232     filesto,_=getRawFileList(data_dir+"toids/")
+233     source_train_file_path = filesfrom[0]
+234     target_train_file_path= filesto[0]    
+235     analysisfile(source_train_file_path,target_train_file_path)
+236     
+237 if __name__=="__main__":
+238 main()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">最后两行为启动main函数。analysisfile为文件的分析函数，实现如下：</p>
+<p class="ziti3">代码9-33　datautil（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">239 def analysisfile(source_file,target_file):
+240 #分析文本    
+241     source_lengths = []
+242     target_lengths = []
+243 
+244     with gfile.GFile(source_file, mode="r") as s_file:
+245         with gfile.GFile(target_file, mode="r") as t_file:
+246             source= s_file.readline()
+247             target = t_file.readline()
+248             counter = 0
+249             
+250             while source and target:
+251                 counter += 1
+252                 if counter % 100000 == 0:
+253                     print("  reading data line %d" % counter)
+254                     sys.stdout.flush()
+255                 num_source_ids = len(source.split())
+256                 source_lengths.append(num_source_ids)
+257                 num_target_ids = len(target.split()) + 1#plus 1 for EOS 
+                token
+258                 target_lengths.append(num_target_ids)
+259                 source, target = s_file.readline(), t_file.readline()
+260     print(target_lengths,source_lengths)
+261     if plot_histograms:
+262         plot_histo_lengths("target lengths", target_lengths)
+263         plot_histo_lengths("source_lengths", source_lengths)
+264     if plot_scatter:
+265         plot_scatter_lengths("target vs source length", "source 
+        length","target length", source_lengths, target_lengths)
+266 def plot_scatter_lengths(title, x_title, y_title, x_lengths, y_
+lengths):
+267 plt.scatter(x_lengths, y_lengths)
+268 plt.title(title)
+269 plt.xlabel(x_title)
+270 plt.ylabel(y_title)
+271 plt.ylim(0, max(y_lengths))
+272 plt.xlim(0,max(x_lengths))
+273 plt.show()
+274 
+275 def plot_histo_lengths(title, lengths):
+276 mu = np.std(lengths)
+277 sigma = np.mean(lengths)
+278 x = np.array(lengths)
+279 n, bins, patches = plt.hist(x,  50, facecolor='green', alpha=0.5)
+280 y = mlab.normpdf(bins, mu, sigma)
+281 plt.plot(bins, y, 'r--')
+282 plt.title(title)
+283 plt.xlabel("Length")
+284 plt.ylabel("Number of Sequences")
+285 plt.xlim(0,max(lengths))
+286 plt.show()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，得到如图9-33所示结果。</p>
+<div class="pic"><img alt="" src="Image00199.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-33　样本分析</p>
+<p class="ziti3">从图9-33可知，样本的长度都在60之间，可以将bucket分为4个区间，即_buckets =[（20，20），（40，40），（50，50），（60，60）]。由于输入和输出的长度差别不大，所以令它们的bucket相等。这部分还有更好的方法：可以使用聚类方式处理，然后自动化生成bucket，这样会更加方便，有兴趣的读者可以自己尝试一下。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 说明：</span>
+ 网络模型初始化的部分，放到了后面讲解（见代码“9-34 seg2seg_model.py”文件），是想让读者先对整个流程有个大致了解。</p>
+<p class="ziti4">
+<span class="yanse">5．载入字典准备训练</span>
+</p>
+<p class="ziti3">预处理结束后，就可以开始编写训练代码了，在代码“9-35 train.py”文件里将刚才生成的字典载入，在getfanyiInfo中通过datautil.initialize_vocabulary将字典读入本地。同时引入库，设置初始参数，网络结构为两层，每层100个GRUcell组成的网络，在Seq2Seq模型中解码器与编码器同为相同的这种结构。</p>
+<p class="ziti3">代码9-35　train</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import os
+02 import math
+03 import sys
+04 import time
+05 import numpy as np
+06 from six.moves import xrange
+07 import tensorflow as tf
+08 datautil = __import__("9-33  datautil")
+09 seq2seq_model = __import__("9-34  seq2seq_model")
+10 import datautil
+11 import seq2seq_model
+12 
+13 tf.reset_default_graph()
+14 
+15 steps_per_checkpoint=200 
+16 
+17 max_train_data_size= 0 #(0代表输入数据的长度没有限制)
+18 
+19 dropout = 0.9 
+20 grad_clip = 5.0
+21 batch_size = 60
+22 
+23 num_layers =2
+24 learning_rate =0.5
+25 lr_decay_factor =0.99
+26 
+27 #设置翻译模型相关参数
+28 hidden_size = 100
+29 checkpoint_dir= "fanyichina/checkpoints/"
+30 _buckets =[(20, 20), (40, 40), (50, 50), (60, 60)]
+31 def getfanyiInfo():
+32     vocaben, rev_vocaben=datautil.initialize_vocabulary(os.path.join
+    (datautil.data_dir, datautil.vocabulary_fileen))
+33     vocab_sizeen= len(vocaben)
+34     print("vocab_size",vocab_sizeen)
+35     
+36     vocabch, rev_vocabch=datautil.initialize_vocabulary(os.path.join
+    (datautil.data_dir, datautil.vocabulary_filech))
+37     vocab_sizech= len(vocabch)
+38     print("vocab_sizech",vocab_sizech) 
+39     
+40     filesfrom,_=datautil.getRawFileList(datautil.data_dir+"fromids/")
+41     filesto,_=datautil.getRawFileList(datautil.data_dir+"toids/")
+42     source_train_file_path = filesfrom[0]
+43     target_train_file_path= filesto[0]
+44     return vocab_sizeen,vocab_sizech,rev_vocaben,rev_vocabch,source_
+    train_file_path,target_train_file_path
+45     
+46 def main():
+47     vocab_sizeen,vocab_sizech,rev_vocaben,rev_vocabch,source_train_
+    file_path,target_train_file_path = getfanyiInfo()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">通过getfanyiInfo函数得到中英词的数量、反向的中英字典、输入样本文件的路径以及目标样本的路径。</p>
+<p class="ziti4">
+<span class="yanse">6．启动session，创建模型并读取样本数据</span>
+</p>
+<p class="ziti3">代码9-35　train（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">48     if not os.path.exists(checkpoint_dir):
+49         os.mkdir(checkpoint_dir)
+50     print ("checkpoint_dir is {0}".format(checkpoint_dir))
+51 
+52     with tf.Session() as sess:
+53         model = createModel(sess,False,vocab_sizeen,vocab_sizech)
+54         print ("Using bucket sizes:")
+55         print (_buckets)
+56 
+57         source_test_file_path = source_train_file_path
+58         target_test_file_path = target_train_file_path
+59         
+60         print (source_train_file_path)
+61         print (target_train_file_path)
+62         
+63         train_set = readData(source_train_file_path, target_train_
+        file_path,max_train_data_size)
+64         test_set = readData(source_test_file_path, target_test_file_
+        path,max_train_data_size)
+65         
+66         train_bucket_sizes = [len(train_set[b]) for b in xrange(len
+        (_buckets))]
+67         print( "bucket sizes = {0}".format(train_bucket_sizes))
+68         train_total_size = float(sum(train_bucket_sizes))
+69     
+70         train_buckets_scale = [sum(train_bucket_sizes[:i + 1]) / train_
+        total_size for i in xrange(len(train_bucket_sizes))]
+71         step_time, loss = 0.0, 0.0
+72         current_step = 0
+73         previous_losses = []</pre>
+<hr class="calibre6"/>
+<p class="ziti3">由于样本不足，这里直接在测试与训练中使用相同的样本，仅仅是为了演示。通过createModel创建模型，并查找检查点文件是否存在，如果存在，则将检测点载入。在createModel 中通过调用Seq2SeqModel类生成模型，并指定模型中的具体初始参数。</p>
+<p class="ziti3">代码9-35　train（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">74 def createModel(session, forward_only,from_vocab_size,to_vocab_
+size):
+75     model = seq2seq_model.Seq2SeqModel(
+76       from_vocab_size,#from
+77       to_vocab_size,#to
+78       _buckets,
+79       hidden_size,
+80       num_layers,
+81       dropout,
+82       grad_clip,
+83       batch_size,
+84       learning_rate,
+85       lr_decay_factor,
+86       forward_only=forward_only,
+87       dtype=tf.float32)
+88       
+89     print("model is ok")
+90     
+91     ckpt = tf.train.latest_checkpoint(checkpoint_dir)
+92     if ckpt!=None:
+93         model.saver.restore(session, ckpt)
+94         print ("Reading model parameters from {0}".format(ckpt))
+95     else:
+96         print ("Created model with fresh parameters.")
+97         session.run(tf.global_variables_initializer())  
+98 
+99     return model</pre>
+<hr class="calibre6"/>
+<p class="ziti3">通过latest_checkpoint发现检查点文件。如果有检查点文件，就将其恢复到session中。</p>
+<p class="ziti3">读取文件的函数定义如下：为了适用带有bucket机制的网络模型，按照bucket的大小序列读取数据，先按照bucket的个数定义好数据集data_set，然后在读取每一对输入、输出时，都会比较其适合哪个bucket，并将其放入对应的bucket中，最后返回data_set。</p>
+<p class="ziti3">代码9-35　train（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">100 def readData(source_path, target_path, max_size=None):
+101 '''
+102 这个方法来自于tensorflow 中的translation 例子
+103 '''
+104 data_set = [[] for _ in _buckets]
+105 with tf.gfile.GFile(source_path, mode="r") as source_file:
+106 with tf.gfile.GFile(target_path, mode="r") as target_file:
+107 source, target = source_file.readline(), target_file.
+readline()
+108 counter = 0
+109 while source and target and (not max_size or counter &lt; 
+max_size):
+110 counter += 1
+111 if counter % 100000 == 0:
+112 print("  reading data line %d" % counter)
+113 sys.stdout.flush()
+114 source_ids = [int(x) for x in source.split()]
+115 target_ids = [int(x) for x in target.split()]
+116 target_ids.append(vocab_utils.EOS_ID)
+117 for bucket_id, (source_size, target_size) in enumerate
+(_buckets):
+118 if len(source_ids) &lt; source_size and len(target_
+ids) &lt; target_size:
+119 data_set[bucket_id].append([source_ids, 
+target_ids])
+120 break
+121 source, target = source_file.readline(), target_file.
+readline()
+122 return data_set</pre>
+<hr class="calibre6"/>
+<p class="ziti3">对于输出的每一句话都会加上EOS_ID，这么做的目的是为了让网络学习到结束的标记，可以控制输出的长短。</p>
+<p class="ziti4">
+<span class="yanse">7．通过循环进行训练</span>
+</p>
+<p class="ziti3">在main函数中接着添加代码：通过循环来调用model.step进行迭代训练，每执行steps_per_checkpoint次，就保存检查点；测试结果，并将结果输出。</p>
+<p class="ziti3">代码9-35　train（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">123 def main():
+124 ……       
+125     while True:
+126             # 根据数据样本的分布情况来选择bucket
+127             
+128             random_number_01 = np.random.random_sample()
+129             bucket_id = min([i for i in xrange(len(train_buckets_scale)) 
+            if train_buckets_scale[i] &gt; random_number_01])
+130 
+131             # 开始训练
+132             start_time = time.time()
+133             encoder_inputs, decoder_inputs, target_weights = model.
+            get_batch(train_set, bucket_id)
+134             _, step_loss, _ = model.step(sess, encoder_inputs, decoder_
+            inputs,target_weights, bucket_id, False)
+135             step_time += (time.time() - start_time) / steps_per_
+            checkpoint
+136             loss += step_loss / steps_per_checkpoint
+137             current_step += 1
+138             
+139             # 保存检查点，测试数据
+140             if current_step % steps_per_checkpoint == 0:
+141                 # Print statistics for the previous epoch.
+142                 perplexity = math.exp(loss) if loss &lt; 300 else float
+                ('inf')
+143                 print ("global step %d learning rate %.4f step-time %.2f 
+                perplexity "
+144                     "%.2f" % (model.global_step.eval(), model.learning_
+                    rate.eval(),step_time, perplexity))
+145                 # 退化学习率
+146                 if len(previous_losses) &gt; 2 and loss &gt; max(previous_
+                losses[-3:]):
+147                     sess.run(model.learning_rate_decay_op)
+148                 previous_losses.append(loss)
+149                 # 保存checkpoint
+150                 checkpoint_path = os.path.join(checkpoint_dir, 
+                "seq2seqtest.ckpt")
+151                 print(checkpoint_path)
+152                 model.saver.save(sess, checkpoint_path, global_step=
+                model.global_step)
+153                 step_time, loss = 0.0, 0.0  # 初始化为0
+154                 # 输出test_set中 empty bucket的bucket_id
+155                     if len(test_set[bucket_id]) == 0:
+156                         print("  eval: empty bucket %d" % (bucket_id))
+157                         continue
+158                     encoder_inputs, decoder_inputs, target_weights = 
+                    model.get_batch(test_set, bucket_id)
+159 
+160                     _, eval_loss,output_logits = model.step(sess, 
+       encoder_inputs, decoder_inputs,target_weights, bucket_id, True)
+161                     eval_ppx = math.exp(eval_loss) if eval_loss &lt; 300 else 
+                    float('inf')
+162                     print("  eval: bucket %d perplexity %.2f" % (bucket_
+                    id, eval_ppx))
+163                     
+164                     
+165                     inputstr = datautil.ids2texts(reversed([en[0] for en 
+                    in encoder_inputs]) ,rev_vocaben)
+166                     print("输入",inputstr)
+167                     print("输出",datautil.ids2texts([en[0] for en in 
+                    decoder_inputs] ,rev_vocabch))
+168   
+169                     outputs = [np.argmax(logit, axis=1)[0] for logit in 
+                    output_logits]                    
+170                    
+171                     if datautil.EOS_ID in outputs:
+172                         outputs = outputs[:outputs.index(datautil.
+                        EOS_ID)]
+173                         print("结果",datautil.ids2texts(outputs,rev_
+                        vocabch))
+174                         
+175                 sys.stdout.flush()
+176 
+177 if __name__ == '__main__':
+178 main()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">这里使用的是一个死循环，默认会一直训练下去。因为有检查点文件，所以可以不用关注迭代次数，通过输出测试的打印结果与loss值，可以看出模型的好坏。训练到一定程度后直接退出即可。</p>
+<p class="ziti4">
+<span class="yanse">8．网络模型Seq2SeqModel的初始化</span>
+</p>
+<p class="ziti3">这里为了先让读者对整体流程有个了解，所以将网络模型放在了最后单独介绍。这部分的代码在“9-34 seq2seq_model.py”文件中，该代码为GitHub中的一个例子代码，我们在其上面做了修改，增加了dropout功能，在初始化函数中增加了dropout_keep_prob参数。</p>
+<p class="ziti3">在原有代码中，由于指定了输出的target_vocab_size，表明要求在模型结束后输出的应该是target_vocab_size其中的一类（one_hot），所以先定义了output_projection参数，里面由w和b构成，作为最后输出的权重。</p>
+<p class="ziti3">代码9-34　seq2seq_model</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 """带有注意力机制的Sequence-to-sequence 模型."""
+02 
+03 from __future__ import absolute_import
+04 from __future__ import division
+05 from __future__ import print_function
+06 
+07 import random
+08 
+09 import numpy as np
+10 from six.moves import xrange  # pylint: disable=redefined-builtin
+11 import tensorflow as tf
+12 datautil = __import__("9-33  datautil")
+13 import datautil as data_utils
+14 
+15 class Seq2SeqModel(object):
+16   """带有注意力机制并且具有multiple buckets的Sequence-to-sequence 模型.
+17   这个类实现了一个多层循环网络组成的编码器和一个具有注意力机制的解码器.完全是按
+  照论文：
+18   http://arxiv.org/abs/1412.7449 - 中所描述的机制实现。更多细节信息可以参看
+  论文内容
+19   这个class 除了使用LSTM cells还可以使用GRU cells, 还使用了sampled 
+  softmax 来
+20   处理大词汇量的输出. 在论文http://arxiv.org/abs/1412.2007中的第三节描述了
+21   sampled softmax。在论文http://arxiv.org/abs/1409.0473里面还有一个关于
+  这个模型的一个单层的使用双向RNN编码器的版本
+22     
+23   """
+24 
+25   def __init__(self,
+26                source_vocab_size,
+27                target_vocab_size,
+28                buckets,
+29                size,
+30                num_layers,
+31                dropout_keep_prob,
+32                max_gradient_norm,
+33                batch_size,
+34                learning_rate,
+35                learning_rate_decay_factor,
+36                use_lstm=False,
+37                num_samples=512,
+38                forward_only=False,
+39                dtype=tf.float32):
+40     """创建模型
+41 
+42     Args:
+43       source_vocab_size:原词汇的大小.
+44       target_vocab_size:目标词汇的大小.
+45       buckets: 一个 (I, O)的list, I 代表输入的最大长度，O代表输出的最大长度，例如
+46 [(2, 4), (8, 16)].
+47       size: 模型中每层的units个数.
+48       num_layers: 模型的层数.
+49       max_gradient_norm: 截断梯度的阀值.
+50       batch_size: 训练中的批次数据大小;
+51       learning_rate: 开始学习率.
+52       learning_rate_decay_factor: 退化学习率的衰减参数.
+53       use_lstm: 如果true, 使用 LSTM cells 替代GRU cells.
+54       num_samples: sampled softmax的样本个数.
+55       forward_only: 如果设置了, 模型只有正向传播.
+56       dtype: internal variables的类型.
+57     """
+58     self.source_vocab_size = source_vocab_size
+59     self.target_vocab_size = target_vocab_size
+60     self.buckets = buckets
+61     self.batch_size = batch_size
+62     self.dropout_keep_prob_output = dropout_keep_prob
+63     self.dropout_keep_prob_input = dropout_keep_prob
+64     self.learning_rate = tf.Variable(
+65         float(learning_rate), trainable=False, dtype=dtype)
+66     self.learning_rate_decay_op = self.learning_rate.assign(
+67         self.learning_rate * learning_rate_decay_factor)
+68     self.global_step = tf.Variable(0, trainable=False)
+69 
+70     # 如果使用 sampled softmax, 需要一个输出的映射.
+71     output_projection = None
+72     softmax_loss_function = None
+73     # 当采样数小于vocabulary size 时Sampled softmax 才有意义
+74     if num_samples &gt; 0 and num_samples &lt; self.target_vocab_size:
+75       w_t = tf.get_variable("proj_w", [self.target_vocab_size, size], 
+      dtype=dtype)
+76       w = tf.transpose(w_t)
+77       b = tf.get_variable("proj_b", [self.target_vocab_size], dtype=
+      dtype)
+78       output_projection = (w, b)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">lobal_step变量的作用是同步检查点文件对应的迭代步数。</p>
+<p class="ziti4">
+<span class="yanse">9．自定义损失函数</span>
+</p>
+<p class="ziti3">sampled_loss为自定义损失函数，计算在分类target_vocab_size里模型输出的logits与标签labels（seq2seq框架中的输出）之间的交叉熵，并将该函数指针赋值给softmax_loss_function。softmax_loss_function会在后面使用model_with_buckets时，作为参数传入。</p>
+<p class="ziti3">代码9-34　seq2seq_model（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">79       def sampled_loss(labels, logits):
+80         labels = tf.reshape(labels, [-1, 1])
+81         #需要使用 32bit的浮点数类型来计算sampled_softmax_loss，才能避免数值
+        的不稳定性
+82         local_w_t = tf.cast(w_t, tf.float32)
+83         local_b = tf.cast(b, tf.float32)
+84         local_inputs = tf.cast(logits, tf.float32)
+85         return tf.cast(
+86             tf.nn.sampled_softmax_loss(
+87                 weights=local_w_t,
+88                 biases=local_b,
+89                 labels=labels,
+90                 inputs=local_inputs,
+91                 num_sampled=num_samples,
+92                 num_classes=self.target_vocab_size),
+93             dtype)
+94       softmax_loss_function = sampled_loss</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">10．定义Seq2Seq框架结构</span>
+</p>
+<p class="ziti3">seq2seq_f函数的作用是定义Seq2Seq框架结构，该函数也是为了使用model_with_buckets时，作为参数传入。前面介绍model_with_buckets函数时说该函数更像一个封装好的框架，原因就在于此。</p>
+<p class="ziti3">读者也要适应这种方式：将损失函数、网络结构、buckets统统定义完，然后将它们作为参数放入model_with_buckets函数中，之后一切交给TensorFlow来实现即可。</p>
+<p class="ziti3">代码9-34　seq2seq_model（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">95     # 使用词嵌入量（embedding）作为输入
+96     def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
+97       
+98       with tf.variable_scope("GRU") as scope:
+99           cell = tf.contrib.rnn.DropoutWrapper(
+100               tf.contrib.rnn.GRUCell(size),
+101                 input_keep_prob=self.dropout_keep_prob_input,
+102                 output_keep_prob=self.dropout_keep_prob_output)
+103           if num_layers &gt; 1:
+104               cell = tf.contrib.rnn.MultiRNNCell([cell] * num_layers)
+105       
+106       print("new a cell")
+107       return tf.contrib.legacy_seq2seq.embedding_attention_seq2seq(
+108           encoder_inputs,
+109           decoder_inputs,
+110           cell,
+111           num_encoder_symbols=source_vocab_size,
+112           num_decoder_symbols=target_vocab_size,
+113           embedding_size=size,
+114           output_projection=output_projection,
+115           feed_previous=do_decode,
+116           dtype=dtype)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面代码中，额外加了一个打印信息print（"new a cell"），是为了测试seq2seq_model函数是什么时被调用的，在实验中可以得出结论。在构建网络模型时，会由model_with_buckets函数来调用，而model_with_buckets函数调用的次数取决于bucket的个数，即在model_with_buckets函数中，会为每个bucket使用seq2seq_f函数构建出一套网络Seq2Seq的网络模型，但是不用担心，它们的权重是共享的。具体可以参见model_with_buckets函数的实现，就是使用了共享变量的机制。</p>
+<p class="ziti4">
+<span class="yanse">11．定义Seq2seq模型的输入占位符</span>
+</p>
+<p class="ziti3">下面定义Seq2Seq模型的输入占位符，这些占位符都是为了传入model_with_buckets函数中做准备的。</p>
+<p class="ziti3">首先是Seq2Seq模型自己的两个list占位符：一个是输入encoder_inputs，一个是输出decoder_inputs。另外，model_with_buckets还需要一个额外的输入，在前面已经提过，因为其在做loss时使用的是带权重的交叉熵，所以还要输入大小等同于decoder_inputs的权重target_weights。</p>
+<p class="ziti3">另外还有一个输入就是做交叉熵时的标签targets，因为它与decoder_inputs一样，所以可以直接由decoder_inputs变换而来，把decoder_inputs的第一个“_GO”去掉，在放到targets中。</p>
+<p class="ziti3">代码9-34　seq2seq_model（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">117     # 注入数据
+118     self.encoder_inputs = []
+119     self.decoder_inputs = []
+120     self.target_weights = []
+121     for i in xrange(buckets[-1][0]):   # 最后的bucket 是最大的
+122       self.encoder_inputs.append(tf.placeholder(tf.int32,
+        shape=[None],
+123                                               name="encoder{0}".format(i)))
+124     for i in xrange(buckets[-1][1] + 1):
+125       self.decoder_inputs.append(tf.placeholder(tf.int32, shape=
+      [None],
+126                                               name="decoder{0}".format(i)))
+127       self.target_weights.append(tf.placeholder(dtype, shape=[None],
+128                                                 name="weight{0}".format(i)))
+129 
+130     #将解码器移动一位得到targets
+131     targets = [self.decoder_inputs[i + 1]
+132                for i in xrange(len(self.decoder_inputs) - 1)]</pre>
+<hr class="calibre6"/>
+<p class="ziti3">占位符的list大小是取buckets中的最大数。targets的长度与buckets 的长度一致，decoder_inputs与target_weights的长度会比buckets的长度大1，因为前面有“_GO”占位。</p>
+<p class="ziti4">
+<span class="yanse">12．定义正向的输出与loss</span>
+</p>
+<p class="ziti3">当一切参数准备好后，就可以使用model_with_buckets将整个网络贯穿起来了。</p>
+<p class="ziti3">在测试时会只进行正向传播，这时seq2seq_f里面的最后一个参数为True，该参数最终会在seq2seq_f里的embedding_attention_seq2seq中的feed_previous中生效。前面介绍过，如果为True时，表明只有第一个decoder输入是“_GO”开头，这样可以保证测试时，模型可以一直记着前面的cell状态。</p>
+<p class="ziti3">代码9-34　seq2seq_model（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">133     # 训练的输出和loss定义
+134     if forward_only:
+135       self.outputs, self.losses = tf.contrib.legacy_seq2seq.model_
+      with_buckets(
+136           self.encoder_inputs, self.decoder_inputs, targets,
+137           self.target_weights, buckets, lambda x, y: seq2seq_f(x, y, 
+          True),
+138           softmax_loss_function=softmax_loss_function)
+139       # 如果使用了输出映射<span class="calibre5">，</span>
+
+需要为解码器映射输出处理
+140       if output_projection is not None:
+141         for b in xrange(len(buckets)):
+142           self.outputs[b] = [
+143               tf.matmul(output, output_projection[0]) + output_
+              projection[1]
+144               for output in self.outputs[b]
+145           ]
+146     else:
+147       self.outputs, self.losses = tf.contrib.legacy_seq2seq.model_
+              with_buckets(
+148           self.encoder_inputs, self.decoder_inputs, targets,
+149           self.target_weights, buckets,
+150           lambda x, y: seq2seq_f(x, y, False),
+151           softmax_loss_function=softmax_loss_function)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在测试过程中，还需要将model_with_buckets的输出结果转化成outputs维度的one_hot。因为model_with_buckets是多个桶的输出，所以需要对每个桶都进行转换。</p>
+<p class="ziti4">
+<span class="yanse">13．反向传播计算梯度并通过优化器更新</span>
+</p>
+<p class="ziti3">在前面已经通过model_with_buckets得到了loss。</p>
+<p class="ziti3">下面的代码先通过tf.trainable_variables函数获得可训练的参数params，然后用tf.gradients计算loss对应参数params的梯度，并通过tf.clip_by_global_norm将过大的梯度按照max_gradient_norm来截断，将截断后的梯度通过优化器opt来迭代更新。同样，还要针对每个桶（bucket）进行这样的操作。</p>
+<p class="ziti3">代码9-34　seq2seq_model（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">152     # 梯度下降更新操作
+153     params = tf.trainable_variables()
+154     if not forward_only:
+155       self.gradient_norms = []
+156       self.updates = []
+157       opt = tf.train.GradientDescentOptimizer(self.learning_rate)
+158       for b in xrange(len(buckets)):
+159         gradients = tf.gradients(self.losses[b], params)
+160         clipped_gradients, norm = tf.clip_by_global_norm(gradients,
+161                                                          max_gradient_norm)
+162         self.gradient_norms.append(norm)
+163         self.updates.append(opt.apply_gradients(
+164             zip(clipped_gradients, params), global_step=self.global_
+            step))
+165 
+166     self.saver = tf.train.Saver(tf.global_variables())</pre>
+<hr class="calibre6"/>
+<p class="ziti3">最后更新saver，在代码“9-35　train.py”中会调用这部分代码来保存训练中的学习参数及相关变量。</p>
+<p class="ziti4">
+<span class="yanse">14．按批次获取样本数据</span>
+</p>
+<p class="ziti3">在模型中，按批次获取的样本数据并不能直接使用，还需要在get_batch函数中进行相应转化，首先根据指定bucket_id所对应的大小确定输入和输出的size，根据size进行pad的填充，并且针对输出数据进行第一位为“_Go”的重整作为解码的input。这里用了个小技巧将输入的数据进行了倒序排列。而对于输入weight则将其全部初始化为0，对应的size为每一批次中decoder每个序列一个权重weight，即与decoder相等。</p>
+<p class="ziti3">代码9-34　seq2seq_model（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">167 def get_batch(self, data, bucket_id):
+168     """在迭代训练过程中，从指定 bucket中获得一个随机批次数据
+169 
+170     Args:
+171       data: 一个大小为len(self.buckets)的tuple，包含了创建一个batch中的输
+      入输出的
+172         lists.
+173       bucket_id: 整型, 指定从哪个bucket中取数据.
+174 
+175     Returns:
+176       方便以后调用的 triple (encoder_inputs, decoder_inputs, target_
+      weights) 
+177       .
+178     """
+179     encoder_size, decoder_size = self.buckets[bucket_id]
+180     encoder_inputs, decoder_inputs = [], []
+181 
+182     # 获得一个随机批次的数据作为编码器与解码器的输入
+183     # 如果需要时会有pad操作, 同时反转encoder的输入顺序，并且为decoder添加GO
+184     for _ in xrange(self.batch_size):
+185       encoder_input, decoder_input = random.choice(data[bucket_id])
+186 
+187       # pad和反转Encoder 的输入数据
+188       encoder_pad = [data_utils.PAD_ID] * (encoder_size - len(encoder_
+      input))
+189       encoder_inputs.append(list(reversed(encoder_input + encoder_
+      pad)))
+190 
+191       # 为Decoder输入数据添加一个额外的“GO”<span class="calibre5">，</span>
+
+并且进行pad
+192       decoder_pad_size = decoder_size - len(decoder_input) - 1
+193       decoder_inputs.append([data_utils.GO_ID] + decoder_input +
+194                             [data_utils.PAD_ID] * decoder_pad_size)
+195 
+196     # 从上面选择好的数据中创建 batch-major vectors
+197     batch_encoder_inputs, batch_decoder_inputs, batch_weights = [], [], []
+198 
+199     for length_idx in xrange(encoder_size):
+200       batch_encoder_inputs.append(
+201           np.array([encoder_inputs[batch_idx][length_idx]
+202                     for batch_idx in xrange(self.batch_size)], dtype=
+                    np.int32))
+203 
+204     for length_idx in xrange(decoder_size):
+205       batch_decoder_inputs.append(
+206           np.array([decoder_inputs[batch_idx][length_idx]
+207                     for batch_idx in xrange(self.batch_size)], dtype=
+                    np.int32))
+208 
+209       # 定义target_weights 变量，默认是1，如果对应的targets是padding，
+      则target_weigts就为0
+210       batch_weight = np.ones(self.batch_size, dtype=np.float32)
+211       for batch_idx in xrange(self.batch_size):
+212         # 如果对应的输出target 是一个 PAD符号，就将weight设为0
+213         # 将decoder_input向前移动1位得到对应的target
+214         if length_idx &lt; decoder_size - 1:
+215           target = decoder_inputs[batch_idx][length_idx + 1]
+216         if length_idx == decoder_size - 1 or target == data_utils.PAD_ID:
+217           batch_weight[batch_idx] = 0.0
+218       batch_weights.append(batch_weight)
+219     return batch_encoder_inputs, batch_decoder_inputs, batch_weights</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">15．Seq2Seq框架的迭代更新处理</span>
+</p>
+<p class="ziti3">这部分代码主要是构建输入feed数据，即输出的OP。在输入时，根据传入的bucket_id构建相应大小的输入输出list，通过循环传入list中对应的操作符里。由于decoder_inputs的长度比bucket中的长度大1，所以需要再多放一位到decoder_inputs的list中，在前面构建targets时，需要将所有的decoder_inputs向后移一位，targets作为标签要与bucket中的长度相等。确切地说target_weights是与targets相等的，所以不需要再输入值。</p>
+<p class="ziti3">代码9-34　seq2seq_model（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">220   def step(self, session, encoder_inputs, decoder_inputs, target_
+  weights,
+221            bucket_id, forward_only):
+222     """注入给定输入数据步骤
+223 
+224     Args:
+225       session: tensorflow 所使用的session
+226       encoder_inputs:用来注入encoder输入数据的numpy int vectors类型的list
+227       decoder_inputs:用来注入decoder输入数据的numpy int vectors类型的list
+228       target_weights:用来注入target weights的numpy float vectors类型的list
+229       bucket_id: which bucket of the model to use
+230       forward_only: 只进行正向传播
+231 
+232     Returns:
+233       一个由gradient norm (不做反向时为none),average perplexity, and the 
+      outputs组成的triple
+234 
+235     Raises:
+236       ValueError:如果 encoder_inputs, decoder_inputs, 或者是target_
+      weights 的长度与指定bucket_id 的bucket size不符合
+237     """
+238     # 检查长度
+239     encoder_size, decoder_size = self.buckets[bucket_id]
+240     if len(encoder_inputs) != encoder_size:
+241       raise ValueError("Encoder length must be equal to the one in 
+      bucket,"
+242                        " %d != %d." % (len(encoder_inputs), encoder_size))
+243     if len(decoder_inputs) != decoder_size:
+244       raise ValueError("Decoder length must be equal to the one in 
+      bucket,"
+245                        " %d != %d." % (len(decoder_inputs), decoder_size))
+246     if len(target_weights) != decoder_size:
+247       raise ValueError("Weights length must be equal to the one in 
+      bucket,"
+248                        " %d != %d." % (len(target_weights), decoder_size))
+249 
+250     # 定义Input feed
+251     input_feed = {}
+252     for l in xrange(encoder_size):
+253       input_feed[self.encoder_inputs[l].name] = encoder_inputs[l]
+254     for l in xrange(decoder_size):
+255       input_feed[self.decoder_inputs[l].name] = decoder_inputs[l]
+256       input_feed[self.target_weights[l].name] = target_weights[l]
+257 
+258     last_target = self.decoder_inputs[decoder_size].name
+259     input_feed[last_target] = np.zeros([self.batch_size], dtype=np.
+    int32)
+260 
+261     # 定义Output feed
+262     if not forward_only:
+263       output_feed = [self.updates[bucket_id], 
+264                      self.gradient_norms[bucket_id],  
+265                      self.losses[bucket_id]]  
+266     else:
+267       output_feed = [self.losses[bucket_id]]  
+268       for l in xrange(decoder_size):  
+269         output_feed.append(self.outputs[bucket_id][l])
+270 
+271     outputs = session.run(output_feed, input_feed)
+272     if not forward_only:
+273       return outputs[1], outputs[2], None  
+274     else:
+275       return None, outputs[0], outputs[1:]     </pre>
+<hr class="calibre6"/>
+<p class="ziti3">对于输出，也要区分是测试还是训练。如果是测试，需要将loss与logit输出，结果在outputs中，outputs[0]为loss，outputs[1：]为输出的decoder_size大小序列。如果是训练，输出需要更新的梯度与loss。这里多输出一个None是为了统一输出，保证第二位输出的都是loss。</p>
+<p class="ziti3">整个代码进展到这里就可以进行训练操作了，运行train.py文件，将模型运行起来进行迭代训练。输出结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Building prefix dict from the default dictionary ...
+Loading model from cache C:\Users\LIJINH~1\AppData\Local\Temp\jieba.cache
+Loading model cost 0.672 seconds.
+Prefix dict has been built succesfully.
+vocab_size 11963
+vocab_sizech 15165
+checkpoint_dir is fanyichina/checkpoints/
+new a cell
+new a cell
+new a cell
+new a cell
+model is ok
+Using bucket sizes:
+[(20, 20), (40, 40), (50, 50), (60, 60)]
+fanyichina/fromids/english1w.txt
+fanyichina/toids/chinese1w.txt
+bucket sizes = [1649, 4933, 1904, 1383]
+fanyichina/checkpoints/seq2seqtest.ckpt
+WARNING:tensorflow:Error encountered when serializing LAYER_NAME_UIDS.
+Type is unsupported, or the types of the items don't match field type in 
+CollectionDef.
+'dict' object has no attribute 'name'
+  eval: bucket 0 perplexity 1.71</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到输出了词典的大小vocab_size 11963、vocab_sizech 15165，与定义的buckets，4个bucket分别需要调用4次seq2seq_f，于是打印了4次new a cell。接着会显示每一批次中每个bucket的输入（因为是反转的，这里已经给反过来了），并且能够看到对输入的pad进行了填充。对于每个输出由'_GO'字符开始，结束时都会有'_EOS'字符。对于模型预测的输出结果，也是将'_EOS'字符前面的内容打印出来，没有'_EOS'字符的预测结果将视为没有翻译成功，因此没有打印出来。</p>
+<p class="ziti4">
+<span class="yanse">16．测试模型</span>
+</p>
+<p class="ziti3">测试模型代码在代码“9-36 test.py”文件中，与前面实例中的代码基本相似，需要考虑的是，在创建模型时要使用测试模式（最后一个参数为True），并且dropout设为1.0。在main函数里，先等待用户输入，然后对用户输入的字符进行处理并传入模型，最终输出结果并显示出来。完整代码如下。</p>
+<p class="ziti3">代码9-36　test</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import tensorflow as tf
+02 import numpy as np
+03 import os
+04 from six.moves import xrange
+05 
+06 _buckets = []
+07 convo_hist_limit = 1
+08 max_source_length = 0
+09 max_target_length = 0
+10 
+11 flags = tf.app.flags
+12 FLAGS = flags.FLAGS
+13 datautil = __import__("9-33  datautil")
+14 seq2seq_model = __import__("9-34  seq2seq_model")
+15 import datautil
+16 import seq2seq_model
+17 
+18 tf.reset_default_graph()
+19 
+20 max_train_data_size= 0 #0表示训练数据的输入长度没有限制
+21 
+22 data_dir = "datacn/"
+23 
+24 dropout = 1.0 
+25 grad_clip = 5.0
+26 batch_size = 60
+27 hidden_size = 14
+28 num_layers =2
+29 learning_rate =0.5
+30 lr_decay_factor =0.99
+31 
+32 checkpoint_dir= "data/checkpoints/"
+33 
+34 ###############翻译
+35 hidden_size = 100
+36 checkpoint_dir= "fanyichina/checkpoints/"
+37 data_dir = "fanyichina/"
+38 _buckets =[(20, 20), (40, 40), (50, 50), (60, 60)]
+39 
+40 def getfanyiInfo():
+41     vocaben, rev_vocaben=datautil.initialize_vocabulary(os.path.join
+    (datautil.data_dir, datautil.vocabulary_fileen))
+42     vocab_sizeen= len(vocaben)
+43     print("vocab_size",vocab_sizeen)
+44     
+45     vocabch, rev_vocabch=datautil.initialize_vocabulary(os.path.join
+    (datautil.data_dir, datautil.vocabulary_filech))
+46     vocab_sizech= len(vocabch)
+47     print("vocab_sizech",vocab_sizech) 
+48 
+49     return vocab_sizeen,vocab_sizech,vocaben,rev_vocabch   
+50     
+51 def main():
+52 
+53     vocab_sizeen,vocab_sizech,vocaben,rev_vocabch= getfanyiInfo()
+54 
+55     if not os.path.exists(checkpoint_dir):
+56         os.mkdir(checkpoint_dir)
+57     print ("checkpoint_dir is {0}".format(checkpoint_dir))
+58 
+59     with tf.Session() as sess:
+60         model = createModel(sess,True,vocab_sizeen,vocab_sizech)    
+61     
+62         print (_buckets)
+63         model.batch_size = 1
+64 
+65         conversation_history =[]
+66         while True:  
+67             prompt = "请输入: "
+68             sentence = input(prompt)
+69             conversation_history.append(sentence.strip())
+70             conversation_history = conversation_history[-convo_hist_
+            limit:]
+71             
+72             token_ids = list(reversed( datautil.sentence_to_ids(" ".
+            join(conversation_history) ,vocaben,normalize_digits=True,
+            Isch=False) )  )
+73             print(token_ids)
+74             bucket_id = min([b for b in xrange(len(_buckets))if _buckets
+            [b][0] &gt; len(token_ids)])
+75             
+76             encoder_inputs, decoder_inputs, target_weights = model.
+            get_batch({bucket_id: [(token_ids, [])]}, bucket_id)
+77 
+78             _, _, output_logits = model.step(sess, encoder_inputs, 
+            decoder_inputs,target_weights, bucket_id, True)
+79 
+80             #使用 beam search策略
+81             outputs = [int(np.argmax(logit, axis=1)) for logit in 
+            output_logits]
+82             print("outputs",outputs,datautil.EOS_ID)
+83             if datautil.EOS_ID in outputs:
+84                 outputs = outputs[:outputs.index(datautil.EOS_ID)]
+85                 
+86                 convo_output =  " ".join(datautil.ids2texts(outputs,
+                rev_vocabch))
+87                 conversation_history.append(convo_output)
+88                 print (convo_output)
+89             else：
+90                 print("can not translation！")
+91 
+92 def createModel(session, forward_only,from_vocab_size,to_vocab_size):
+93     """Create translation model and initialize or load parameters in 
+    session."""
+94     model = seq2seq_model.Seq2SeqModel(
+95       from_vocab_size,#from
+96       to_vocab_size,#to
+97       _buckets,
+98       hidden_size,
+99       num_layers,
+100       dropout,
+101       grad_clip,
+102       batch_size,
+103       learning_rate,
+104       lr_decay_factor,
+105       forward_only=forward_only,
+106       dtype=tf.float32)
+107       
+108     print("model is ok")
+109     
+110     ckpt = tf.train.latest_checkpoint(checkpoint_dir)
+111     if ckpt!=None:
+112         model.saver.restore(session, ckpt)
+113         print ("Reading model parameters from {0}".format(ckpt))
+114     else:
+115         print ("Created model with fresh parameters.")
+116         session.run(tf.global_variables_initializer())  
+117 
+118     return model
+119 
+120 if __name__=="__main__":
+121 main()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Building prefix dict from the default dictionary ...
+Loading model from cache C:\Users\LIJINH~1\AppData\Local\Temp\jieba.cache
+Loading model cost 0.719 seconds.
+Prefix dict has been built succesfully.
+vocab_size 11963
+vocab_sizech 15165
+checkpoint_dir is fanyichina/checkpoints/
+new a cell
+new a cell
+new a cell
+new a cell
+model is ok
+INFO:tensorflow:Restoring parameters from fanyichina/checkpoints/
+seq2seqtest.ckpt-99600
+Reading model parameters from fanyichina/checkpoints/seq2seqtest.
+ckpt-99600
+[(20, 20), (40, 40), (50, 50), (60, 60)]
+ 
+请输入: will reap good results and the large
+[149, 4, 6, 341, 169, 4980, 22]
+not use
+outputs[838,838,26,105,643,8,1595,1089,5,968,8,968,6,2,5,1365,6,2,6,2]2
+最终 最终 也 会 对此 和 坚强 有力 的 指导 和 指导 .</pre>
+<hr class="calibre6"/>
+<p class="ziti3">当前的例子是“跑了”约半天时间的模型效果，通过载入检查点打印信息可以看到当前迭代了99 600次，从原有的样本中简单复制几句话输入系统中，则系统可以大致翻译出一些汉语。可以看到它并没有按照词顺序逐个翻译，而是用学到原有样本的意思来表达，尽管语句还不通畅。这里只是做个演示，如果需要训练更好的模型，可以增加样本数量，并增加训练时间。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

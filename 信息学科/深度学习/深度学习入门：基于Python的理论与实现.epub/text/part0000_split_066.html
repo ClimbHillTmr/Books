@@ -1,0 +1,205 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<table width="90%" border="1" class="calibre36">
+<tbody class="calibre41">
+<tr class="calibre38">
+<td class="calibre42">
+<p class="calibre40">
+参数 <code class="calibre43">X</code> 是图像数据、<code class="calibre43">t</code> 是正确解标签</p></td>
+</tr>
+<tr class="calibre45">
+<td class="calibre42"><p class="calibre40"><code class="calibre43">accuracy(self, x, t)</code></p></td>
+<td class="calibre42"><p class="calibre40">计算识别精度</p></td>
+</tr>
+<tr class="calibre38">
+<td class="calibre42"><p class="calibre40"><code class="calibre43">numerical_gradient(self, x, t)</code></p></td>
+<td class="calibre42"><p class="calibre40">通过数值微分计算关于权重参数的梯度（同上一章）</p></td>
+</tr>
+<tr class="calibre45">
+<td class="calibre42"><p class="calibre40"><code class="calibre43">gradient(self, x, t)</code></p></td>
+<td class="calibre42"><p class="calibre40">通过误差反向传播法计算关于权重参数的梯度</p></td>
+</tr>
+</tbody>
+</table>
+<p class="calibre1">这个类的实现稍微有一点长，但是内容和 4.5 节的学习算法的实现有很多共通的部分，不同点主要在于这里使用了层。通过使用层，获得识别结果的处理（<code class="calibre15">predict()</code>）和计算梯度的处理（<code class="calibre15">gradient()</code>）只需通过层之间的传递就能完成。下面是 <code class="calibre15">TwoLayerNet</code> 的代码实现。</p>
+<pre class="calibre18">
+import sys, os
+sys.path.append(os.pardir)
+import numpy as np
+from common.layers import *
+from common.gradient import numerical_gradient
+from collections import OrderedDict
+
+class TwoLayerNet:
+
+    def __init__(self, input_size, hidden_size, output_size,
+                 weight_init_std=0.01):
+        # 初始化权重
+        self.params = {}
+        self.params['W1'] = weight_init_std * \
+                            np.random.randn(input_size, hidden_size)
+        self.params['b1'] = np.zeros(hidden_size)
+        self.params['W2'] = weight_init_std * \
+                            np.random.randn(hidden_size, output_size)
+        self.params['b2'] = np.zeros(output_size)
+
+        # 生成层
+        <b class="calibre19">self.layers = OrderedDict()</b>
+        <b class="calibre19">self.layers['Affine1'] = \</b>
+            <b class="calibre19">Affine(self.params['W1'], self.params['b1'])</b>
+        <b class="calibre19">self.layers['Relu1'] = Relu()</b>
+        <b class="calibre19">self.layers['Affine2'] = \</b>
+            <b class="calibre19">Affine(self.params['W2'], self.params['b2'])</b>
+
+        <b class="calibre19">self.lastLayer = SoftmaxWithLoss()</b>
+
+    def predict(self, x):
+        <b class="calibre19">for layer in self.layers.values():</b>
+            <b class="calibre19">x = layer.forward(x)</b>
+
+        return x
+
+    # x:输入数据, t:监督数据
+    def loss(self, x, t):
+        y = self.predict(x)
+        return self.lastLayer.forward(y, t)
+
+    def accuracy(self, x, t):
+        y = self.predict(x)
+        y = np.argmax(y, axis=1)
+        if t.ndim != 1 : t = np.argmax(t, axis=1)
+        accuracy = np.sum(y == t) / float(x.shape[0])
+        return accuracy
+
+    # x:输入数据, t:监督数据
+    def numerical_gradient(self, x, t):
+        loss_W = lambda W: self.loss(x, t)
+
+        grads = {}
+        grads['W1'] = numerical_gradient(loss_W, self.params['W1'])
+        grads['b1'] = numerical_gradient(loss_W, self.params['b1'])
+        grads['W2'] = numerical_gradient(loss_W, self.params['W2'])
+        grads['b2'] = numerical_gradient(loss_W, self.params['b2'])
+
+        return grads
+
+    def gradient(self, x, t):
+        <b class="calibre19"># forward</b>
+        <b class="calibre19">self.loss(x, t)</b>
+
+        <b class="calibre19"># backward</b>
+        <b class="calibre19">dout = 1</b>
+        <b class="calibre19">dout = self.lastLayer.backward(dout)</b>
+
+        <b class="calibre19">layers = list(self.layers.values())</b>
+        <b class="calibre19">layers.reverse()</b>
+        <b class="calibre19">for layer in layers:</b>
+            <b class="calibre19">dout = layer.backward(dout)</b>
+
+        # 设定
+        grads = {}
+        grads['W1'] = self.layers['Affine1'].dW
+        grads['b1'] = self.layers['Affine1'].db
+        grads['W2'] = self.layers['Affine2'].dW
+        grads['b2'] = self.layers['Affine2'].db
+
+        return grads
+</pre>
+
+<p class="calibre1">请注意这个实现中的粗体字代码部分，尤其是将神经网络的层保存为 <code class="calibre15">OrderedDict</code> 这一点非常重要。<code class="calibre15">OrderedDict</code> 是有序字典，“有序”是指它可以记住向字典里添加元素的顺序。因此，神经网络的正向传播只需按照添加元素的顺序调用各层的 <code class="calibre15">forward()</code> 方法就可以完成处理，而反向传播只需要按照相反的顺序调用各层即可。因为 Affine 层和 ReLU 层的内部会正确处理正向传播和反向传播，所以这里要做的事情仅仅是以正确的顺序连接各层，再按顺序（或者逆序）调用各层。</p>
+<p class="calibre1">像这样通过将神经网络的组成元素以层的方式实现，可以轻松地构建神经网络。这个用层进行模块化的实现具有很大优点。因为想另外构建一个神经网络（比如 5 层、10 层、20 层……的大的神经网络）时，只需像组装乐高积木那样添加必要的层就可以了。之后，通过各个层内部实现的正向传播和反向传播，就可以正确计算进行识别处理或学习所需的梯度。</p>
+<h3 id="nav_point_139" class="calibre17">5.7.3　误差反向传播法的梯度确认</h3>
+<p class="calibre1">到目前为止，我们介绍了两种求梯度的方法。一种是基于数值微分的方法，另一种是解析性地求解数学式的方法。后一种方法通过使用误差反向传播法，即使存在大量的参数，也可以高效地计算梯度。因此，后文将不再使用耗费时间的数值微分，而是使用误差反向传播法求梯度。</p>
+<p class="calibre1">数值微分的计算很耗费时间，而且如果有误差反向传播法的（正确的）实现的话，就没有必要使用数值微分的实现了。那么数值微分有什么用呢？实际上，在确认误差反向传播法的实现是否正确时，是需要用到数值微分的。</p>
+<p class="calibre1">数值微分的优点是实现简单，因此，一般情况下不太容易出错。而误差反向传播法的实现很复杂，容易出错。所以，经常会比较数值微分的结果和误差反向传播法的结果，以确认误差反向传播法的实现是否正确。确认数值微分求出的梯度结果和误差反向传播法求出的结果是否一致（严格地讲，是非常相近）的操作称为<strong class="calibre2">梯度确认</strong>（gradient check）。梯度确认的代码实现如下所示（源代码在 <code class="calibre15">ch05/gradient_check.py</code> 中）。</p>
+<pre class="calibre18"><code class="calibre20">import sys, os
+sys.path.append(os.pardir)
+import numpy as np
+from dataset.mnist import load_mnist
+from two_layer_net import TwoLayerNet
+
+# 读入数据
+(x_train, t_train), (x_test, t_test) = \ load_mnist(normalize=True, one_
+hot_label = True)
+
+network = TwoLayerNet(input_size=784, hidden_size=50, output_size=10)
+
+x_batch = x_train[:3]
+t_batch = t_train[:3]
+
+grad_numerical = network.numerical_gradient(x_batch, t_batch)
+grad_backprop = network.gradient(x_batch, t_batch)
+
+# 求各个权重的绝对误差的平均值
+for key in grad_numerical.keys():
+    diff = np.average( np.abs(grad_backprop[key] - grad_numerical[key]) )
+    print(key + ":" + str(diff))
+
+</code></pre>
+<p class="calibre1">和以前一样，读入 MNIST 数据集。然后，使用训练数据的一部分，确认数值微分求出的梯度和误差反向传播法求出的梯度的误差。这里误差的计算方法是求各个权重参数中对应元素的差的绝对值，并计算其平均值。运行上面的代码后，会输出如下结果。</p>
+<pre class="calibre18"><code class="calibre20">b1:9.70418809871e-13
+W2:8.41139039497e-13
+b2:1.1945999745e-10
+W1:2.2232446644e-13
+
+</code></pre>
+<p class="calibre1">从这个结果可以看出，通过数值微分和误差反向传播法求出的梯度的差非常小。比如，第 1 层的偏置的误差是 <code class="calibre15">9.7e-13</code>（<code class="calibre15">0.00000000000097</code>）。这样一来，我们就知道了通过误差反向传播法求出的梯度是正确的，误差反向传播法的实现没有错误。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00001.jpeg" alt="" width="5%" class="calibre11"/>　数值微分和误差反向传播法的计算结果之间的误差为 0 是很少见的。这是因为计算机的计算精度有限（比如，32 位浮点数）。受到数值精度的限制，刚才的误差一般不会为 0，但是如果实现正确的话，可以期待这个误差是一个接近 0 的很小的值。如果这个值很大，就说明误差反向传播法的实现存在错误。</p>
+</blockquote>
+<h3 id="nav_point_140" class="calibre17">5.7.4　使用误差反向传播法的学习</h3>
+<p class="calibre1">最后，我们来看一下使用了误差反向传播法的神经网络的学习的实现。和之前的实现相比，不同之处仅在于通过误差反向传播法求梯度这一点。这里只列出了代码，省略了说明（源代码在 <code class="calibre15">ch05/train_neuralnet.py</code> 中）。</p>
+<pre class="calibre18">
+import sys, os
+sys.path.append(os.pardir)
+import numpy as np
+from dataset.mnist import load_mnist
+from two_layer_net import TwoLayerNet
+
+# 读入数据
+(x_train, t_train), (x_test, t_test) = \
+    load_mnist(normalize=True, one_hot_label=True)
+
+network = TwoLayerNet(input_size=784, hidden_size=50, output_size=10)
+
+iters_num = 10000
+train_size = x_train.shape[0]
+batch_size = 100
+learning_rate = 0.1
+train_loss_list = []
+train_acc_list = []
+test_acc_list = []
+
+iter_per_epoch = max(train_size / batch_size, 1)
+
+for i in range(iters_num):
+    batch_mask = np.random.choice(train_size, batch_size)
+    x_batch = x_train[batch_mask]
+    t_batch = t_train[batch_mask]
+
+    <b class="calibre19"># 通过误差反向传播法求梯度</b>
+    <b class="calibre19">grad = network.gradient(x_batch, t_batch)</b>
+
+    # 更新
+    for key in ('W1', 'b1', 'W2', 'b2'):
+        network.params[key] -= learning_rate * grad[key]
+
+    loss = network.loss(x_batch, t_batch)
+    train_loss_list.append(loss)
+
+    if i % iter_per_epoch == 0:
+        train_acc = network.accuracy(x_train, t_train)
+        test_acc = network.accuracy(x_test, t_test)
+        train_acc_list.append(train_acc)
+        test_acc_list.append(test_acc)
+        print(train_acc, test_acc)
+</pre>
+
+</body></html>

@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>数据科学入门</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<p id="filepos736434" class="calibre_"><span class="calibre1"><span class="bold"> 第 24 章　MapReduce </span></span></p><p class="calibre_4">
+<span class="bold">明天已经照耀现在，只是尚未洒满每个角落。</span>
+</p><p class="calibre_4">
+<span class="bold">——威廉 · 吉布森</span>
+</p><p class="calibre_">MapReduce 是一个用来在在大型数据集上执行并行处理的算法模型。尽管这是一个非常强大的技术，但它的基本原理却很简单。</p><p class="calibre_">假设我们有一组待处理的项目，这些项目可能是网页日志、许多本书的文本、图像文件或者是其他东西。一个基本的 MapReduce 算法包括下面几个步骤。</p><p class="calibre_">1. 使用 <tt class="calibre7">mapper</tt> 函数把每个项目转化成零个或多个键值对。（通常这被称为 <tt class="calibre7">map</tt> 函数，但是已经有了一个叫 <tt class="calibre7">map</tt> 的 Python 函数，所以我们不能把它们混淆。）</p><p class="calibre_">2. 用相同的键把所有的键值对收集起来。</p><p class="calibre_">3. 在每一个分好组的值集合上使用 <tt class="calibre7">reducer</tt> 函数，对每个对应的键生成输出值。</p><p class="calibre_">这样讲是很抽象的，所以让我们看一个具体的例子。数据科学里很少有绝对的规则，但有一个不成文的规则是，你面对的第一个 MapReduce 的例子中必须要涉及单词计数。</p><div class="mbp_pagebreak" id="calibre_pb_171"></div>
+<div class="calibre5">本书由「<a href="https://epubw.com" class="calibre3">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="calibre3">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body></html>

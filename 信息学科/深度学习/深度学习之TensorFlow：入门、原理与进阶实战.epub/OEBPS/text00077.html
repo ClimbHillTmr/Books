@@ -1,0 +1,476 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">10.3　自编码网络的代码实现</h3>
+<p class="ziti3">本节通过实例演示自编码网络的实现。</p>
+<h4 class="p3">10.3.1　实例76：提取图片的特征，并利用特征还原图片</h4>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">通过构建一个两层降维的自编码网络，将MNIST数据集的数据特征提取出来，并通过这些特征再重建一个MNIST数据集。</p>
+<p class="ziti3">本例分为如下几个步骤。</p>
+<p class="ziti4">
+<span class="yanse">1．引入头文件，并加载MNIST数据</span>
+</p>
+<p class="ziti3">假设MNIST数据放在代码文件同级目录的data下，将其以one-hot的形式载入。</p>
+<p class="ziti3">代码10-1　自编码</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import tensorflow as tf
+02 import numpy as np
+03 import matplotlib.pyplot as plt
+04 
+05 # 导入MINST 数据集
+06 from tensorflow.examples.tutorials.mnist import input_data
+07 mnist = input_data.read_data_sets("/data/", one_hot=True) </pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．定义网络模型</span>
+</p>
+<p class="ziti3">下面输入MNIST数据集的图片，将其像素点组成的数据（28×28=784）从784维降维到256，然后再降到128，最后再以同样的方式经过128再经过256，最终还原到原来的图片，其过程如图10-2所示。</p>
+<div class="pic"><img alt="" src="Image00202.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-2　自编码实例代码的维度变化过程</p>
+<p class="ziti3">定义网络模型的具体代码如下。</p>
+<p class="ziti3">代码10-1　自编码（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">08 learning_rate = 0.01
+09 n_hidden_1 = 256                             # 第一层256个节点
+10 n_hidden_2 = 128                             # 第二层128个节点
+11 n_input = 784                                  # MNIST 数据集中图片的维度
+12 
+13 # 占位符
+14 x = tf.placeholder("float", [None, n_input])     #输入
+15 y = x                                                    #输出
+16 
+17 #学习参数
+18 weights = {
+19     'encoder_h1': tf.Variable(tf.random_normal([n_input, n_hidden_
+    1])),
+20     'encoder_h2': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_
+    2])),
+21     'decoder_h1': tf.Variable(tf.random_normal([n_hidden_2, n_hidden_
+    1])),
+22     'decoder_h2': tf.Variable(tf.random_normal([n_hidden_1, n_
+    input])),
+23 }
+24 biases = {
+25     'encoder_b1': tf.Variable(tf.zeros([n_hidden_1])),
+26     'encoder_b2': tf.Variable(tf.zeros([n_hidden_2])),
+27     'decoder_b1': tf.Variable(tf.zeros([n_hidden_1])),
+28     'decoder_b2': tf.Variable(tf.zeros([n_input])),
+29 }
+30 
+31 # 编码
+32 def encoder(x):
+33     layer_1 = tf.nn.sigmoid(tf.add(tf.matmul(x, weights['encoder_
+    h1']),biases['encoder_b1']))
+34     layer_2 = tf.nn.sigmoid(tf.add(tf.matmul(layer_1, weights
+    ['encoder_h2']), biases['encoder_b2']))
+35     return layer_2
+36 
+37 # 解码
+38 def decoder(x):
+39     layer_1 = tf.nn.sigmoid(tf.add(tf.matmul(x, weights['decoder_
+    h1']),biases['decoder_b1']))
+40     layer_2 = tf.nn.sigmoid(tf.add(tf.matmul(layer_1, weights
+    ['decoder_h2']),biases['decoder_b2']))
+41     return layer_2
+42 
+43 #输出的节点
+44 encoder_out = encoder(x)
+45 pred = decoder(encoder_out)
+46 
+47 # cost为y与pred的平方差
+48 cost = tf.reduce_mean(tf.pow(y - pred, 2))
+49 optimizer = tf.train.RMSPropOptimizer(learning_rate).minimize(cost)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面代码里先定义了学习率为0.01，这个值可以动态调节，会直接影响到收敛速度和学习的准确性，由于输出标签也是输入标签，所以后面直接定义y=x。</p>
+<p class="ziti4">
+<span class="yanse">3．开始训练</span>
+</p>
+<p class="ziti3">接下来设置训练参数，一次取256条数据，将所有的训练数据集进行20次的迭代训练。</p>
+<p class="ziti3">代码10-1　自编码（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">50 # 训练参数
+51 training_epochs = 20             #一共迭代20次
+52 batch_size = 256               #每次取256个样本
+53 display_step = 5               #迭代5次输出一次信息
+54 
+55 # 启动会话
+56 with tf.Session() as sess:
+57     sess.run(tf.global_variables_initializer())
+58     total_batch = int(mnist.train.num_examples/batch_size)
+59     # 开始训练
+60     for epoch in range(training_epochs): #迭代
+61       
+62       for i in range(total_batch):
+63         batch_xs, batch_ys = mnist.train.next_batch(batch_size)#取数据
+64             _, c = sess.run([optimizer, cost], feed_dict={x: batch_xs})   # 训练模型
+65         if epoch % display_step == 0: # 现实日志信息
+66             print("Epoch:", '%04d' % (epoch+1),"cost=", "{:.9f}".
+            format(c))
+67     print("完成!")</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">4．测试模型</span>
+</p>
+<p class="ziti3">接下来通过MNIST数据集中的test集来测试一下模型的准确度。</p>
+<p class="ziti3">代码10-1　自编码（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">68     correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
+69     # 计算错误率
+70     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+71     print ("Accuracy:", 1-accuracy.eval({x: mnist.test.images, y: 
+    mnist.test.images}))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">执行代码，信息输出如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Epoch: 0001 cost= 0.216481194
+Epoch: 0006 cost= 0.144190893
+Epoch: 0011 cost= 0.128914982
+Epoch: 0016 cost= 0.120772459
+完成!
+Accuracy: 0.885104</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面的输出信息中，前面打印的是每一次迭代的错误率，最终输出的Accuracy指的是整个模型的正确率。</p>
+<p class="ziti4">
+<span class="yanse">5．双比输入和输出</span>
+</p>
+<p class="ziti3">随意取出10张图片，比对一下输入与输出，可以看到自编码网络还原的图片与真实图片几乎一样。</p>
+<p class="ziti3">代码10-1　自编码（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">72 # 可视化结果
+73     show_num = 10
+74     reconstruction = sess.run(
+75         pred, feed_dict={x: mnist.test.images[:show_num]})
+76     f, a = plt.subplots(2, 10, figsize=(10, 2))
+77     for i in range(show_num):
+78         a[0][i].imshow(np.reshape(mnist.test.images[i], (28, 28)))
+79         a[1][i].imshow(np.reshape(reconstruction[i], (28, 28)))
+80     plt.draw()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">执行上面的代码，会生成如图10-3所示图片。图片分为上下两行，第一行显示的内容为输入图片，第二行显示的内容为输出图片。</p>
+<div class="pic"><img alt="" src="Image00203.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-3　自编码实例的输出结果</p>
+<h4 class="p3">10.3.2　线性解码器</h4>
+<p class="ziti3">在实例76中使用的激活函数为S型激活函数，输出范围是[0，1]，当我们对最终提取的特征节点采用该激励函数时，就相当于对输入限制或缩放，使其位于[0，1]范围中。有一些数据集，比如MNIST，能方便地将输出缩放到[0，1]中，但是很难满足对输入值的要求。例如，PCA白化处理的输入并不满足[0，1]范围要求，也不清楚是否有最好的办法可以将数据缩放到特定范围中。</p>
+<p class="ziti3">如果利用一个恒等式来作为激励函数，就可以很好地解决这个问题，即将f（z）=z作为激励函数（即，没有激励函数）。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 这个方法只是对最后的输出层而言，对于神经网络中隐含层的神经元依然还要使用S型（或者tanh）激励函数。</p>
+<p class="ziti3">由多个带有S型激活函数的隐含层及一个线性输出层构成的自编码器，称为线性解码器。下面来看一个线性解码器的例子。</p>
+<h4 class="p3">10.3.3　实例77：提取图片的二维特征，并利用二维特征还原图片</h4>
+<p class="ziti3">本节用一个更为极致的例子来展示自编码网络的“威力”。将MNIST图片压缩成二维数据，这样也可以在直角坐标系上将其显示出来，让读者更形象地了解自编码网络在特征提取方面的功能。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">在自编码网络中使用线性解码器对MNIST数据特征进行再压缩，并将其映射到直角坐标系上。</p>
+<p class="ziti3">这里使用4层逐渐压缩将784维度分别压缩成256、64、16、2这4个特征向量。编码部分的具体结构如图10-4所示。</p>
+<div class="pic"><img alt="" src="Image00204.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-4　线性解码器实例编码部分网络结构</p>
+<p class="ziti3">然后以直角坐标系的形式将数据点显示出来，这样可以更直观地看到自编码器对于同一类图片的聚类效果。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 说明：</span>
+ 如果读者想得到更好的特征提取效果，可以将压缩的层数变得更多，每层压缩一点点（如：512、256、128、64、32、16、2），由于Sigmoid函数的“天生”缺陷，无法使用更深的层，所以这里只能做成4层压缩。但不用担心，这个问题可以在学完本章内容之后得到一个满意的解决办法（使用栈式自编码器）。</p>
+<p class="ziti3">在这个例子中分为如下几步来编写代码。</p>
+<p class="ziti4">
+<span class="yanse">1．引入头文件，定义学习参数变量</span>
+</p>
+<p class="ziti3">由于要建立4层网络，所以要为每一层分配节点个数，学习参数。</p>
+<p class="ziti3">代码10-2　自编码进阶</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import tensorflow as tf
+02 import numpy as np
+03 import matplotlib.pyplot as plt
+04 
+05 # 导入MNIST数据集
+06 from tensorflow.examples.tutorials.mnist import input_data
+07 mnist = input_data.read_data_sets("/data/", one_hot=True)
+08 
+09 # 定义学习率
+10 learning_rate = 0.01    
+11 # 隐藏层设置
+12 n_hidden_1 = 256
+13 n_hidden_2 = 64
+14 n_hidden_3 = 16
+15 n_hidden_4 = 2
+16 n_input = 784  # MNIST data 输入(img shape: 28*28)
+17 
+18 #定义输入占位符
+19 x = tf.placeholder("float", [None,n_input])
+20 y=x
+21 weights = {
+22     'encoder_h1': tf.Variable(tf.random_normal([n_input, n_hidden_1],)),
+23     'encoder_h2': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_2],)),
+24     'encoder_h3': tf.Variable(tf.random_normal([n_hidden_2, n_hidden_3],)),
+25     'encoder_h4': tf.Variable(tf.random_normal([n_hidden_3, n_hidden_4],)),
+26 
+27     'decoder_h1': tf.Variable(tf.random_normal([n_hidden_4, n_hidden_3],)),
+28     'decoder_h2': tf.Variable(tf.random_normal([n_hidden_3, n_hidden_2],)),
+29     'decoder_h3': tf.Variable(tf.random_normal([n_hidden_2, n_hidden_1],)),
+30     'decoder_h4': tf.Variable(tf.random_normal([n_hidden_1, n_input],)),
+31 } 
+32 
+33 biases = {
+34     'encoder_b1': tf.Variable(tf.zeros([n_hidden_1])),
+35     'encoder_b2': tf.Variable(tf.zeros([n_hidden_2])),
+36     'encoder_b3': tf.Variable(tf.zeros([n_hidden_3])),
+37     'encoder_b4': tf.Variable(tf.zeros([n_hidden_4])),
+38 
+39     'decoder_b1': tf.Variable(tf.zeros([n_hidden_3])),
+40     'decoder_b2': tf.Variable(tf.zeros([n_hidden_2])),
+41     'decoder_b3': tf.Variable(tf.zeros([n_hidden_1])),
+42     'decoder_b4': tf.Variable(tf.zeros([n_input])),
+43 }</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．定义网络模型</span>
+</p>
+<p class="ziti3">下面的代码是定义编码和解码的网络结构，这里使用了线性解码器。在编码的最后一层，没有进行Sigmoid变换，这是因为生成的二维数据其数据特征已经变得极为主要，所以我们希望让它透传到解码器中，少一些变换可以最大化地保存原有的主要特征。当然，这一切也是通过分析之后实际测试得来的结果。</p>
+<p class="ziti3">代码10-2　自编码进阶（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">44   def encoder(x):
+45     layer_1 = tf.nn.sigmoid(tf.add(tf.matmul(x, weights['encoder_h1']),
+46                                    biases['encoder_b1']))
+47     layer_2 = tf.nn.sigmoid(tf.add(tf.matmul(layer_1, weights
+    ['encoder_h2']),
+48                                    biases['encoder_b2']))
+49     layer_3 = tf.nn.sigmoid(tf.add(tf.matmul(layer_2, weights
+    ['encoder_h3']),
+50                                    biases['encoder_b3']))
+51     layer_4 = tf.add(tf.matmul(layer_3, weights['encoder_h4']),
+52                                     biases['encoder_b4'])
+53     return layer_4
+54 
+55 def decoder(x):
+56     layer_1 = tf.nn.sigmoid(tf.add(tf.matmul(x, weights['decoder_h1']),
+57                                    biases['decoder_b1']))
+58     layer_2 = tf.nn.sigmoid(tf.add(tf.matmul(layer_1, weights
+    ['decoder_h2']),
+59                                    biases['decoder_b2']))
+60     layer_3 = tf.nn.sigmoid(tf.add(tf.matmul(layer_2, weights
+    ['decoder_h3']),
+61                                 biases['decoder_b3']))
+62     layer_4 = tf.nn.sigmoid(tf.add(tf.matmul(layer_3, weights
+    ['decoder_h4']),
+63                                 biases['decoder_b4']))
+64     return layer_4
+65 # 构建模型
+66 encoder_op = encoder(x) 
+67 y_pred = decoder(encoder_op) # 784 维度
+68 
+69 cost = tf.reduce_mean(tf.pow(y - y_pred, 2))
+70 optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">3．开始训练</span>
+</p>
+<p class="ziti3">这一步中还是一次取256条数据，将全部数据集迭代20次。</p>
+<p class="ziti3">代码10-2　自编码进阶（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">71 #训练
+72 training_epochs = 20 # 迭代训练20一次
+73 batch_size = 256
+74 display_step = 1
+75 
+76 with tf.Session() as sess:
+77     sess.run(tf.global_variables_initializer())
+78     total_batch = int(mnist.train.num_examples/batch_size)
+79     # 启动循环开始训练
+80     for epoch in range(training_epochs):
+81         # 遍历全部数据集
+82         for i in range(total_batch):
+83             batch_xs, batch_ys = mnist.train.next_batch(batch_size)  
+84             _, c = sess.run([optimizer, cost], feed_dict={x: batch_xs})
+85         # 显示训练中的详细信息
+86         if epoch % display_step == 0:
+87             print("Epoch:", '%04d' % (epoch+1),
+88                   "cost=", "{:.9f}".format(c))
+89     print("完成!")</pre>
+<hr class="calibre6"/>
+<p class="ziti3">输出结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Epoch: 0001 cost= 0.106694221
+Epoch: 0002 cost= 0.096146211
+Epoch: 0003 cost= 0.089687020
+Epoch: 0004 cost= 0.085342437
+Epoch: 0005 cost= 0.076942392
+Epoch: 0006 cost= 0.077152036
+Epoch: 0007 cost= 0.074504733
+Epoch: 0008 cost= 0.071438089
+Epoch: 0009 cost= 0.070937753
+Epoch: 0010 cost= 0.067885153
+Epoch: 0011 cost= 0.068935215
+Epoch: 0012 cost= 0.067724347
+Epoch: 0013 cost= 0.065405361
+Epoch: 0014 cost= 0.069433592
+Epoch: 0015 cost= 0.068582796
+Epoch: 0016 cost= 0.067146875
+Epoch: 0017 cost= 0.065363437
+Epoch: 0018 cost= 0.066899218
+Epoch: 0019 cost= 0.065677144
+Epoch: 0020 cost= 0.064701408
+完成!</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看出，通过自编码网络将784维的数据压缩成了二维，用二维数据来代替784维，这就是自编码网络的神奇之处！</p>
+<p class="ziti4">
+<span class="yanse">4．对比输入和输出</span>
+</p>
+<p class="ziti3">同样我们再添加一些代码将效果显示出来。随意取出10张图片，并将图片输入模型中，得到输出图片。同时比对一下输入与输出的图片。</p>
+<p class="ziti3">代码10-2　自编码进阶（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">90     # 可视化结果
+91     show_num = 10
+92     encode_decode = sess.run(
+93         y_pred, feed_dict={x: mnist.test.images[:show_num]})
+94     # 将自编码输出结果和原始样本显示出来
+95     f, a = plt.subplots(2, 10, figsize=(10, 2))
+96     for i in range(show_num):
+97         a[0][i].imshow(np.reshape(mnist.test.images[i], (28, 28)))
+98         a[1][i].imshow(np.reshape(encode_decode[i], (28, 28)))
+99     plt.show()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">执行上面的代码，生成如图10-5所示图片。</p>
+<div class="pic"><img alt="" src="Image00205.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-5　自编码进阶实例结果1</p>
+<p class="ziti4">
+<span class="yanse">5．显示数据的二维特征</span>
+</p>
+<p class="ziti3">接着就是比较好玩的事情了。我们要把数据压缩后的二维特征显示出来。</p>
+<p class="ziti3">代码10-2　自编码进阶（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">100     aa = [np.argmax(l)for l in mnist.test.labels]#将onehot转成一般编码
+101     encoder_result = sess.run(encoder_op, feed_dict={x: mnist.test.
+    images})
+102     plt.scatter(encoder_result[:, 0], encoder_result[:, 1], c=aa)
+103     plt.colorbar()
+104     plt.show()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">执行上面的代码，生成如图10-6所示图片。</p>
+<div class="pic"><img alt="" src="Image00206.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-6　自编码进阶实例结果2</p>
+<p class="ziti3">这样看这是不是直观多了！看了这个图你会有什么感觉，聚类？K均值？softmax？没错，一般来讲用自编码网络将数据降维之后的数据更有利于进行分类处理。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 上面代码中的aa是将mnist.test.labels里面的one_hot转换成一般的数字，然后进行图像显示。这个代码建议读者把它收集起来，因为在深度学习过程中one_hot的互转会经常用到。另外，one_hot转码有多种方法，细心的读者可以在前面章节中找到更简洁的转换代码。</p>
+<p class="ziti3">当然也可以不用这句代码，那么在最前面引入MNIST时就必须把onehot关掉，将</p>
+<hr class="calibre6"/>
+<pre class="ziti5">mnist = input_data.read_data_sets("/data/", one_hot=True)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">改成：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">mnist = input_data.read_data_sets("/data/", one_hot=False)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">同时将倒数第三句改成使用mnist的测试标签：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">plt.scatter(encoder_result[:,0],encoder_result[:,1],c=mnist.test.labels)</pre>
+<hr class="calibre6"/>
+<h4 class="p3">10.3.4　实例78：实现卷积网络的自编码</h4>
+<p class="ziti3">自编码结构不仅只用在全连接网络上，还可用在卷积网络上。下面举例实现一个卷积网络的自编码。代码变化不大，是在原有的基础上将全连接改成卷积，具体改动步骤如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">在自编码网络中使用卷积网络完成MNIST的自编码功能。</p>
+<p class="ziti4">
+<span class="yanse">1．修改网络权重定义</span>
+</p>
+<p class="ziti3">保持b不变，将原来的w改成卷积核的定义如下。</p>
+<p class="ziti3">代码10-3　卷积网络自编码</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 ……
+02 #学习参数
+03 weights = {
+04     'encoder_conv1': tf.Variable(tf.truncated_normal([5, 5, 1, n_conv_
+    1],stddev=0.1)),
+05     'encoder_conv2': tf.Variable(tf.random_normal([3, 3, n_conv_1, n_
+    conv_2],stddev=0.1)),
+06     'decoder_conv1': tf.Variable(tf.random_normal([5, 5, 1, n_conv_
+    1],stddev=0.1)),
+07     'decoder_conv2': tf.Variable(tf.random_normal([3, 3, n_conv_1, n_
+    conv_2],stddev=0.1))
+08 }
+09 ……</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．改变编码和解码结构</span>
+</p>
+<p class="ziti3">原来的编码器和解码器分别由全连接改成卷积和反卷积操作，通过外层的池化与反池化将整个网络贯穿起来。在网络入口处还要将输入的维度改成[-1，28，28，1]。</p>
+<p class="ziti3">代码10-3　卷积网络自编码（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">10 x_image = tf.reshape(x, [-1,28,28,1])
+11 # 编码
+12 def encoder(x):
+13     h_conv1 = tf.nn.relu(conv2d(x, weights['encoder_conv1']) + biases
+    ['encoder_conv1'])
+14     h_conv2 = tf.nn.relu(conv2d(h_conv1, weights['encoder_conv2']) + 
+    biases['encoder_conv2'])  
+15     return h_conv2,h_conv1
+16 
+17 # 解码
+18 def decoder(x,conv1):
+19     t_conv1 = tf.nn.conv2d_transpose(x-biases['decoder_conv2'],
+      weights['decoder_conv2'], conv1.shape,[1,1,1,1])
+20     t_x_image = tf.nn.conv2d_transpose(t_conv1-biases['decoder_
+    conv1'], weights['decoder_conv1'], x_image.shape,[1,1,1,1])
+21     return t_x_image
+22 
+23 #输出的节点
+24 encoder_out,conv1 = encoder(x_image)
+25 h_pool2, mask = max_pool_with_argmax(encoder_out, 2)
+26 
+27 h_upool = unpool(h_pool2, mask, 2)
+28 pred = decoder(h_upool,conv1)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面代码中用到的卷积函数和反池化函数，可以在8.4节和8.6节中查看具体实现过程。</p>
+<p class="ziti4">
+<span class="yanse">3．测试及可视化部分改动</span>
+</p>
+<p class="ziti3">因为反池化的函数要求输入图片的一个维度不能为Nine，所以，需要把评估部分也改一下。</p>
+<p class="ziti3">代码10-3　卷积网络自编码（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">29     # 测试
+30     batch_xs, batch_ys = mnist.train.next_batch(batchsize)
+31     print ("Error:", cost.eval({x: batch_xs}))
+32 
+33     # 可视化结果
+34     show_num = 10
+35     reconstruction = sess.run(
+36         
+37         pred, feed_dict={x: batch_xs})
+38 
+39     f, a = plt.subplots(2, 10, figsize=(10, 2))
+40     for i in range(show_num):
+41         
+42         a[0][i].imshow(np.reshape(batch_xs[i], (28, 28)))
+43         a[1][i].imshow(np.reshape(reconstruction[i], (28, 28)))
+44     plt.draw()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行上面的代码，可以看到如下信息，生成的图片如图10-7所示。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Epoch: 0001 cost= 0.026543943
+Epoch: 0006 cost= 0.538754463
+Epoch: 0011 cost= 0.006631755
+Epoch: 0016 cost= 0.003391982
+完成!
+error: 0.0214768</pre>
+<hr class="calibre6"/>
+<div class="pic"><img alt="" src="Image00207.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-7　卷积自编码网络实例</p>
+<h4 class="p3">10.3.5　练习题</h4>
+<p class="ziti3">仿照10.3.1节的例子，试着建立一个更深层的自编码，分为3层将图片压缩成512、256、128维度，然后再将其还原（可以参考本书配套代码的代码“10-4 自编码练习题.py”文件）。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

@@ -1,0 +1,760 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">9.4　TensorFlow实战RNN</h3>
+<p class="ziti3">在了解了RNN原理及类型之后，本节开始讲解在TensorFlow中如何构建RNN网络。</p>
+<h4 class="p3">9.4.1　TensorFlow中的cell类</h4>
+<p class="ziti3">TensorFlow中定义了5个关于cell的类，具体定义如表9-1所示。</p>
+<p class="middle-img">表9-1　cell类</p>
+<div class="pic"><img alt="" src="Image00174.jpg" class="calibre4"/>
+</div>
+<div class="pic"><img alt="" src="Image00175.jpg" class="calibre4"/>
+</div>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 在使用MultiRNNCell时，有些习惯写法是cells参数中直接用[cell]×n来代表创建n层的cell，这种写法如果不使用作用域隔离，则会报编译错误，或者使用一个外层循环将cell一个个append进去来解决命名冲突。</p>
+<h4 class="p3">9.4.2　通过cell类构建RNN</h4>
+<p class="ziti3">定义好cell类之后，还需要将它们连接起来构成RNN网络。TensorFlow中有几种现成的构建网络模式，是封装好的函数，直接调用即可，具体介绍如下。</p>
+<p class="ziti4">
+<span class="yanse">1．静态RNN构建</span>
+</p>
+<p class="ziti3">TensorFlow中提供了一个构建静态RNN的函数static_rnn，定义如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">def static_rnn(cell, inputs, initial_state=None,dtype=None,sequence_ 
+length=None, scope=None):</pre>
+<hr class="calibre6"/>
+<p class="ziti3">具体参数说明如下。</p>
+<p class="ziti4">·cell：生成好的cell类对象。</p>
+<p class="ziti4">·inputs：输入数据，一定是list或者二维张量，list的顺序就是时间序列。元素就是每一个序列的值。</p>
+<p class="ziti4">·initial_state：初始化cell状态。见9.4.14的详细介绍。</p>
+<p class="ziti4">·dtype：期望输出和初始化state的类型。</p>
+<p class="ziti4">·sequence_length：每一个输入的序列长度。</p>
+<p class="ziti4">·scope：命名空间。</p>
+<p class="ziti4">·返回值有两个，一个是结果，一个是cell状态，我们只关注结果即可，结果也是一个list。输入是多少个时序，list里面就会输出多少个元素。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ TensorFlow中的这种定义很不友好，初学者极易出错。在输入时，一定要将我们习惯使用的张量改成list。另外，在得到输出时也要取结果中的最后一个元素参与后面的运算。</p>
+<p class="ziti4">
+<span class="yanse">2．动态RNN构建</span>
+</p>
+<p class="ziti3">关于动态RNN函数dynamic_rnn的定义如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">def dynamic_rnn (cell, inputs, sequence_length=None, initial_state=None,
+                dtype=None, parallel_iterations=None, swap_memory=False,
+                time_major=False, scope=None):</pre>
+<hr class="calibre6"/>
+<p class="ziti3">具体参数说明如下。</p>
+<p class="ziti4">·cell：生成好的cell类对象。</p>
+<p class="ziti4">·inputs：输入数据，是一个张量，一般是三维张量，[batch_size，max_time，...]。其中batch_size表示一次的批次数量，max_time表示时间序列总数，后面是具体数据。</p>
+<p class="ziti4">·initial_state：初始化cell状态。见9.4.14的详细介绍。</p>
+<p class="ziti4">·dtype：期望输出和初始化state的类型。</p>
+<p class="ziti4">·sequence_length：每一个输入的序列长度。</p>
+<p class="ziti4">·time_major：为默认值False时，input的shape为[batch_size，max_time，...]。如果是True，shape为[max_time，batch_size，...]。</p>
+<p class="ziti4">·scope：命名空间。</p>
+<p class="ziti4">·返回值：一个是结果，一个是cell状态，结果是以[batch_size，max_time，...]形式的张量。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 动态RNN也存在很多容易出错的地方，尤其在输出部分，它是以批次优先的矩阵。因为我们需要取最后一个时序的输出，所以需要转置成时间优先的形式。</p>
+<p class="ziti4">
+<span class="yanse">3．双向RNN构建</span>
+</p>
+<p class="ziti3">双向RNN作为一个可以学习正、反向规律的循环神经网络，在TensorFlow中有4个函数可以使用，如表9-2所示。</p>
+<p class="middle-img">表9-2　双向RNN函数</p>
+<div class="pic"><img alt="" src="Image00176.jpg" class="calibre4"/>
+</div>
+<div class="pic"><img alt="" src="Image00177.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">表9-2中，第一个函数是建立一个简单的双向RNN网络，两个方向各一个cell。第二个函数是建立多层的双向RNN，每个方向都是一个多层cell。最后一个函数与第二个函数相同，只不过输入和输出是张量的形式。有了前面多层网络结构及卷积的基础之后，再理解LSTM将变得很容易。下面例子中仍然是对MNIST进行分类，这里只列出了核心部分，其他部分与原来一样，不再赘述。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 在单层、多层、双向RNN函数的介绍中，都有动态和静态之分。静态的意思就是按照样本的时间序列个数（n）展开，在图中创建（n）个序列的cell或cell中；动态的意思是只创建样本中一个序列的RNN，其他的序列数据都会通过循环来进入该RNN来运算。</p>
+<p class="ziti4">通过静态生成的RNN网络，生成过程所需的时间会更长，网络所占有的内存会更多，导出的模型会更大。模型中会带有每个序列中间态的信息，利于调试。在使用时必须与训练时的样本序列个数相同。通过动态生成的RNN网络，所占用的内存较少，导出的模型较小。模型中只会有最后的状诚。在使用时还能支持不同的序列个数。</p>
+<p class="ziti4">
+<span class="yanse">4．使用动态RNN处理变长序列</span>
+</p>
+<p class="ziti3">动态RNN还有个更高级的功能就是可以处理变长序列，方法就是：在准备样本的同时，将样本对应的长度也作为初始化参数，一起创建动态RNN。示例代码如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">import tensorflow as tf
+import numpy as np
+tf.reset_default_graph()
+# 创建输入数据
+X = np.random.randn(2, 4, 5)
+ 
+# 第二个样本长度为3
+X[1,1:] = 0
+seq_lengths = [4, 1]
+#分别建立一个lstm与GRU的cell，比较输出的状态
+cell = tf.contrib.rnn.BasicLSTMCell(num_units=3, state_is_tuple=True)
+gru = tf.contrib.rnn.GRUCell(3)
+ 
+# 如果没有 initial_state，必须指定 a dtype
+outputs, last_states = tf.nn.dynamic_rnn(cell,X, seq_lengths,dtype=tf. float64)
+gruoutputs, grulast_states = tf.nn.dynamic_rnn(gru,X,seq_lengths,dtype= tf.float64)
+sess = tf.InteractiveSession()
+sess.run(tf.global_variables_initializer())
+result,sta ,gruout,grusta=sess.run([outputs,last_states,gruoutputs,grulast_states])
+ 
+print("全序列：\n", result[0]) #对于全序列则输出正常长度的值
+print("短序列：\n", result[1]) #对于短序列，会为多余的序列长度补0
+print('LSTM的状态：',len(sta),'\n',sta[1]) #在初始化中设置了state_is_ 
+   tuple为true，所以lstm的状
+ 态，为（状态，输出值）
+print('GRU的短序列：\n',gruout[1])
+print('GRU的状态：',len(grusta),'\n',grusta[1]) #Gru没有状态输出。其状态就是
+ 最终结果，因为批次为两个，所
+ 以输出为2</pre>
+<hr class="calibre6"/>
+<p class="ziti3">这种变成序列在运算之后，对于短序列会在输出结果后面补0，同时会把补0之前的最后输出放到状态里。例如上面代码执行后，会有如下输出：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">全序列：
+ [[-0.01654044  0.01401587 -0.09957964]
+ [-0.02326733  0.05380562 -0.00796815]
+ [-0.01326877  0.26243431 -0.20821182]
+ [-0.02425857  0.04418174 -0.2551933 ]]
+短序列：
+ [[ 0.01152199  0.00987599  0.05193869]
+ [ 0.          0.          0.        ]
+ [ 0.          0.          0.        ]
+ [ 0.          0.          0.        ]]
+LSTM的状态： 2 
+ [[-0.02425857  0.04418174 -0.2551933 ]
+ [ 0.01152199  0.00987599  0.05193869]]
+GRU的短序列：
+ [[ 0.34744831 -0.0745199   0.04048231]
+ [ 0.          0.          0.        ]
+ [ 0.          0.          0.        ]
+ [ 0.          0.          0.        ]]
+GRU的状态： 2 
+ [ 0.34744831 -0.0745199   0.04048231]</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在源码中，批次的值为2，里面放了一个全序列样本与一个短序列样本。在输出的结果中，使用result[0]将全序列的结果输出，result[1]将短序列的结果输出。全序列与短序列两部分的输出均为4行3列的数组，其中3是由于有3个RNN单元，而4是源于全序列的长度为4。可以看到由于短序列长度为1，其输出结果中其他的3个序列自动补上了0。</p>
+<p class="ziti3">动态RNN会将真实长度的最后输出放到状态里，直接从状态取值即可拿到结果。这里需要区分一下LSTM与GRU的状态取值方法。</p>
+<p class="ziti4">·LSTM的状态：一般是一个元组（取决于state_is_tuple初始化时的参数设置），内容为（状态，输出值），取值时需要选择输出值对应的索引。</p>
+<p class="ziti4">·GRU的状态：因为GRU本身没有状态输出，所以状态值即为输出值。如上面的代码通过打印grusta[1]的值（最后一行），直接可以得到短序列的最终输出值并在屏幕上打印出来。</p>
+<h4 class="p3">9.4.3　实例57：构建单层LSTM网络对MNIST数据集分类</h4>
+<p class="ziti3">这里的输入x当成28个时间段，每段内容为28个值，使用unstack将原始的输入28×28调整成具有28个元素的list，每个元素为1×28的数组。这28个时序一次送入RNN中，如图9-21所示。</p>
+<div class="pic"><img alt="" src="Image00178.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-21　LSTM例子</p>
+<p class="ziti3">由于是批次操作，所以每次都取该批次中所有图片的一行作为一个时间序列输入。</p>
+<p class="ziti3">理解了这个转换之后，构建网络就变得很容易了，先建立一个包含128个cell的类lstm_cell，然后将变形后的x1放进去生成节点outputs，最后通过全连接生成pred，最后使用softmax进行分类。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">演示使用单层LSTM网络对MNIST数据集分类。</p>
+<p class="ziti3">代码9-3　LSTMMnist</p>
+<hr class="calibre6"/>
+<pre class="ziti5">import tensorflow as tf
+# 导入MINST data
+from tensorflow.examples.tutorials.mnist import input_data
+mnist = input_data.read_data_sets("/data/", one_hot=True)
+ 
+n_input = 28            #MNIST data 输入(img shape: 28*28)
+n_steps = 28            #序列个数
+n_hidden = 128          #隐藏层个数
+n_classes = 10          #MNIST 分类个数 (0～9 digits)
+#定义占位符
+x = tf.placeholder("float", [None, n_steps, n_input])
+y = tf.placeholder("float", [None, n_classes])
+ 
+x1 = tf.unstack(x, n_steps, 1)
+lstm_cell = tf.contrib.rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
+outputs, states = tf.contrib.rnn.static_rnn(lstm_cell, x1, 
+dtype=tf.float32)
+pred = tf.contrib.layers.fully_connected(outputs[-1],n_classes, 
+activation_fn = None)
+……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行上面代码，结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Extracting /data/train-images-idx3-ubyte.gz
+Extracting /data/train-labels-idx1-ubyte.gz
+Extracting /data/t10k-images-idx3-ubyte.gz
+Extracting /data/t10k-labels-idx1-ubyte.gz
+Iter 1280, Minibatch Loss= 1.957660, Training Accuracy= 0.35156
+Iter 2560, Minibatch Loss= 1.633594, Training Accuracy= 0.46875
+……
+Iter 98560, Minibatch Loss= 0.156201, Training Accuracy= 0.94531
+Iter 99840, Minibatch Loss= 0.170062, Training Accuracy= 0.94531
+ Finished!
+Testing Accuracy: 0.945</pre>
+<hr class="calibre6"/>
+<p class="ziti3">本例中用到了BasicLSTMCell类，还可以使用LSTMCell类，将类名换一下即可，见本书附带资源中的代码“9-4　LSTMCell.py”文件。</p>
+<h4 class="p3">9.4.4　实例58：构建单层GRU网络对MNIST数据集分类</h4>
+<p class="ziti3">GRU的实现与LSTM几乎一样，修改该前面的代码“9-3 LSTMMnist.py”文件，将LSTMCell换成GRUCell，同时去掉参数和返回值。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">演示使用单层GRU网络对MNIST数据集分类。</p>
+<p class="ziti3">代码9-5　gru</p>
+<hr class="calibre6"/>
+<pre class="ziti5">……
+gru = tf.contrib.rnn.GRUCell(n_hidden)
+outputs = tf.contrib.rnn.static_rnn(gru, x1, dtype=tf.float32)
+……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">由于GRU只有一个输出，所以创建起来没有state_is_tuple参数。</p>
+<h4 class="p3">9.4.5　实例59：创建动态单层RNN网络对MNIST数据集分类</h4>
+<p class="ziti3">本例中将静态RNN函数改成动态RNN函数即可，将上面的代码“9-5　gru.py”修改如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">演示使用单层动态RNN网络对MNIST数据集分类。</p>
+<p class="ziti3">代码9-6　创建动态RNN</p>
+<hr class="calibre6"/>
+<pre class="ziti5">……
+gru = tf.contrib.rnn.GRUCell(n_hidden)
+ 
+# 创建动态RNN
+outputs,_  = tf.nn.dynamic_rnn(gru,x,dtype=tf.float32)
+outputs = tf.transpose(outputs, [1, 0, 2])
+pred = tf.contrib.layers.fully_connected(outputs[-1],n_classes, 
+activation_fn = None)
+……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面代码中，输入不再是转成list的x1，而是x，输出的outputs也通过transpose做了一次转置。</p>
+<p class="ziti3">transpose中的第二参数[1，0，2]的意思是将[batch_size，max_time，……]中的第1维batch_size放在前面，第0维max_time放在后面，而第2维的数据不变。按照这些要求，在数据集变为[max_time，batch_size，……]之后，取最后一个时间序列时得到的就是[batch_size，……]了。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 对于输出是张量形式的RNN对结果处理先转置，再取最后一条，这是一个常用的技巧。</p>
+<p class="ziti3">多层RNN在创建过程中，需要使用到前面介绍的MultiRNNCell类，这个类的实例化需要通过单层的cell对象输入。</p>
+<p class="ziti3">与前面的例子类似，先创建单层的cell，然后再创建MultiRNNCell对象，在创建好MultiRNNCell后，可以通过静态或动态的RNN网络建立方式将网络组合起来。</p>
+<h4 class="p3">9.4.6　实例60：静态多层LSTM对MNIST数据集分类</h4>
+<p class="ziti3">修改该前面的代码“9-3 LSTMMnist.py”例子代码如下：通过一个循环来建立3个LSTM的cell并放在list列表变量stacked_rnn里，然后实例化MultiRNNCell对象得到mcell。用unstack将输入的x转成list，输入到static_rnn函数里，返回值的结果再接一个全连接层进行softmax分类。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">演示使用静态多层LSTM网络对MNIST数据集分类。</p>
+<p class="ziti3">代码9-7　McellMNIST</p>
+<hr class="calibre6"/>
+<pre class="ziti5">……
+x = tf.placeholder("float", [None, n_steps, n_input])
+y = tf.placeholder("float", [None, n_classes])
+ 
+stacked_rnn = []
+for i in range(3):
+    stacked_rnn.append(tf.contrib.rnn.LSTMCell(n_hidden))
+mcell = tf.contrib.rnn.MultiRNNCell(stacked_rnn)
+ 
+x1 = tf.unstack(x, n_steps, 1)
+outputs, states = tf.contrib.rnn.static_rnn(mcell, x1, dtype=tf.float32)
+pred = tf.contrib.layers.fully_connected(outputs[-1],n_classes, 
+activation_fn = None)
+ 
+learning_rate = 0.001
+# 定义loss和优化器
+cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits 
+(logits=pred, labels=y))
+optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate). 
+minimize(cost)
+ 
+# 评估模型节点
+correct_pred = tf.equal(tf.argmax(pred,1), tf.argmax(y,1))
+accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+ 
+ 
+training_iters = 100000
+ 
+display_step = 10
+ 
+# 启动session
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+……</pre>
+<hr class="calibre6"/>
+<h4 class="p3">9.4.7　实例61：静态多层RNN-LSTM连接GRU对MNIST数据集分类</h4>
+<p class="ziti3">MultiRNNCell类的功能就是将多个RNN连接在一起，在前面的例子中将3个一样的LSTM连在了一起，其中这些RNN可以是不同的类型。这个就相当于前面讲过的MLP（多层神经网络）中的神经元节点一样。</p>
+<p class="ziti3">下面的例子就要将LSTM连接到GRU网络上输出。代码如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">演示使用静态多层LSTM网络对MNIST数据集分类。</p>
+<p class="ziti3">代码9-8　mcellLSTMGRU</p>
+<hr class="calibre6"/>
+<pre class="ziti5">gru = tf.contrib.rnn.GRUCell(n_hidden*2)
+lstm_cell = tf.contrib.rnn.LSTMCell(n_hidden)
+mcell = tf.contrib.rnn.MultiRNNCell([lstm_cell,gru])</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面的代码只是把循环生成的LSTM换成由LSTM与GRU组成的list即可，为了演示两个cell的无关性，特意将GRU的cell设成了n_hidden×2个，LSTM的cell设成n_hidden个，当然最终输出以最后一个节点为主，就是一个具有28个元素的list，每个元素为[batch_ size，n_hidden×2]。如果想要生成更多层的网络结构，直接在list里添加RNN的cell即可。</p>
+<h4 class="p3">9.4.8　实例62：动态多层RNN对MNIST数据集分类</h4>
+<p class="ziti3">本例与动态单层一样使用dynamic_rnn函数，改写上面代码如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">演示使用动态多层RNN网络对MNIST数据集分类。</p>
+<p class="ziti3">代码9-9　动态多层</p>
+<hr class="calibre6"/>
+<pre class="ziti5">outputs,states  = tf.nn.dynamic_rnn(mcell,x,dtype=tf.float32)#(?, 28, 
+256)
+outputs = tf.transpose(outputs, [1, 0, 2])
+#(28, ?, 256) 28个时序，取最后一个时序outputs[-1]=(?,256)
+pred = tf.contrib.layers.fully_connected(outputs[-1],n_classes, 
+activation_fn = None)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">将输入改成x，同时将输出的结果进行tf.transpose（outputs，[1，0，2]）的转置处理，取outputs[-1]放到下一层里参与运算。</p>
+<h4 class="p3">9.4.9　练习题</h4>
+<p class="ziti3">本书附带资源中有4个代码文件——“9-10　LSTM改错.py”“9-11　lstm改错1.py”“9-12　GRU改错2.py”“9-13　LSTM改错3.py”，分别有不同的错误，请将这些错误找出来使程序正常运行。</p>
+<h4 class="p3">9.4.10　实例63：构建单层动态双向RNN对MNIST数据集分类</h4>
+<p class="ziti3">先建立两个包含128个正反向cell的类lstm_fw_cell、lstm_bw_cell，然后使用tf.nn.bidirectional_dynamic_rnn函数将x放进去生成节点outputs，由于bidirectional_ dynamic_rnn的输出结果与状态是分离的，所以需要手动将结果合并起来并进行转置，然后通过全连接生成pred，再使用softmax进行分类。代码如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">演示使用单层动态双向RNN网络对MNIST数据集分类。</p>
+<p class="ziti3">代码9-14　BiRNNMnist</p>
+<hr class="calibre6"/>
+<pre class="ziti5">import tensorflow as tf
+from tensorflow.contrib import rnn
+# 导入MINST data
+from tensorflow.examples.tutorials.mnist import input_data
+mnist = input_data.read_data_sets("/data/", one_hot=True)
+ 
+# 定义参数
+learning_rate = 0.001
+training_iters = 100000
+batch_size = 128
+display_step = 10
+ 
+# 网络模型参数设置
+n_input = 28                  # MNIST data 输入(img shape: 28*28)
+n_steps = 28                  # 序列个数
+n_hidden = 128                # 隐藏层节点个数
+n_classes = 10                # MNIST 分类数 (0～9 digits)
+ 
+tf.reset_default_graph()
+ 
+#定义占位符
+x = tf.placeholder("float", [None, n_steps, n_input])
+y = tf.placeholder("float", [None, n_classes])
+ 
+x1 = tf.unstack(x, n_steps, 1)
+lstm_fw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
+# 反向cell
+lstm_bw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
+outputs, output_states = tf.nn.bidirectional_dynamic_rnn(lstm_fw_cell, 
+lstm_bw_cell,x,
+                                              dtype=tf.float32)
+print(len(outputs),outputs[0].shape,outputs[1].shape)
+outputs = tf.concat(outputs, 2)
+outputs = tf.transpose(outputs, [1, 0, 2])
+ 
+pred = tf.contrib.layers.fully_connected(outputs[-1],n_classes, 
+activation_fn = None)
+……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码后，输出的outputs类型如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">2 (?, 28, 128) (?, 28, 128)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以再次证明，输出的outputs是前向和后向分开的。这种方法最原始也最灵活，但要注意，一定要把两个输出结果进行融合（也可以不用concat）。因为后面实例的方法输出的都是concat之后的结果，不需要再额外考虑融合操作。</p>
+<h4 class="p3">9.4.11　实例64：构建单层静态双向RNN对MNIST数据集分类</h4>
+<p class="ziti3">静态双向RNN的建立是使用static_bidirectional_rnn函数，先建立两个包含128个正反向cell的类lstm_fw_cell、lstm_bw_cell，然后将变形后的x1放进去生成节点outputs，再通过全连接生成pred，最后使用softmax进行分类。代码如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">演示使用单层静态双向RNN网络对MNIST数据集分类。</p>
+<p class="ziti3">代码9-15　单层静态双向rnn</p>
+<hr class="calibre6"/>
+<pre class="ziti5">import tensorflow as tf
+from tensorflow.contrib import rnn
+# 输入MINST data
+from tensorflow.examples.tutorials.mnist import input_data
+mnist = input_data.read_data_sets("/data/", one_hot=True)
+ 
+# 定义参数
+learning_rate = 0.001
+training_iters = 100000
+batch_size = 128
+display_step = 10
+ 
+# 网络模型参数设置
+n_input = 28                       #MNIST数据输入 (img shape: 28*28)
+n_steps = 28                       #步骤序列
+n_hidden = 128                     #隐藏层个数
+n_classes = 10                     #MNIST总类别(0～9 digits)
+ 
+tf.reset_default_graph()
+ 
+#定义占位符
+x = tf.placeholder("float", [None, n_steps, n_input])
+y = tf.placeholder("float", [None, n_classes])
+ 
+x1 = tf.unstack(x, n_steps, 1)
+lstm_fw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
+# 反向cell
+lstm_bw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
+outputs,_,_ = rnn.static_bidirectional_rnn(lstm_fw_cell, lstm_bw_cell,x1,
+                                              dtype=tf.float32)
+print(outputs[0].shape,len(outputs))
+pred = tf.contrib.layers.fully_connected(outputs[-1],n_classes, 
+activation_fn = None)
+……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，输出结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Extracting /data/train-images-idx3-ubyte.gz
+Extracting /data/train-labels-idx1-ubyte.gz
+Extracting /data/t10k-images-idx3-ubyte.gz
+Extracting /data/t10k-labels-idx1-ubyte.gz
+(?, 256) 28
+Iter 1280, Minibatch Loss= 2.142399, Training Accuracy= 0.30469
+Iter 2560, Minibatch Loss= 1.830110, Training Accuracy= 0.37500
+Iter 3840, Minibatch Loss= 1.613333, Training Accuracy= 0.46875
+……
+Iter 96000, Minibatch Loss= 0.114890, Training Accuracy= 0.95312
+Iter 97280, Minibatch Loss= 0.159568, Training Accuracy= 0.94531
+Iter 98560, Minibatch Loss= 0.168179, Training Accuracy= 0.96094
+Iter 99840, Minibatch Loss= 0.089507, Training Accuracy= 0.97656
+ Finished!
+Testing Accuracy: 0.992188</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在输出过程中，我们将outputs的shape打印了出来，可以看到是个长度为28的list，每个元素为[batch_size，2×n_hidden]。双向RNN将输出两倍的结果。</p>
+<h4 class="p3">9.4.12　实例65：构建多层双向RNN对MNIST数据集分类</h4>
+<p class="ziti3">修改该前面的“9-15单层静态双向rnn.py”例子：将static_bidirectional_rnn换成stack_bidirectional_rnn，并将前、后向中的lstm_fw_cell和lstm_bw_cell用中括号扩起来。这样就用stack_bidirectional_rnn生成了正反各带有一层RNN的双向RNN网络。如果想再增加层，需要在中括号里接着添加即可。代码如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">演示使用多层双向RNN网络对MNIST数据集分类。</p>
+<p class="ziti3">代码9-16　多层双向RNN</p>
+<hr class="calibre6"/>
+<pre class="ziti5">outputs,_,_=rnn.stack_bidirectional_rnn([lstm_fw_cell],[lstm_bw_cell],x1,
+                                              dtype=tf.float32)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">也可以用循环方式生成多个RNN放到list里，代码如下。</p>
+<p class="ziti3">代码9-17　list多层双向RNN</p>
+<hr class="calibre6"/>
+<pre class="ziti5">stacked_rnn = []
+stacked_bw_rnn = []
+for i in range(3):
+    stacked_rnn.append(tf.contrib.rnn.LSTMCell(n_hidden))
+    stacked_bw_rnn.append(tf.contrib.rnn.LSTMCell(n_hidden))
+    
+outputs,_,_= rnn.stack_bidirectional_rnn(stacked_rnn,stacked_bw_rnn, x1,
+                                              dtype=tf.float32)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">还可以构建一个多层cell放到stack_bidirectional_rnn中，代码如下。</p>
+<p class="ziti3">代码9-18　Multi双向RNN</p>
+<hr class="calibre6"/>
+<pre class="ziti5">stacked_rnn = []
+stacked_bw_rnn = []
+for i in range(3):
+    stacked_rnn.append(tf.contrib.rnn.LSTMCell(n_hidden))
+    stacked_bw_rnn.append(tf.contrib.rnn.LSTMCell(n_hidden))
+ 
+mcell = tf.contrib.rnn.MultiRNNCell(stacked_rnn)
+mcell_bw = tf.contrib.rnn.MultiRNNCell(stacked_bw_rnn)
+ 
+outputs, _, _ = rnn.stack_bidirectional_rnn([mcell],[mcell_bw], x1,
+                                              dtype=tf.float32)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 使用MultiRNNCell时，虽然是多层，但是从外表上看仍是一个输入，stack_ bidirectional_rnn只关心输入的cell类是不是多个，而不会去识别输入的cell里面是否还包含多个。在这种情况下，就必须将输入用中括号括起来，让其变为list类型。</p>
+<h4 class="p3">9.4.13　实例66：构建动态多层双向RNN对MNIST数据集分类</h4>
+<p class="ziti3">将前面代码中rnn.stack_bidirectional_rnn注释掉，换成stack_bidirectional_dynamic_ rnn，输入变成x，同样将输出转置，然后送往下一层，代码如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">演示使用动态多层双向RNN网络对MNIST数据集分类。</p>
+<p class="ziti3">代码9-19　动态Multi双向rnn</p>
+<hr class="calibre6"/>
+<pre class="ziti5">mcell = tf.contrib.rnn.MultiRNNCell(stacked_rnn)
+mcell_bw = tf.contrib.rnn.MultiRNNCell(stacked_bw_rnn)
+ 
+outputs, _, _ = rnn.stack_bidirectional_dynamic_rnn([mcell],[mcell_bw], x,
+                                              dtype=tf.float32)
+outputs = tf.transpose(outputs, [1, 0, 2])
+ 
+print(outputs[0].shape,outputs.shape)
+pred = tf.contrib.layers.fully_connected(outputs[-1],n_classes, 
+activation_fn = None)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码后，输出的outputs类型如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">(?, 256) (28, ?, 256)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">前一个括号中是送往下一层的结果，仍然是256即正、反向的结果concat，后一个括号中是outputs的形状。</p>
+<h4 class="p3">9.4.14　初始化RNN</h4>
+<p class="ziti3">对应于9.4.2节中介绍的构建RNN的初始化cell状态参数，TensorFlow中也封装了对其初始化的方法，一起来看一下。</p>
+<p class="ziti4">
+<span class="yanse">1．初始化为0</span>
+</p>
+<p class="ziti3">对于正向或反向，第一个cell传入时没有之前的序列输出值，所以需要对其初始化。一般来讲，不用去刻意指定，系统会默认初始化0，当然也可以手动指定其初始化为0。代码如下。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">initial_state = lstm_cell.zero_state(batch_size, dtype)
+#在后续的cell实例化中，将initial_state传入即可</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．初始化为指定值</span>
+</p>
+<p class="ziti3">在确保创建组成RNN的cell时，设置了输出为元组类型（见表9-1中，创建cell类的初始化参数state_is_tuple=True）的前提下，可以使用LSTMStateTuple函数。但有时想要给lstm_cell的initial state赋予我们想要的值，而不是简单的用0来初始化。</p>
+<p class="ziti3">示例：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">from tensorflow.contrib.rnn.python.ops.core_rnn_cell_impl import 
+LSTMStateTuple
+……
+c_state = ……
+h_state = ……
+# c_state , h_state 都为Tensor
+initial_state = LSTMStateTuple(c_state, h_state)</pre>
+<hr class="calibre6"/>
+<h4 class="p3">9.4.15　优化RNN</h4>
+<p class="ziti3">RNN的优化技巧有很多，对于前面讲述的神经网络技巧大部分在RNN上都适用，但也有例外，下面就来介绍下RNN自己特有的两个优化方法的处理。</p>
+<p class="ziti4">
+<span class="yanse">1．dropout功能</span>
+</p>
+<p class="ziti3">在RNN中，如果想使用dropout功能，不能用以前的CNN下的dropout，CNN中：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">def dropout(x, keep_prob, noise_shape=None, seed=None, name=None)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">因为RNN有自己的dropout，并且实现方式与RNN不一样：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">def rnn_cell.DropoutWrapper(rnn_cell, input_keep_prob=1.0, output_keep_ 
+prob=1.0):</pre>
+<hr class="calibre6"/>
+<p class="ziti3">使用举例：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">lstm_cell=tf.nn.rnn_cell.DropoutWrapper(lstm_cell,output_keep_prob=0.5)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">从t-1时刻的状态传递到t时刻进行计算，这中间不进行memory的dropout，仅在同一个t时刻中，多层cell之间传递信息时进行dropout。所以，RNN的dropout方法会有两个设置参数input_keep_prob（传入cell的保留率）和output_keep_prob（输出cell的保留率）</p>
+<p class="ziti4">·如果希望是input传入cell时丢弃掉一部分input信息，就设置input_keep_prob，那么传入到cell的就是部分input。</p>
+<p class="ziti4">·如果希望cell的output只有一部分作为下一层cell的input，就定义为output_ keep_prob。</p>
+<p class="ziti3">示例代码如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">lstm_cell=tf.nn.rnn_cell.BasicLSTMCell(size,forget_bias=0.0,state_is_
+tuple=True)
+lstm_cell=tf.nn.rnn_cell.DropoutWrapper(lstm_cell,output_keep_prob=0.5)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在上面代码中，一个RNN层后面跟一个DropoutWrapper，是一种常见的用法。</p>
+<p class="ziti4">
+<span class="yanse">2．LN基于层的归一化</span>
+</p>
+<p class="ziti3">这部分内容是对应于批量归一化（BN）的。由于RNN的特殊结构，它的输入不同于前面所讲的全连接、卷积网络。</p>
+<p class="ziti4">·在BN中，每一层的输入只考虑当前批次样本（或批次样本的转化值）即可。</p>
+<p class="ziti4">·但是在RNN中，每一层的输入除了当前批次样本的转化值，还得考虑样本中上一个序列样本的输出值，所以对于RNN的归一化，BN算法不再适用，最小批次覆盖不了全部的输入数据，而是需要对于输入BN的某一层来做归一化，即layer- Normalization。</p>
+<p class="ziti3">由于RNN的网络都被LSTM、GRU这样的结构给封装起来，所以想要实现LN并不像BN那样直接在外层添加一个BN层就可以，需要改写LSTM或GRU的cell，对其内部的输入进行归一化处理。</p>
+<p class="ziti3">TensorFlow中目前还不支持这样的cell，所以需要开发者自己来改写原有cell的代码，具体的方法可以在下面例子中找到。</p>
+<h4 class="p3">9.4.16　实例67：在GRUCell中实现LN</h4>
+<p class="ziti3">在本例中将改写GRUCell代码来实现LN，该例子是在前面的代码“9-3 LSTMMnist.py”文件中改写的。</p>
+<p class="ziti3">（1）新加了一个函数LN用于做归一化处理。</p>
+<p class="ziti3">（2）定义一个LNGRU来代替原始的GRU。通过右击原有的代码tf.contrib.rnn. GRUCell（n_hidden）中GRUCell部分，选择“go to definition”找到GRU实现的代码，全部复制过来，在其__call__函数里修改为如下代码，即完成了属于我们自己的LNGRU类。具体代码如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">手动构建GRUCell的 LN代码，并演示使用该cell对MNIST数据集分类。</p>
+<p class="ziti3">代码9-20　lnGRUonMnist</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 from tensorflow.python.ops.rnn_cell_impl import _RNNCell as RNNCell
+02 from tensorflow.python.ops.math_ops import sigmoid
+03 from tensorflow.python.ops.math_ops import tanh
+04 from tensorflow.python.ops import variable_scope as vs
+05 from tensorflow.python.ops import array_ops
+06 from tensorflow.contrib.rnn.python.ops.core_rnn_cell_impl import 
+_linear 
+07 print(tf.__version__)
+08 tf.reset_default_graph()
+09 
+10 def ln(tensor, scope = None, epsilon = 1e-5):
+11     """ Layer normalizes a 2D tensor along its second axis """
+12     assert(len(tensor.get_shape()) == 2)
+13     m, v = tf.nn.moments(tensor, [1], keep_dims=True)
+14     if not isinstance(scope, str):
+15         scope = ''
+16     with tf.variable_scope(scope + 'layer_norm'):
+17         scale = tf.get_variable('scale',
+18                                 shape=[tensor.get_shape()[1]],
+19                                 initializer=tf.constant_initializer(1))
+20         shift = tf.get_variable('shift',
+21                                 shape=[tensor.get_shape()[1]],
+22                                 initializer=tf.constant_initializer(0))
+23     LN_initial = (tensor - m) / tf.sqrt(v + epsilon)
+24 
+25     return LN_initial * scale + shift
+26 
+27 class LNGRUCell(RNNCell):
+28     """Gated Recurrent Unit cell (cf. http://arxiv.org/abs/1406.
+    1078)."""
+29 
+30     def __init__(self, num_units, input_size=None, activation=tanh):
+31         if input_size is not None:
+32             print("%s: The input_size parameter is deprecated." % self)
+33         self._num_units = num_units
+34         self._activation = activation
+35 
+36     @property
+37     def state_size(self):
+38         return self._num_units
+39 
+40     @property
+41     def output_size(self):
+42         return self._num_units
+43 
+44     def __call__(self, inputs, state):
+45         """Gated recurrent unit (GRU) with nunits cells."""
+46         with vs.variable_scope("Gates"):  
+47             value =_linear([inputs, state], 2 * self._num_units, True, 1.0)
+48             r, u = array_ops.split(value=value, num_or_size_splits=2, 
+            axis=1)
+49             r = ln(r, scope = 'r/')
+50             u = ln(u, scope = 'u/')
+51             r, u = sigmoid(r), sigmoid(u)
+52         with vs.variable_scope("Candidate"):
+53             Cand = _linear([inputs,  r *state], self._num_units, True)
+54             c_pre = ln(Cand,  scope = 'new_h/')
+55             c = self._activation(c_pre)
+56         new_h = u * state + (1 - u) * c
+57         return new_h, new_h</pre>
+<hr class="calibre6"/>
+<p class="ziti3">LNGRU定义好之后，直接替换原有的GRU使用代码即可。</p>
+<p class="ziti3">代码9-20　lnGRUonMnist（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">58 ……
+59 #3 gru
+60 gru = LNGRUCell(n_hidden)
+61 ……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">其他代码均不用变化，运行后可以得出如下结果：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">1.1.0-rc2
+……
+Iter 93440, Minibatch Loss= 0.022772, Training Accuracy= 1.00000
+Iter 94720, Minibatch Loss= 0.060210, Training Accuracy= 0.99219
+Iter 96000, Minibatch Loss= 0.116144, Training Accuracy= 0.96875
+Iter 97280, Minibatch Loss= 0.057876, Training Accuracy= 0.98438
+Iter 98560, Minibatch Loss= 0.030294, Training Accuracy= 0.98438
+Iter 99840, Minibatch Loss= 0.158428, Training Accuracy= 0.96094
+ Finished!
+Testing Accuracy: 0.96875</pre>
+<hr class="calibre6"/>
+<p class="ziti3">生成的结果为0.96，比原来的效果有所提升（原来是0.945）。本例中只是使用了一个GRUcell。在多个cell中，LN的效果会更明显些（多cell的例子可以参考本书附带资源中的代码“9-21　LN多GRu1-1.py”文件），其实质只是在cell中调用了一次LN来处理。</p>
+<p class="ziti3">读者可以仿照上面的形式来修改其他的cell。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 本例中已经将代码版本打印出来，这表明该例子是与代码强关联的。如果读者不是这个版本，很可能会遇到错误。因为不同的版本有可能会修改原始的GRU实现代码，所以请读者记住修改该方法，千万不要直接复制代码。</p>
+<p class="ziti3">另外，本书配套资源中还提供了关于1.2.0-rc0的代码修改，可以参考代码“9-22 LN多GRu1-2.py”文件。</p>
+<h4 class="p3">9.4.17　CTC网络的loss——ctc_loss</h4>
+<p class="ziti3">CTC网络的loss就不能用平方差了，更不能用交叉熵，它有更为复杂的公式方法，在TensorFlow中已经有现成的封装函数ctc_loss。下面来一起学习一下。</p>
+<p class="ziti4">
+<span class="yanse">1．ctc_loss函数介绍</span>
+</p>
+<p class="ziti3">配合前文的CTC，在TensorFlow中提供了一个ctc_loss函数，其作用就是按照序列来处理输出标签和标准标签之间的损失。因为也是成型的函数封装，对于初学者内部实现不用花太多时间关注，只要会用即。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">tf.nn.ctc_loss(labels,inputs,sequence_length,preprocess_collapse_
+repeated=False, ctc_merge_repeated=True, time_major=True) </pre>
+<hr class="calibre6"/>
+<p class="ziti3">具体参数说明如下。</p>
+<p class="ziti4">·labels：一个int32类型的稀疏矩阵张量（SparseTensor）。</p>
+<p class="ziti4">·inputs：（常用变量logits表示）经过RNN后输出的标签预测值，三维的浮点型张量，当time_major为False时形状为[batch_size，max_time，num_classes]，否则为[max_ time，batch_size，num_classes]。</p>
+<p class="ziti4">·sequence_length：序列长度。</p>
+<p class="ziti4">·preprocess_collapse_repeated：是否需要预处理，将重复的label合并成一个label，默认是false。</p>
+<p class="ziti4">·ctc_merge_repeated：在计算时是否将每个non_blank（非空）重复的label当成单独的label来解释，默认是true。</p>
+<p class="ziti4">·time_major：决定inputs的格式。</p>
+<p class="ziti3">对于preprocess_collapse_repeated与ctc_merge_repeated，都是对于ctc_loss中重复标签处理的控制，各种情况组合后如表9-3所示。</p>
+<p class="middle-img">表9-3　ctc_loss函数参数情况</p>
+<div class="pic"><img alt="" src="Image00179.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">对于ctc_loss的返回值，仍然属于loss的计算模式，当取批次样本进行训练时，同样也需要对最终的ctc_loss求均值。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 对于重复标签方面的ctc_loss计算，一般情况下默认即可。</p>
+<p class="ziti4">另外这里有个隐含的规则，inputs中的classes是指需要输出多少类，在使用ctc_loss时，要将classes+1，即再多生成一个类，用于存放blank。因为输入的序列与label并不是一一对应的，所以需要通过添加blank类，当对应不上时，最后的softmax就会将其生成到blank。具体做法就是在最后的输出层多构建一个节点即可。</p>
+<p class="ziti3">这个规则是ctc_loss内置的，否则当标准标签label中的类索引等于inputs中的size-1时会报错。</p>
+<p class="ziti4">
+<span class="yanse">2．SparseTensor类型</span>
+</p>
+<p class="ziti3">前面提到了SparseTensor类型，这里主要介绍一下，本来应该将其放在前面章节介绍的，考虑到读者的接受程度，所以就放在这里介绍了。</p>
+<p class="ziti3">首先介绍下稀疏矩阵，它是相对于密集矩阵而言的。</p>
+<p class="ziti3">密集矩阵就是我们常见的矩阵。当密集矩阵中大部分的数都为0时，就可以使用一种更好的存储方式（只将矩阵中不为0的索引和值记录下来）来存储。这种方式就可以大大节省内存空间，它就是“稀疏矩阵”。</p>
+<p class="ziti3">稀疏矩阵在TensorFlow中的结构类型如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">SparseTensor(indices, values, dense_shape)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">一个密集矩阵只需要3个参数即可，说明如下。</p>
+<p class="ziti4">·indices：就是前面所说的不为0的位置信息。它是一个二维的int64 Tensor，shape为（N，ndims），指定了sparse tensor中的索引，例如，indices=[[1，3]，[2，4]]，表示dense tensor中对应索引为[1，3]，[2，4]位置的元素的值不为0。</p>
+<p class="ziti4">·values：一个list，存储密集矩阵中不为0位置所对应的值，它要与indices里的顺序对应。例如，indices=[[1，3]，[2，4]]，values=[18，3.6]，表明[1，3]的位置是18，[2，4]的位置是3.6。</p>
+<p class="ziti4">·dense_shape：一个1D的int64 tensor，代表原来密集矩阵的形状。</p>
+<p class="ziti4">
+<span class="yanse">3．生成SparseTensor</span>
+</p>
+<p class="ziti3">了解了SparseTensor类型之后，就可以按照参数来拼接出一个SparseTensor了。在实际应用中，常会用到需要将稠密矩阵dense转成稀疏矩阵SparseTensor。示例代码如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">def sparse from_ dense(dense, dtype=np.int32):
+   
+    indices = []
+    values = []
+ 
+    for n, seq in enumerate(dense):
+        indices.extend(zip([n] * len(seq), range(len(seq))))
+        values.extend(seq)
+ 
+    indices = np.asarray(indices, dtype=np.int64)
+    values = np.asarray(values, dtype=dtype)
+    shape = np.asarray([len(dense), indices.max(0)[1] + 1], dtype=np.int64)
+ 
+    return tf.SparseTensor(indices=indices, values=values, shape=shape)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 由于TensorFlow中没有现成的函数，可以自己封装好后保存下来，以后需要时随时拿来用。</p>
+<p class="ziti4">
+<span class="yanse">4．SparseTensor转dense</span>
+</p>
+<p class="ziti3">在TensorFlow中，可以很方便地实现SparseTensor转dense：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">tf.sparse_tensor_to_dense(sp_input,default_value=0,validate_indices=True,
+name=None)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">参数说明如下。</p>
+<p class="ziti4">·sp_input：一个SparceTensor。</p>
+<p class="ziti4">·default_value：没有指定索引的对应的默认值，默认为0。</p>
+<p class="ziti4">·validate_indices：布尔值。如果为True，该函数会检查sp_input的indices的lexicographic order是否有重复。</p>
+<p class="ziti4">·name：返回tensor的名字前缀，可选。</p>
+<p class="ziti4">
+<span class="yanse">5．levenshtein距离</span>
+</p>
+<p class="ziti3">前面讲到了ctc_loss是用来训练时间序列分类模型的。评估模型时，一般常使用计算得到的levenshtein距离值作为模型的评分（正确率或错误率）。</p>
+<p class="ziti3">levenshtein距离又叫编辑距离（Edit Distance），是指两个字符串之间，由一个转成另一个所需的最少编辑操作次数。许可的编辑操作包括：将一个字符替换成另一个字符、插入一个字符、删除一个字符。一般来说，编辑距离越小，两个字符串的相似度越大。</p>
+<p class="ziti3">这种方法应用非常广泛，在全序列对比、局部序列对比中都会用到，例如语音识别、拼写纠错、DAN比对等方面。</p>
+<p class="ziti3">在TensorFlow中，levenshtein距离的处理被封装成对两个稀疏矩阵进行的操作，具体定义如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">def edit_distance(hypothesis,truth, normalize=True, name="edit_distance")</pre>
+<hr class="calibre6"/>
+<p class="ziti3">参数说明如下。</p>
+<p class="ziti4">·hypothesis：SparseTensor类型，输入预测的序列结果。</p>
+<p class="ziti4">·truth：SparseTensor类型，输入真实的序列结果。</p>
+<p class="ziti4">·normalize：默认为True，求出来的Levenshtein距离除以真实序列的长度。</p>
+<p class="ziti4">·name：operation 的名字，可选。</p>
+<p class="ziti4">·返回值：R-1维的DenseTensor，包含着每个Sequence的Levenshtein距离。</p>
+<h4 class="p3">9.4.18　CTCdecoder</h4>
+<p class="ziti3">CTC结构中还有一个重要的环节就是CTCdecoder，下面就来介绍一下。</p>
+<p class="ziti4">
+<span class="yanse">1．CTCdecoer介绍</span>
+</p>
+<p class="ziti3">虽然在输入ctc_loss中的logits（inputs）是我们的预测结果，但却是带有空标签（blank）的，而且是一个与时间序列强对应的输出。在实际情况下，我们需要一个转化好的类似于原始标准标签（labels）的输出。这时可以使用CTCdecoder，经过它对预测结果加工后，就可以与标准标签（labels）进行损失值（loss）的运算了。</p>
+<p class="ziti4">
+<span class="yanse">2．CTCdecoder函数</span>
+</p>
+<p class="ziti3">在TensorFlow中，CTCdecoder有两个函数，如表9-4所示。</p>
+<p class="middle-img">表9-4　CTCdecoder函数</p>
+<div class="pic"><img alt="" src="Image00180.jpg" class="calibre4"/>
+</div>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 在实际情况中，解码完事的decoder是list，不能直接用，通常取decoder[0]，然后转成密集矩阵，得到的是一个批次的结果，然后再一条一条地取到每一个样本的结果。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

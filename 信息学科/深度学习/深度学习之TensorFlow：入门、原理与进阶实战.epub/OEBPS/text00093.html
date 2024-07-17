@@ -1,0 +1,251 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">11.7　实物检测模型库——Object Detection API</h3>
+<p class="ziti3">Object Detection API是谷歌开放的一个内部使用的物体识别系统。2016年10月，该系统在COCO识别挑战中名列第一。它支持当前最佳的实物检测模型，能够在单个图像中定位和识别多个对象。该系统不仅用于谷歌于自身的产品和服务，还被推广至整个研究社区。</p>
+<p class="ziti4">
+<span class="yanse">1．代码位置与内置的模型</span>
+</p>
+<p class="ziti3">Object Detection模块的位置与slim的位置相近，同在github.com中TensorFlow的models\research目录下。类似slim，Object Detection也囊括了各种关于物体检测的各种先进模型：</p>
+<p class="ziti4">·带有MobileNets的SSD（Single Shot Multibox Detector）。</p>
+<p class="ziti4">·带有Inception V2的SSD。</p>
+<p class="ziti4">·带有Resnet 101的R-FCN（Region-Based Fully Convolutional Networks）。</p>
+<p class="ziti4">·带有Resnet 101的Faster RCNN。</p>
+<p class="ziti4">·带有Inception-Resnet v2的Faster RCNN。</p>
+<p class="ziti3">上述每一个模型的冻结权重（在COCO数据集上训练）可被直接加载使用。</p>
+<p class="ziti3">SSD模型使用了轻量化的 MobileNet，这意味着它们可以轻而易举地在移动设备中实时使用。谷歌使用了Fast RCNN模型需要更多计算资源，但结果更为准确。</p>
+<p class="ziti4">
+<span class="yanse">2．COCO数据集介绍</span>
+</p>
+<p class="ziti3">在实物检测领域，训练模型的最权威数据集就是COCO数据集。</p>
+<p class="ziti3">COCO数据集是微软发布的一个可以用来进行图像识别训练的数据集，官方网址为<a href="http://mscoco.org/" class="pcalibre calibre2">http://mscoco.org/</a>
+ 。其图像主要从复杂的日常场景中截取，图像中的目标通过精确的segmentation进行位置的标定。</p>
+<p class="ziti3">COCO数据集包括91类目标，分两部分发布，前部分于2014年发布，后部分于2015年发布。</p>
+<p class="ziti4">·2014年版本：训练集有82783个样本，验证集有40504个样本，测试集有40775个样本，有270KB的人物标注和886KB的物体标注。</p>
+<p class="ziti4">·2015年版本：训练集有165482个样本，验证集有81208个样本，测试集有81434个样本。</p>
+<h4 class="p3">11.7.1　准备工作</h4>
+<p class="ziti4">
+<span class="yanse">1．获取protobuf</span>
+</p>
+<p class="ziti3">Object Detection API使用protobufs来配置模型和训练参数，这些文件以“.proto”的扩展名放在models\research\object_detection\protos下。在使用框架之前，必须使用protobuf库将其编译成py文件才可以正常运行。protobuf库使用的是2.6版本，下载地址为<a href="https://github.com/%20google/protobuf/releases/tag/v2.6.1" class="pcalibre calibre2">https://github.com/ google/protobuf/releases/tag/v2.6.1</a>
+ 。</p>
+<p class="ziti3">进入网址后会看到如图11-20所示，单击相应链接即可下载。</p>
+<div class="pic"><img alt="" src="Image00246.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图11-20　protobuf下载包</p>
+<p class="ziti3">protoc-2.6.1-win32.zip文件是个绿色程序，可以直接在命令行里运行。下载并解压后将其放到models\research路径下（假设你已经完成了在11.5.1中下载models的步骤）。</p>
+<p class="ziti4">
+<span class="yanse">2．编译proto配置文件</span>
+</p>
+<p class="ziti3">来到命令行里，进入models\research目录（如笔者的目录是D：\own\python\models\ research）下，执行如下命令：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">D:\own\python\models\ research&gt;protoc.exe object_detection/protos/*.proto -- python_out=.</pre>
+<hr class="calibre6"/>
+<p class="ziti3">如果不显示任何信息，则表明运行成功了。为了检验成功效果，可以来到D：\own\ python\models\research\object_detection\protos下，如图11-21所示，可以看到生成了很多py文件。</p>
+<div class="pic"><img alt="" src="Image00247.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图11-21　编译protos</p>
+<p class="ziti4">
+<span class="yanse">3．检测API是否正常</span>
+</p>
+<p class="ziti3">如果前面两步都完成了，下面可以测试一下Object Detection API是否可以正常使用了，还需要两步操作：</p>
+<p class="ziti3">（1）将models\research\slim中的nets文件夹复制出来放到models\research下。</p>
+<p class="ziti3">（2）将models\research\object_detection\builders下的model_builder_test.py复制到models\research下。</p>
+<p class="ziti3">变成如图11-22所示的文件夹结构。</p>
+<div class="pic"><img alt="" src="Image00248.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图11-22　Object Detection配置的文件结构</p>
+<p class="ziti3">用spyder将model_builder_test.py/research文件打开，运行之后会看到如下信息：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">runfile('D:/own/python/models/research/model_builder_test.py', wdir='D:/
+own/python/models/research')
+Reloaded modules: object_detection.protos.box_predictor_pb2, object_
+detection.core, object_detection.anchor_generators.multiple_grid_anchor_generator, object_detection.core.target_assigner, object_detection.protos.image_resizer_pb2, object_detection.protos.losses_pb2, object_detection.utils.static_shape, object_detection.builders.anchor_generator_builder, object_detection.anchor_generators.grid_anchor_generator, object_detection.builders,object_detection.core.standard_fields,object_detection.core.losses,object_detection.builders.hyperparams_builder, 
+object_detection.core.box_list_ops, object_detection.protos.box_coder_pb2,object_detection.utils,object_
+detection.builders.box_predictor_builder,object_detection.utils.shape_
+utils,object_detection.core.box_list,object_detection.anchor_generators,
+object_detection.box_coders,object_detection.box_coders.mean_stddev_box_
+coder, object_detection.protos, object_detection.protos.hyperparams_pb2, 
+object_detection.core.box_coder,object_detection.protos.ssd_anchor_
+generator_pb2, object_detection.meta_architectures, object_detection.
+core.model,object_detection.protos.square_box_coder_pb2,object_detection.
+core.post_processing,object_detection.box_coders.faster_rcnn_box_coder,
+object_detection.protos.grid_anchor_generator_pb2,object_detection.protos.
+matcher_pb2, object_detection.models, object_detection.protos.anchor_
+generator_pb2,object_detection.matchers.bipartite_matcher,object_detection.
+core.preprocessor,object_detection.meta_architectures.ssd_meta_arch,
+object_detection.protos.post_processing_pb2,object_detection.protos.
+argmax_matcher_pb2,object_detection.core.anchor_generator,object_detection.
+utils.ops,object_detection.matchers,object_detection.matchers.argmax_
+matcher,object_detection.protos.faster_rcnn_box_coder_pb2,object_detection.
+builders.region_similarity_calculator_builder,object_detection.
+builders.image_resizer_builder,object_detection.core.matcher,object_
+detection.meta_architectures.faster_rcnn_meta_arch,object_detection.
+core.minibatch_sampler,object_detection.core.balanced_positive_negative_
+sampler,object_detection.protos.bipartite_matcher_pb2,object_detection.
+core.keypoint_ops,object_detection.protos.region_similarity_calculator_
+pb2,object_detection.builders.matcher_builder,object_detection.builders.
+losses_builder,object_detection.meta_architectures.rfcn_meta_arch,object_
+detection.core.box_predictor,object_detection.builders.box_coder_builder,
+object_detection.box_coders.square_box_coder,object_detection.protos.
+mean_stddev_box_coder_pb2,object_detection.utils.variables_helper,object_
+detection,object_detection.core.region_similarity_calculator,object_
+detection.builders.post_processing_builder
+……
+----------------------------------------------------------------------
+Ran 7 tests in 0.047s
+ 
+OK
+To exit: use 'exit','quit',or Ctrl-D.
+An exception has occurred,use %tb to see the full traceback.
+ 
+SystemExit: &lt;sitecustomize.IPyTesProgram object at 0x000002B770CBA048&gt;</pre>
+<hr class="calibre6"/>
+<p class="ziti3">表明Object Detection API一切正常，可以使用了。</p>
+<p class="ziti4">
+<span class="yanse">4．将Object Detection API加入Python库默认搜索路径</span>
+</p>
+<p class="ziti3">为了不用每次都将文件复制到Object Detection文件夹外，可以将Object Detection加到Python引入库的默认搜索路径中，将Object Detection文件夹整个复制到anaconda3安装文件目录下的lib\site-packages下，如图11-23所示。</p>
+<div class="pic"><img alt="" src="Image00249.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图11-23　Object Detection安装</p>
+<p class="ziti3">这样无论文件在哪里，只要搜索import Object Detection xxx ，系统都会找到Object Detection了。</p>
+<h4 class="p3">11.7.2　实例87：调用Object Detection API进行实物检测</h4>
+<p class="ziti3">下面用一个例子来测试下Object Detection API中的检测效果。该例子改编于Object Detection API的自带程序，使用的图片也是Object Detection API中的图片。具体步骤如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">使用Object Detection API基于COCO上训练的ssd_mobilenet_v1模型，对任意图片进行分类识别。</p>
+<p class="ziti4">
+<span class="yanse">1．下载模型</span>
+</p>
+<p class="ziti3">上面介绍的已有模型，在以下网址都可以下载<a href="https://github.com/tensorflow/models/%20blob/master/research/object_detection/g3doc/detection_model_zoo.md" class="pcalibre calibre2">https://github.com/tensorflow/models/ blob/master/research/object_detection/g3doc/detection_model_zoo.md</a>
+ 。</p>
+<p class="ziti3">下载模型如图11-24所示。</p>
+<div class="pic"><img alt="" src="Image00250.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图11-24　下载Detection模型</p>
+<p class="ziti3">每一个压缩文件里都包含如下3种文件：</p>
+<p class="ziti4">·放置权重的检查点文件。</p>
+<p class="ziti4">·描述网络变量的txt文件。</p>
+<p class="ziti4">·可用于变量载入内存的图frozen文件。该文件与检查点结合可以实现“开箱即用”的使用理念，即不需要如前面例子中再引入一次网络模型源码文件。</p>
+<p class="ziti4">
+<span class="yanse">2．载入模型及数据集样本标签</span>
+</p>
+<p class="ziti3">在Object Detection文件夹下新建一个py文件，编写如下代码。</p>
+<p class="ziti3">代码中首先加载引入库。然后指定检测点文件及相关路径，将*.pb文件读入serialized_ graph中，重新定义一个图od_graph_def，使用其ParseFromString方法将serialized_graph的内容恢复到图中，接着再使用tf.import_graph_def将od_graph_def的内容导入到当前的默认图中。</p>
+<p class="ziti3">代码11-4　Object Detection使用</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import numpy as np
+02 import os
+03 
+04 import tensorflow as tf
+05 from matplotlib import pyplot as plt
+06 from PIL import Image
+07 from object_detection.utils import label_map_util
+08 
+09 from object_detection.utils import visualization_utils as vis_util
+10 
+11 # 指定要使用模型的名字
+12 MODEL_NAME = 'ssd_mobilenet_v1_coco_11_06_2017'
+13 
+14 # 指定模型的路径
+15 PATH_TO_CKPT = MODEL_NAME + '/frozen_inference_graph.pb'
+16 
+17 # 数据集对应的label
+18 PATH_TO_LABELS = os.path.join('data', 'mscoco_label_map.pbtxt')
+19 
+20 NUM_CLASSES = 90
+21 
+22 tf.reset_default_graph()
+23         
+24 od_graph_def = tf.GraphDef()
+25 with tf.gfile.GFile(PATH_TO_CKPT, 'rb') as fid:
+26     serialized_graph = fid.read()
+27     od_graph_def.ParseFromString(serialized_graph)
+28     tf.import_graph_def(od_graph_def, name='')       
+29 #载入coco数据集标签文件        
+30 label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
+31 categories = label_map_util.convert_label_map_to_categories(label_
+map, max_num_classes=NUM_CLASSES, use_display_name=True)
+32 category_index = label_map_util.create_category_index(categories) </pre>
+<hr class="calibre6"/>
+<p class="ziti3">在Object Detection模块中有一个data文件夹，里面为放置好的coco数据集对应的标签txt文件和其他的数据集标签文件（pascal与pet数据集）。使用Object Detection 自带的label_map_util类可以将其以index的方式读入内存中。</p>
+<p class="ziti4">
+<span class="yanse">3．定义session加载待测试的图片文件</span>
+</p>
+<p class="ziti3">本例也使用Object Detection自带的测试图片来演示。该图片存放在Object Detection\ test_images中，一共有两张。当然读者也可以自己再添加图片进行测试，但要修改对应的名字和代码。</p>
+<p class="ziti3">代码11-4　Object Detection使用（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">33 def load_image_into_numpy_array(image):
+34   (im_width, im_height) = image.size
+35   return np.array(image.getdata()).reshape(
+36       (im_height, im_width, 3)).astype(np.uint8)        
+37         
+38 PATH_TO_TEST_IMAGES_DIR = 'test_images'
+39 TEST_IMAGE_PATHS = [ os.path.join(PATH_TO_TEST_IMAGES_DIR, 'image{}.
+jpg'.format(i)) for i in range(1, 3) ] #将要测试的图片路径放到数组里
+40 
+41 # 设置输出图片的大小
+42 IMAGE_SIZE = (12, 8)        
+43         
+44 detection_graph = tf.get_default_graph()        
+45 with tf.Session(graph=detection_graph) as sess:
+46     for image_path in TEST_IMAGE_PATHS:
+47       image = Image.open(image_path)
+48     
+49       image_np = load_image_into_numpy_array(image)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">本例中新建立了一个图，为了不易混淆，可通过get_default_graph获得当前的默认图，接下来在默认的图上建立session并进行测试。</p>
+<p class="ziti4">
+<span class="yanse">4．定义节点，运行结果并可视化</span>
+</p>
+<p class="ziti3">下面可以体验一下Object Detection中的“开箱即用”概念。因为在前面已经将变量导入图中了，所以这里不需要再定义一套变量，直接通过get_tensor_by_name拿到变量并使用即可。这种方式将模型与应用很好的解耦，做应用的人不再需要了解模型的结构，只需关心输入输出和模型文件，做模型的人也不用担心模型代码被误改导致功能失效。</p>
+<p class="ziti3">代码11-4　Object Detection使用（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">50 # 扩充维度 shape，变成: [1, None, None, 3]
+51       image_np_expanded = np.expand_dims(image_np, axis=0)
+52       image_tensor = detection_graph.get_tensor_by_name('image_
+      tensor:0')
+53       # boxes用来显示识别结果
+54       boxes = detection_graph.get_tensor_by_name('detection_boxes:0')
+55       # Each score代表识别出的物体与标签匹配的相似程度，在类型标签后面
+56       
+57       scores = detection_graph.get_tensor_by_name('detection_
+      scores:0')
+58       classes = detection_graph.get_tensor_by_name('detection_
+      classes:0')
+59       num_detections = detection_graph.get_tensor_by_name('num_
+      detections:0')
+60       # 开始检测
+61       (boxes, scores, classes, num_detections) = sess.run(
+62           [boxes, scores, classes, num_detections],
+63           feed_dict={image_tensor: image_np_expanded})
+64       # 可视化结果
+65       vis_util.visualize_boxes_and_labels_on_image_array(
+66           image_np,
+67           np.squeeze(boxes),
+68           np.squeeze(classes).astype(np.int32),
+69           np.squeeze(scores),
+70           category_index,
+71           use_normalized_coordinates=True,
+72           line_thickness=8)
+73       plt.figure(figsize=IMAGE_SIZE)
+74       plt.imshow(image_np)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">模型的检测结果有3个输出，一个是位置boxes、一个是类型，另一个是分数。得到这3个输出后调用Object Detection中的visualize_boxes_and_labels_on_image_array函数，将图片显示出来。运行代码，输出如图11-25所示。</p>
+<div class="pic"><img alt="" src="Image00251.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图11-25　实物检测例子运行结果</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 如何得到里面的变量名？一般会在提供模型时会给出对应例子；如果没有，则可以在代码中找到相应的模型定义；也可以通过在代码中添加print（detection_ graph.get_operations（））将图中所有的变量打印出来，第一行就可以找到占位符，最后一行也可以找到输出结果。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

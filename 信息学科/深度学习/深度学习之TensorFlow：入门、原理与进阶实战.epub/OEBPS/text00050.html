@@ -1,0 +1,97 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">7.3　实例31：利用全连接网络将图片进行分类</h3>
+<p class="ziti3">本例使用全连接网络，将第5章中的例子重新实现一遍，将MNIST图像用多层神经网络来分类。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">构建一个简单的多层神经网络，以拟合MNIST样本特征完成分类任务。</p>
+<p class="ziti4">
+<span class="yanse">1．定义网络参数</span>
+</p>
+<p class="ziti3">在输入和输出之间使用两个隐藏层，每层各256个节点，学习率使用0.001。</p>
+<p class="ziti3">代码7-5　MNIST多层分类</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 # 定义参数
+02 learning_rate = 0.001
+03 training_epochs = 25
+04 batch_size = 100
+05 display_step = 1
+06 
+07 # 设置网络模型参数
+08 n_hidden_1 = 256                # 第一个隐藏层节点个数
+09 n_hidden_2 = 256                # 第二个隐藏层节点个数
+10 n_input = 784                    # MNIST 共784 (28×28)维
+11 n_classes = 10                   # MNIST 共10个类别 (0～9)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．定义网络结构</span>
+</p>
+<p class="ziti3">multilayer_perceptron函数为封装好的网络模型函数，第一层与第二层均使用Relu激活函数，loss使用softmax交叉熵。具体代码如下。</p>
+<p class="ziti3">代码7-5　MNIST多层分类（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">12 #定义占位符
+13 x = tf.placeholder("float", [None, n_input])
+14 y = tf.placeholder("float", [None, n_classes])
+15 
+16 # 创建model
+17 def multilayer_perceptron(x, weights, biases):
+18     # 第一层隐藏层
+19     layer_1 = tf.add(tf.matmul(x, weights['h1']), biases['b1'])
+20     layer_1 = tf.nn.relu(layer_1)
+21     # 第二层隐藏层
+22     layer_2 = tf.add(tf.matmul(layer_1, weights['h2']), biases['b2'])
+23     layer_2 = tf.nn.relu(layer_2)
+24     # 输出层
+25     out_layer = tf.matmul(layer_2, weights['out']) + biases['out']
+26     return out_layer
+27     
+28 # 学习参数
+29 weights = {
+30     'h1': tf.Variable(tf.random_normal([n_input, n_hidden_1])),
+31     'h2': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_2])),
+32     'out': tf.Variable(tf.random_normal([n_hidden_2, n_classes]))
+33 }
+34 biases = {
+35     'b1': tf.Variable(tf.random_normal([n_hidden_1])),
+36     'b2': tf.Variable(tf.random_normal([n_hidden_2])),
+37     'out': tf.Variable(tf.random_normal([n_classes]))
+38 }
+39 
+40 # 输出值
+41 pred = multilayer_perceptron(x, weights, biases)
+42 
+43 # 定义loss和优化器
+44 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits
+(logits=pred, labels=y))
+45 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).
+minimize(cost)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">3．运行session输出结果</span>
+</p>
+<p class="ziti3">session运行的代码参见第5章实例，运行结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Epoch: 0001 cost= 166.257328408
+Epoch: 0002 cost= 39.961055286
+……
+Epoch: 0023 cost= 0.335092138
+Epoch: 0024 cost= 0.289653350
+Epoch: 0025 cost= 0.286943634
+ Finished!
+Accuracy: 0.957</pre>
+<hr class="calibre6"/>
+<p class="ziti3">全连接网络可以成功地将图片进行分类，并且随着层数的增加和节点的增多，还能够得到更好的拟合效果。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 由于神经网络的学习算法限制，在实际情况中并不是层数越多、节点越多，效果就越好，因为在训练过程中使用的BP算法，会随着层数的逐渐增大其算出来的调整值会逐渐变小，直到其他层都感觉不到变化，即梯度消失的情况。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

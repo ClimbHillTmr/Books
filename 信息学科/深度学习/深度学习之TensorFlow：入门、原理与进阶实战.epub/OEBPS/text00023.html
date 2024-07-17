@@ -1,0 +1,322 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">4.3　共享变量</h3>
+<p class="ziti3">下面来到本章的重点——共享变量。共享变量在复杂的网络中用处非常之广泛，所以读者一定要学好。</p>
+<h4 class="p3">4.3.1　共享变量用途</h4>
+<p class="ziti3">在构建模型时，需要使用tf.Variable来创建一个变量（也可以理解成节点）。例如代码：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">biases = tf.Variable(tf.zeros([2]), name=" biases")    #创建一个偏执的学习参数，在训练时，这个变量不断地更新</pre>
+<hr class="calibre6"/>
+<p class="ziti3">但在某种情况下，一个模型需要使用其他模型创建的变量，两个模型一起训练。比如，对抗网络中的生成器模型与判别器模型（后文12章会有详细讲解）。如果使用tf.Variable，将会生成一个新的变量，而我们需要的是原来的那个biases变量。这时怎么办呢？</p>
+<p class="ziti3">这时就是通过引入get_variable方法，实现共享变量来解决这个问题。这个种方法可以使用多套网络模型来训练一套权重。</p>
+<h4 class="p3">4.3.2　使用get-variable获取变量</h4>
+<p class="ziti3">get_variable一般会配合variable_scope一起使用，以实现共享变量。variable_scope的意思是变量作用域。在某一作用域中的变量可以被设置成共享的方式，被其他网络模型使用。后文的4.3.4节中会有共享变量的实例。下面先介绍下get_variable的详细使用。</p>
+<p class="ziti3">get_variable函数的定义如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">tf.get_variable(&lt;name&gt;, &lt;shape&gt;, &lt;initializer&gt;)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在TensorFlow里，使用 get_variable生成的变量是以指定的name属性为唯一标识，并不是定义的变量名称。使用时一般通过name属性定位到具体变量，并将其共享到其他模型中。</p>
+<p class="ziti3">下面通过两个例子来深入介绍。</p>
+<h4 class="p3">4.3.3　实例14：演示get_variable和Variable的区别</h4>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">分别使用Variable定义变量和使用get_variable来定义变量。请读者仔细观察它们的用法区别。</p>
+<p class="ziti4">
+<span class="yanse">1．Variable的用法</span>
+</p>
+<p class="ziti3">首先先来看一下Variable的用法。</p>
+<p class="ziti3">代码4-9　get_variable和Variable的区别</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import tensorflow as tf
+02 
+03 var1 = tf.Variable(1.0 , name='firstvar')
+04 print ("var1:",var1.name)
+05 var1 = tf.Variable(2.0 , name='firstvar')
+06 print ("var1:",var1.name)
+07 var2 = tf.Variable(3.0 )
+08 print ("var2:",var2.name)
+09 var2 = tf.Variable(4.0 )
+10 print ("var1:",var2.name)
+11 
+12 with tf.Session() as sess:
+13     sess.run(tf.global_variables_initializer())
+14     print("var1=",var1.eval())
+15     print("var2=",var2.eval())</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面的代码运行后输出如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">var1: firstvar:0
+var1: firstvar_1:0
+var2: Variable:0
+var1: Variable_1:0
+var1= 2.0
+var2= 4.0</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面代码中定义了两次var1，可以看到在内存中生成了两个var1（因为它们的name不一样），对于图来讲后面的var1是生效的（var1=2.0）。</p>
+<p class="ziti3">var2表明了：Variable定义时没有指定名字，系统会自动给加上一个名字Variable：0。</p>
+<p class="ziti4">
+<span class="yanse">2．get_variable用法演示</span>
+</p>
+<p class="ziti3">接着上面的代码，使用get_variable添加get_var1变量。</p>
+<p class="ziti3">代码4-9　get_variable和Variable的区别（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">16 get_var1 = tf.get_variable("firstvar",[1], initializer=tf.constant_
+initializer(0.3))
+17 print ("get_var1:",get_var1.name)
+18 
+19 get_var1 = tf.get_variable("firstvar",[1], initializer=tf.constant_
+initializer(0.4))
+20 print ("get_var1:",get_var1.name)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">代码运行之后结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">var1: firstvar:0
+var1: firstvar_1:0
+var2: Variable:0
+var1: Variable_1:0
+var1= 2.0
+var2= 4.0
+get_var1: firstvar_2:0
+Traceback (most recent call last):
+……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到，程序在定义第2个get_var1时发生崩溃了。这表明，使用get_variable只能定义一次指定名称的变量。同时由于变量firstvar在前面使用Variable函数生成过一次，所以系统自动变成了firstvar_2：0。</p>
+<p class="ziti3">如果将崩溃的句子改成下面的样子：</p>
+<p class="ziti3">代码4-9　get_variable和Variable的区别（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">21 get_var1 = tf.get_variable("firstvar",[1], initializer=tf.constant_
+initializer(0.3))
+22 print ("get_var1:",get_var1.name)
+23 
+24 get_var1 = tf.get_variable("firstvar1",[1], initializer=tf.constant_
+initializer(0.4))
+25 print ("get_var1:",get_var1.name)
+26 
+27 with tf.Session() as sess:
+28     sess.run(tf.global_variables_initializer())
+29     print("get_var1=",get_var1.eval())</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，输出如下：（部分内容）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">……
+get_var1: firstvar_2:0
+get_var1: firstvar1:0
+get_var1= [ 0.40000001]</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到，这次仍然是又定义了一个get_var1，不同的是改变了它的名字firstvar1，这样就没有问题了。同样，新的get_var1会在图中生效，所以它的输出值是4.0而不是3.0。</p>
+<h4 class="p3">4.3.4　实例15：在特定的作用域下获取变量</h4>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">在作用域下，使用get_variable，以及嵌套variable_scope。</p>
+<p class="ziti3">在前面的例子中，大家已经知道使用get_variable创建两个同样名字的变量是行不通的，如下代码会报错。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">var1 = tf.get_variable("firstvar",shape=[2],dtype=tf.float32)   
+var2 = tf.get_variable("firstvar",shape=[2],dtype=tf.float32) </pre>
+<hr class="calibre6"/>
+<p class="ziti3">如果真的想要那么做，可以使用variable_scope将它们隔开，代码如下。</p>
+<p class="ziti3">代码4-10　get_variable配合variable_scope</p>
+<hr class="calibre6"/>
+<pre class="ziti5">import tensorflow as tf
+with tf.variable_scope("test1", ):     #定义一个作用域test1
+    var1 = tf.get_variable("firstvar",shape=[2],dtype=tf.float32)
+    
+with tf.variable_scope("test2"):
+    var2 = tf.get_variable("firstvar",shape=[2],dtype=tf.float32)
+        
+print ("var1:",var1.name)
+print ("var2:",var2.name)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，输出结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">var1: test1/firstvar:0
+var2: test2/firstvar:0</pre>
+<hr class="calibre6"/>
+<p class="ziti3">var1和var2都使用firstvar的名字来定义。通过输出可以看出，其实生成的两个变量var1和var2是不同的，它们作用在不同的scope下，这就是scope的作用。</p>
+<p class="ziti3">scope还支持嵌套，将上面代码中的第二个scope缩进一下，得到如下代码：</p>
+<p class="ziti3">代码4-11　get_variable配合variable_scope2</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 ……
+02 
+03 with tf.variable_scope("test1", ):
+04     var1 = tf.get_variable("firstvar",shape=[2],dtype=tf.float32)
+05     
+06     with tf.variable_scope("test2"):
+07         var2 = tf.get_variable("firstvar",shape=[2],dtype=tf.float32)
+08         
+09 print ("var1:",var1.name)
+10 print ("var2:",var2.name)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，输出结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">var1: test1/firstvar:0
+var2: test1/test2/firstvar:0</pre>
+<hr class="calibre6"/>
+<h4 class="p3">4.3.5　实例16：共享变量功能的实现</h4>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">使用作用域中的reuse参数来实现共享变量功能。</p>
+<p class="ziti3">费了这么大的劲来使用get_variable，目的其实是为了要通过它实现共享变量的功能。</p>
+<p class="ziti3">variable_scope里面有个reuse=True属性，表示使用已经定义过的变量。这时get_variable将不会再创建新的变量，而是去图（一个计算任务）中get_variable所创建过的变量中找与name相同的变量。</p>
+<p class="ziti3">在上文代码中再建立一个同样的scope，并且设置reuse=True，实现共享firstvar变量。</p>
+<p class="ziti3">代码4-11　get_variable配合variable_scope2（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">11 with tf.variable_scope("test1",reuse=True ):
+12     var3= tf.get_variable("firstvar",shape=[2],dtype=tf.float32)
+13     with tf.variable_scope("test2"):
+14         var4 = tf.get_variable("firstvar",shape=[2],dtype=tf.float32)
+15 
+16 print ("var3:",var3.name)
+17 print ("var4:",var4.name)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行上面代码，输出如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">var1: test1/firstvar:0
+var2: test1/test2/firstvar:0
+var3: test1/firstvar:0
+var4: test1/test2/firstvar:0</pre>
+<hr class="calibre6"/>
+<p class="ziti3">var1和var3的输出名字是一样的，var2和var4的名字也是一样的。这表明var1和var3共用了一个变量，var2和var4共用了一个变量，这就实现了共享变量。在实际应用中，可以把var1和var2放到一个网络模型里去训练，把var3和var4放到另一个网络模型里去训练，而两个模型的训练结果都会作用于一个模型的学习参数上。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 如果读者使用的是Anaconda工具包里面的Spyder工具（第2章介绍过）运行，该代码只能运行一次，第二次会报错。</p>
+<p class="ziti4">解决办法：需要在Anacondad的Consoles菜单里退出当前的kernel，再重新进入一下。再运行才不会报错。否则会提示已经有这个变量了。</p>
+<p class="ziti4">为什么会这样呢？</p>
+<p class="ziti4">tf.get_variable在创建变量时，会去检查图（一个计算任务）中是否已经创建过该变量。如果创建过并且本次调用时没有被设为共享方式，则会报错。</p>
+<p class="ziti4">明白原理后可以加一条语句tf.reset_default_graph（），将图（一个计算任务）里面的变量清空，就可以解决这个问题了。图（一个计算任务）的更多内容将在后面章节介绍。</p>
+<h4 class="p3">4.3.6　实例17：初始化共享变量的作用域</h4>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">演示variable_scope中get_variable初始化的继承功能，以及嵌套variable_scope的继承功能。</p>
+<p class="ziti3">variable_scope和get_variable都有初始化的功能。在初始化时，如果没有对当前变量初始化，则TensorFlow会默认使用作用域的初始化方法对其初始化，并且作用域的初始化方法也有继承功能。下面演示代码。</p>
+<p class="ziti3">代码4-12　共享变量的作用域与初始化</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01  import tensorflow as tf
+02  
+03  with tf.variable_scope("test1", initializer=tf.constant_initializer 
+    (0.4) ):
+04    var1 = tf.get_variable("firstvar",shape=[2],dtype=tf.float32)
+05    
+06    with tf.variable_scope("test2"):
+07     var2 = tf.get_variable("firstvar",shape=[2],dtype=tf.float32)
+08     var3 = tf.get_variable("var3",shape=[2],initializer=tf.constant_ 
+    initializer (0.3))
+09        
+10  with tf.Session() as sess:
+11    sess.run(tf.global_variables_initializer())
+12    print("var1=",var1.eval())     #作用域test1下的变量
+13    print("var2=",var2.eval())     #作用域test2下的变量，继承test1初始化
+14    print("var3=",var3.eval())     #作用域test2下的变量</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上述代码大致操作如下：</p>
+<p class="ziti4">·将test1作用域进行初始化为4.0，见代码第3行。</p>
+<p class="ziti4">·var1没有初始化，见代码第4行。</p>
+<p class="ziti4">·嵌套的test2作用域也没有初始化，见代码第6行。</p>
+<p class="ziti4">·test2下的var3进行了初始化，见代码第8行。</p>
+<p class="ziti3">运行代码，输出如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">var1= [ 0.40000001  0.40000001]
+var2= [ 0.40000001  0.40000001]
+var3= [ 0.30000001  0.30000001]</pre>
+<hr class="calibre6"/>
+<p class="ziti3">var1数组值为0.4，表明继承了test1的值；var2数组值为0.4，表明其所在的作用域test2也继承了test1的初始化；变量var3在创建时同步指定了初始化操作，所以数组值为0.3。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 在多模型训练中，常常会使用variable_scope对模型间的张量进行区分。同时，统一为学习参数进行默认的初始化。在变量共享方面，还可以使用 tf.AUTO_REUSE来为reuse属性赋值。tf.AUTO_REUSE可以实现第一次调用variable_scope时，传入的reuse值是False；再次调用variable_scope时，传入reuse的值就会自动变为True。</p>
+<h4 class="p3">4.3.7　实例18：演示作用域与操作符的受限范围</h4>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">演示variable_scope的as用法，以及对应的作用域。</p>
+<p class="ziti3">variable_scope还可以使用with variable_scope（"name"）as xxxscope的方式定义作用域，当使用这种方式时，所定义的作用域变量xxxscope将不再受到外围的scope所限制。看下面的例子。</p>
+<p class="ziti3">代码4-13　作用域与操作符的受限范围</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import tensorflow as tf
+02 
+03 with tf.variable_scope("scope1") as sp:
+04      var1 = tf.get_variable("v", [1])
+05 
+06 print("sp:",sp.name)              #作用域名称 
+07 print("var1:",var1.name)      
+08 
+09 with tf.variable_scope("scope2"):
+10     var2 = tf.get_variable("v", [1])
+11     
+12     with tf.variable_scope(sp) as sp1:
+13         var3 = tf.get_variable("v3", [1])
+14           
+15 print("sp1:",sp1.name)  
+16 print("var2:",var2.name)
+17 print("var3:",var3.name)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">例子中定义了作用域scope1 as sp（见代码第3行），然后将sp放在作用域scope2中，并as成sp1（见代码第12行）。运行代码输出如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">sp: scope1
+var1: scope1/v:0
+sp1: scope1
+var2: scope2/v:0
+var3: scope1/v3:0</pre>
+<hr class="calibre6"/>
+<p class="ziti3">sp和var1的输出前面已经交代过。sp1在scope2下，但是输出仍是scope1，没有改变。在它下面定义的var3的名字是scope1/v3：0，表明也在scope1下，再次说明sp没有受到外层的限制。</p>
+<p class="ziti3">另外再介绍一个操作符的作用域tf.name_scope，如下所示。操作符不仅受到tf.name_scope作用域的限制，同时也受到tf.variable_scope作用域的限制。</p>
+<p class="ziti3">代码4-13　作用域与操作符的受限范围（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">18 with tf.variable_scope("scope"):
+19     with tf.name_scope("bar"):
+20         v = tf.get_variable("v", [1])    #v为一个变量
+21         x = 1.0 + v                          # x为一个op，实现1.0+v操作
+22 print("v:",v.name)  
+23 print("x.op:",x.op.name)
+)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面的代码运行后输出如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">v: scope/v:0
+x.op: scope/bar/add</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到，虽然v和x都在scope的bar下面，但是v的命名只受到scope的限制，tf.name_scope只能限制op，不能限制变量的命名。</p>
+<p class="ziti3">在tf.name_scope函数中，还可以使用空字符将作用域返回到顶层。</p>
+<p class="ziti3">下面举例来比较tf.name_scope与variable_scope在空字符情况下的处理：</p>
+<p class="ziti4">·在代码第28行var3的定义之后添加空字符的variable_scope。</p>
+<p class="ziti4">·定义var4，见代码第31行。</p>
+<p class="ziti3">代码4-13　作用域与操作符的受限范围（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">24 with tf.variable_scope("scope2"):
+25     var2 = tf.get_variable("v", [1])
+26     
+27     with tf.variable_scope(sp) as sp1:
+28         var3 = tf.get_variable("v3", [1])
+29           
+30         with tf.variable_scope("") :
+31             var4 = tf.get_variable("v4", [1])</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在x = 1.0 + v之后添加空字符的tf.name_scope，并定义y。代码如下：</p>
+<p class="ziti3">代码4-13　作用域与操作符的受限范围（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">32 with tf.variable_scope("scope"):
+33     with tf.name_scope("bar"):
+34         v = tf.get_variable("v", [1])
+35         x = 1.0 + v
+36         with tf.name_scope(""):
+37             y = 1.0 + v</pre>
+<hr class="calibre6"/>
+<p class="ziti3">将var4和y的值打印出来，得出如下信息：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">var4: scope1//v4:0
+y.op: add</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到，y变成顶层了，而var4多了一个空层。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

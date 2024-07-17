@@ -1,0 +1,778 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">9.5　实例68：利用BiRNN实现语音识别</h3>
+<p class="ziti3">在神经网络大势兴起之前，语音识别还是有一定门槛的。传统的语音识别方法，是基于语音学（Phonetics）的方法，它们通常包含拼写、声学和语言模型等单独组件。开发人员需要了解编程以外的很多语言学知识，语言学也会作为一门单独的专业学科存在。训练模型的语料中除了要标注具体的文字，还要标注按照时间对应的音素，需要大量的人工成本。</p>
+<p class="ziti3">本节将通过一个例子来演示BiRNN在语音识别中的应用。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">准备一批带有文字标注的语音样本，构建BiRNN网络，通过该语料样本进行训练，最终实现一个能够识别语音的神经网络模型。</p>
+<h4 class="p3">9.5.1　语音识别背景</h4>
+<p class="ziti3">使用神经网络技术可以将语音识别变得简单。通过能进行时序分类的连接时间分类（Connectionist Temporal Classification，CTC）目标函数，计算多个标签序列的概率，而序列是语音样本中所有可能的对应文字的集合。随后把预测结果与实际进行比较，计算预测结果的误差，以在训练中不断更新网络权重。这样可以丢弃音素的概念，自然也不需要人工根据时序标注对应的音素了。由于是直接拿音频序列来对应文字，连语言模型都可以省去，这样就脱离了标准的语言模型与声学模型，将使语音识别技术与语言无关（也就是中文、英文、地方语言），只要样本足够多，就可以训练出来。</p>
+<p class="ziti3">例子中使用了两个代码文件“9-24 yuyinutils.py”与“9-23 yuyinchall.py”。</p>
+<p class="ziti4">·代码文件“9-24 yuyinutils.py”：放置语音识别相关的工具函数。</p>
+<p class="ziti4">·代码文件“9-23 yuyinchall.py”：放置语音识别主体流程函数。</p>
+<h4 class="p3">9.5.2　获取并整理样本</h4>
+<p class="ziti4">
+<span class="yanse">1．样本下载</span>
+</p>
+<p class="ziti3">本例中使用了清华大学公开的语料库样本，下载地址如下：</p>
+<p class="ziti4">·<a href="http://data.cslt.org/thchs30/zip/wav.tgz" class="pcalibre calibre2">http://data.cslt.org/thchs30/zip/wav.tgz</a>
+ ；</p>
+<p class="ziti4">·<a href="http://data.cslt.org/thchs30/zip/doc.tgz" class="pcalibre calibre2">http://data.cslt.org/thchs30/zip/doc.tgz</a>
+ 。</p>
+<p class="ziti3">第一个是音频WAV文件的压缩包。第二个是WAV文件中对应的文字。thchs30语料库本来有3部分，这里只列出了两部分，还有一部分是语言模型，暂时用不上，所以忽略。</p>
+<p class="ziti3">省去了语言模型的语料库看起来简单多了，感兴趣的读者完全可以仿照thchs30语料库，自己录制音频，创建自己的语料库。这样你就可以学出一个识别自己口音的语音识别模型了。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 自己录制时，一定要将音频录制成单声道的，或者将双声道的音频转成单声道也可以。</p>
+<p class="ziti3">文件下载好之后，解压并放到指定目录中即可，后面可以在代码中通过该目录进行读取。</p>
+<p class="ziti4">
+<span class="yanse">2．样本读取</span>
+</p>
+<p class="ziti3">下面通过代码将数据读入内存。指定训练语音的文件夹与对应的文档，调用get_wavs_lables函数即可。</p>
+<p class="ziti3">代码9-23　yuyinchall</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 ……
+02 yuyinutils = __import__("9-24  yuyinutils")
+03 get_wavs_lables = yuyinutils.get_wavs_lables
+04 
+05 wav_path='D:/ data_thchs30/data_thchs30/train'
+06 label_file='D: /data_thchs30/doc/trans/train.word.txt'
+07    
+08 wav_files, labels = get_wavs_lables(wav_path,label_file) 
+09 print(wav_files[0], labels[0])  
+10 print("wav:",len(wav_files),"label",len(labels))
+11 ……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">输出信息如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">D:/ data_thchs30/data_thchs30/train/A11_0.WAV 绿 是 阳春 烟 景 大块 文章 的 底色 四月 的 林 峦 更是 绿 得 鲜活 秀媚 诗意 盎然  
+wav: 8911 label 8911<br class="calibre3"/>
+</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可见，wav_files里面是一个个音频文件名称，其对应的文字都存放在labels数组里，一共是8911个文件。这里用到的get_wavs_lables函数是自己定义的函数，为了代码规整些，我们把它放到另一个py文件（代码“9-24 yuyinutils.py”）里。get_wavs_lables的定义如下。</p>
+<p class="ziti3">代码9-24　yuyinutils</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 ……
+02 import os
+03 
+04 '''读取WAV文件对应的label'''  
+05 def get_wavs_lables(wav_path=wav_path, label_file=label_file): 
+06 #获得训练用的WAV文件路径列表 
+07     wav_files = []  
+08     for (dirpath, dirnames, filenames) in os.walk(wav_path):  
+09         for filename in filenames:  
+10             if filename.endswith('.wav') or filename.endswith('.WAV'):  
+11                 filename_path = os.sep.join([dirpath, filename])  
+12                 if os.stat(filename_path).st_size &lt; 240000:   # 剔除掉一些小文件  
+13                     continue  
+14                 wav_files.append(filename_path)     
+15     
+16     labels_dict = {}  
+17     with open(label_file, 'rb') as f:  
+18         for label in f:  
+19             label = label.strip(b'\n')  
+20             label_id = label.split(b' ', 1)[0]  
+21             label_text = label.split(b' ', 1)[1]  
+22             labels_dict[label_id.decode('ascii')] = label_text.decode
+            ('utf-8')
+23             
+24     labels = []  
+25     new_wav_files = []  
+26     for wav_file in wav_files:  
+27         wav_id = os.path.basename(wav_file).split('.')[0] 
+28         
+29         if wav_id in labels_dict:  
+30             labels.append(labels_dict[wav_id])  
+31             new_wav_files.append(wav_file)  
+32    
+33     return new_wav_files, labels  </pre>
+<hr class="calibre6"/>
+<p class="ziti3">首先是通过WAV文件路径读入文件。然后再将文本文件内容按照WAV文件名进行裁分放到labels里，最终将WAV与labels的对应顺序关联起来。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 在读取文本时使用的是UTF-8编码，如果在Windows下自建数据集，需要改成GB2312编码。</p>
+<p class="ziti4">
+<span class="yanse">3．建立批次获取样本函数</span>
+</p>
+<p class="ziti3">在代码“9-23 yuyinchall.py”文件中，读取完WAV文件和labels之后，添加如下代码，对labels的字数进行统计。接着定义一个next_batch函数，该函数的作用就是取一批次的样本数据进行训练。</p>
+<p class="ziti3">代码9-23　yuyinchall（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">12 from collections import Counter
+13 ## 自定义
+14 from yuyinutils import  sparse_tuple_to_texts_ch,ndarray_to_text_ch
+15 from yuyinutils import get_audio_and_transcriptch, pad_sequences
+16 from yuyinutils import sparse_tuple_from
+17 ……
+18 # 字表 
+19 all_words = []  
+20 for label in labels:  
+21     all_words += [word for word in label]  
+22 counter = Counter(all_words)  
+23 words = sorted(counter)
+24 words_size= len(words)
+25 word_num_map = dict(zip(words, range(words_size))) 
+26 
+27 print('字表大小:', words_size) 
+28  
+29 n_input = 26                 #计算美尔倒谱系数的个数
+30 n_context = 9                #对于每个时间点，要包含上下文样本的个数
+sparse_tuple_to_texts_ch = yuyinutils.sparse_tuple_to_texts_ch
+ndarray_to_text_ch        = yuyinutils.ndarray_to_text_ch
+get_audio_and_transcritych = yuyinutils.get_audio_and_transcriptch
+pad_sequences              = yuyinutils.pad_sequences
+sparse_tuple_from         = yuyinutils.sparse_tuple_from
+31 batch_size =8
+32 def next_batch(labels, start_idx = 0,batch_size=1,wav_files = wav_
+files):
+33     filesize = len(labels)
+34     end_idx = min(filesize, start_idx + batch_size)
+35     idx_list = range(start_idx, end_idx)
+36     txt_labels = [labels[i] for i in idx_list]
+37     wav_files = [wav_files[i] for i in idx_list]
+38     (source, audio_len, target, transcript_len) = get_audio_and_
+     transcriptch(None,
+39                                                       wav_files,
+40                                                       n_input,
+41                                                       n_context,word_num_map,
+  txt_labels)
+42     
+43     start_idx += batch_size
+44     # 验证 start_idx 
+45     if start_idx &gt;= filesize:
+46         start_idx = -1
+47 
+48     # 使用pad方式对其输入序列
+49     source, source_lengths = pad_sequences(source) #如果有多个文件将长度统一，支持按最大截断或补0
+50     sparse_labels = sparse_tuple_from(target)
+51 
+52     return start_idx,source, source_lengths, sparse_labels</pre>
+<hr class="calibre6"/>
+<p class="ziti3">将音频数据转成训练数据是在next_batch中的get_audio_and_transcriptch函数里完成的，然后使用pad_sequences函数将该批次的音频数据对齐。对于文本，使用sparse_tuple_from函数将其转成稀疏矩阵，这3个函数都放在代码“9-24 yuyinutils.py”文件里面。</p>
+<p class="ziti3">添加测试代码，取出批次数据并打印出来。</p>
+<p class="ziti3">代码9-23　yuyinchall（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">53 next_idx,source,source_len,sparse_lab = next_batch(labels,0,batch_
+size)
+54 print(len(sparse_lab))
+55 print(np.shape(source))
+56 t = sparse_tuple_to_texts_ch(sparse_lab,words)
+57 print(t[0])
+58 #source为具体的样本，每条样本的内容为19个时间序列，包括：前9（不够补空）+本身+
+后9。每个时间序列有26个美尔倒谱系数。第一条的样本是从第10个时间序列开始的。</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">词汇表大小: 2666
+3
+(8, 1168, 494)
+绿是阳春烟景大块文章的底色四月的林峦更是绿得鲜活秀媚诗意盎然</pre>
+<hr class="calibre6"/>
+<p class="ziti3">整个样本集里涉及的字数有2666个，sparse_lab为文字转化成向量后并生成的稀疏矩阵，所以长度为3，补0对齐后的音频数据的shape为（8，1168，494），8代表batchsize；1168代表时序的总个数。494是组合好的MFCC特征数：取前9个时序的MFCC，当前MFCC再加上后9个MFCC，每个MFCC由26个数字组成。最后一个输出是通过sparse_tuple_to_texts_ch 函数将稀疏矩阵向量sparse_lab中的第一个内容还原成文字。函数sparse_tuple_to_texts_ch的定义同样在代码“9-24 yuyinutils.py”文件里。</p>
+<p class="ziti4">
+<span class="yanse">4．安装python_speech_features工具</span>
+</p>
+<p class="ziti3">为了让机器识别音频数据，必须先将数据从时域转换为频域，需要将语音数据转换为需要计算的13位或26位不同倒谱特征的梅尔倒频谱系数（MFCC）。这一过程可以借助工具python_speech_features的代码包来实现，现在一起来安装该代码包。</p>
+<p class="ziti3">在计算机联网的状态下，打开“开始”菜单，在“运行”框里输入cmd，调出控制台窗口，输入如下命令：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">pip install python_speech_features</pre>
+<hr class="calibre6"/>
+<p class="ziti3">python_speech_features工具就会自动安装了。</p>
+<p class="ziti4">
+<span class="yanse">5．提取音频数据MFCC特征</span>
+</p>
+<p class="ziti3">对于WAV音频的样本，通过MFCC转换之后，在函数get_audio_and_transcriptch中将数据存储为时间（列）和频率特征系数（行）的矩阵，其代码如下。</p>
+<p class="ziti3">代码9-24　yuyinutils（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">34 import numpy as np
+35 
+36 from python_speech_features import mfcc   #需要使用pip install命令来额外安装
+37 import scipy.io.wavfile as wav
+38 ……
+39 def get_audio_and_transcriptch(txt_files, wav_files, n_input, n_
+context,word_num_map,txt_labels=None):
+40     
+41     audio = []
+42     audio_len = []
+43     transcript = []
+44     transcript_len = []
+45     if txt_files!=None:
+46         txt_labels = txt_files
+47 
+48     for txt_obj, wav_file in zip(txt_labels, wav_files):
+49         # 载入音频数据并转化为特征值
+50         audio_data = audiofile_to_input_vector(wav_file, n_input, n_
+        context)
+51         audio_data = audio_data.astype('float32')
+52 
+53         audio.append(audio_data)
+54         audio_len.append(np.int32(len(audio_data)))
+55 
+56         # 载入音频对应的文本
+57         target = []
+58         if txt_files!=None:#txt_obj是文件
+59             target = get_ch_lable_v(txt_obj,word_num_map)
+60         else:
+61             target = get_ch_lable_v(None,word_num_map,txt_obj) #txt_obj是labels
+62         transcript.append(target)
+63         transcript_len.append(len(target))
+64 
+65     audio = np.asarray(audio)
+66     audio_len = np.asarray(audio_len)
+67     transcript = np.asarray(transcript)
+68     transcript_len = np.asarray(transcript_len)
+69     return audio, audio_len, transcript, transcript_len</pre>
+<hr class="calibre6"/>
+<p class="ziti3">这部分代码遍历所有音频文件及文本，将音频调用audiofile_to_input_vector转成MFCC，文本调用get_ch_lable_v函数将文本转成向量。所以接着看audiofile_to_input_vector的实现。</p>
+<p class="ziti3">在audiofile_to_input_vector中先将其转化为MFCC特征码，例如第一个文件会被转成（277，26）数组，代表着277个时间序列，每个序列的特征值是26个。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 这里有个小技巧，因为使用了双向循环神经网络，它的输出包含正、反向的结果，相当于每一个时间序列都扩大了一倍，所以为了保证总时序不变，使用orig_inputs = orig_inputs[：：2]对orig_inputs每隔一行进行一次取样。这样被忽略的那个序列可以用后文中反向RNN生成的输出来代替，维持了总的序列长度。</p>
+<p class="ziti3">接着会扩展这26个特征值，将其扩展成：前9个时间序列MFCC+当前MFCC+后9个时间序列。比如第2个序列的前面只有一个序列不够9个，这时就要为其补0，将它凑够9个。同理对于取不到前9、后9时序的序列都做补0操作。这样数据就被扩成了（139，494）。最后再将其进行标准化（减去均值然后再除以方差）处理，这是为了在训练中效果更好。代码如下。</p>
+<p class="ziti3">代码9-24　yuyinutils（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">70 ……
+71 def audiofile_to_input_vector(audio_filename, numcep, numcontext):
+72 
+73     # 加载wav文件
+74     fs, audio = wav.read(audio_filename)
+75 
+76     # 获得mfcc coefficients
+77     orig_inputs = mfcc(audio, samplerate=fs, numcep=numcep)
+78     orig_inputs = orig_inputs[::2]             #(139, 26)
+79 
+80     train_inputs = np.array([], np.float32)
+81     train_inputs.resize((orig_inputs.shape[0], numcep + 2 * numcep * 
+    numcontext))
+82     
+83     empty_mfcc = np.array([])
+84     empty_mfcc.resize((numcep))
+85 
+86     # 准备输入数据。输入数据的格式由三部分安装顺序拼接而成，分为当前样本的前9个
+    序列样本，当前样本序列、后9个序列样本
+87     time_slices = range(train_inputs.shape[0]) #139个切片
+88     context_past_min = time_slices[0] + numcontext
+89     context_future_max = time_slices[-1] - numcontext#[9,1,2...,
+    137,129]
+90     for time_slice in time_slices:
+91         # 前9个补0，mfcc features
+92         need_empty_past = max(0, (context_past_min - time_slice))
+93         empty_source_past = list(empty_mfcc for empty_slots in range
+        (need_empty_past))
+94         data_source_past = orig_inputs[max(0, time_slice - numcontext):
+        time_slice]
+95         assert(len(empty_source_past) + len(data_source_past) == 
+        numcontext)
+96         
+97         # 后9个补0，mfcc features
+98         need_empty_future = max(0, (time_slice - context_future_max))
+99         empty_source_future = list(empty_mfcc for empty_slots in range
+        (need_empty_future))
+100         data_source_future = orig_inputs[time_slice + 1:time_slice + 
+        numcontext + 1]
+101         assert(len(empty_source_future) + len(data_source_future) == 
+        numcontext)
+102 
+103         if need_empty_past:
+104             past = np.concatenate((empty_source_past, data_source_
+            past))
+105         else:
+106             past = data_source_past
+107 
+108         if need_empty_future:
+109             future = np.concatenate((data_source_future, empty_source_
+            future))
+110         else:
+111             future = data_source_future
+112 
+113         past = np.reshape(past, numcontext * numcep)
+114         now = orig_inputs[time_slice]
+115         future = np.reshape(future, numcontext * numcep)
+116 
+117         train_inputs[time_slice] = np.concatenate((past, now, future))
+118         assert(len(train_inputs[time_slice]) == numcep + 2 * numcep * 
+        numcontext)
+119 
+120     # 将数据使用正太分布标准化，减去均值然后再除以方差
+121     train_inputs = (train_inputs - np.mean(train_inputs)) / np.std
+    (train_inputs)
+122     return train_inputs</pre>
+<hr class="calibre6"/>
+<p class="ziti3">orig_inputs代表转化后的MFCC，train_inputs是将时间序列扩充后的数据，里面的for循环是做补0操作。最后两行是数据标准化。</p>
+<p class="ziti4">
+<span class="yanse">6．批次音频数据对齐</span>
+</p>
+<p class="ziti3">前面是对单个文件里的特征补0，在训练环节中，文件是一批一批的获取并进行训练的，这要求每一批音频的时序数要统一，所以这里需要有一个对齐处理，pad_sequences的定义如下，可以支持补0和截断两个操作。对于补0和截断的方向都可以通过参数来控制，'post'代表后补0（截断），'pre'代表前补0（截断）。</p>
+<p class="ziti3">代码9-24　yuyinutils（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">123 ……
+124 def pad_sequences(sequences, maxlen=None, dtype=np.float32,
+125                   padding='post', truncating='post', value=0.):
+126 
+127     lengths = np.asarray([len(s) for s in sequences], dtype=np.int64)
+128 
+129     nb_samples = len(sequences)
+130     if maxlen is None:
+131         maxlen = np.max(lengths)
+132 
+133     # 从第一个非空的序列中得到样本形状
+134     sample_shape = tuple()
+135     for s in sequences:
+136         if len(s) &gt; 0:
+137             sample_shape = np.asarray(s).shape[1:]
+138             break
+139 
+140     x = (np.ones((nb_samples, maxlen) + sample_shape) * value).
+    astype(dtype)
+141     for idx, s in enumerate(sequences):
+142         if len(s) == 0:
+143             continue   # 如果序列为空，则跳过
+144         if truncating == 'pre':
+145             trunc = s[-maxlen:]
+146         elif truncating == 'post':
+147             trunc = s[:maxlen]
+148         else:
+149             raise ValueError('Truncating type "%s" not understood' % 
+            truncating)
+150 
+151         # 检查trunc
+152         trunc = np.asarray(trunc, dtype=dtype)
+153         if trunc.shape[1:] != sample_shape:
+154             raise ValueError('Shape of sample %s of sequence at position 
+            %s is different from expected shape %s' %
+155                              (trunc.shape[1:], idx, sample_shape))
+156 
+157         if padding == 'post':
+158             x[idx, :len(trunc)] = trunc
+159         elif padding == 'pre':
+160             x[idx, -len(trunc):] = trunc
+161         else:
+162             raise ValueError('Padding type "%s" not understood' % 
+            padding)
+163     return x, lengths</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">7．文字样本的转化</span>
+</p>
+<p class="ziti3">对于文本方面的样本，需要将里面的文字转换成具体的向量。get_ch_lable_v会按照传入的word_num_map将txt_label或是指定文件中的文字转化成向量。后面的get_ch_lable是读取文件操作，本例中用不到。</p>
+<p class="ziti3">代码9-24　yuyinutils（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">164 ……
+165 def get_ch_lable_v(txt_file,word_num_map,txt_label=None):
+166         
+167     words_size = len(word_num_map)
+168     
+169     to_num = lambda word: word_num_map.get(word, words_size) 
+170 
+171     if txt_file!= None:
+172         txt_label = get_ch_lable(txt_file)
+173 
+174     labels_vector = list(map(to_num, txt_label)) 
+175     return labels_vector  
+176     
+177 def get_ch_lable(txt_file):  
+178     labels= " "
+179     with open(txt_file, 'rb') as f:
+180         for label in f: 
+181             #labels =label.decode('utf-8')
+182             labels = labels +label.decode('gb2312')
+183             
+184     return  labels</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">8．密集矩阵转成稀疏矩阵</span>
+</p>
+<p class="ziti3">TensorFlow中没有密集矩阵转稀疏矩阵函数，所以需要编写一个。该函数比较常用，可以当成工具来储备，具体代码如下。</p>
+<p class="ziti3">代码9-24　yuyinutils（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">185 ……
+186 def sparse_tuple_from(sequences, dtype=np.int32):
+187    
+188     indices = []
+189     values = []
+190 
+191     for n, seq in enumerate(sequences):
+192         indices.extend(zip([n] * len(seq), range(len(seq))))
+193         values.extend(seq)
+194 
+195     indices = np.asarray(indices, dtype=np.int64)
+196     values = np.asarray(values, dtype=dtype)
+197     shape = np.asarray([len(sequences), indices.max(0)[1] + 1], 
+    dtype=np.int64)
+198 
+199     return indices, values, shape</pre>
+<hr class="calibre6"/>
+<p class="ziti3">这里主要是算出indices、values、shape这3个值，得到之后可以使用tf.SparseTensor随时生成稀疏矩阵。</p>
+<p class="ziti4">
+<span class="yanse">9．将字向量转成文字</span>
+</p>
+<p class="ziti3">字向量转成文字主要有两个函数：sparse_tuple_to_texts_ch函数，将稀疏矩阵的字向量转成文字；ndarray_to_text_ch函数，将密集矩阵的字向量转成文字。两个函数都需要传入字表，然后会按照字表对应的索引将字转化回来。</p>
+<p class="ziti3">代码9-24　yuyinutils（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">￼200 ……
+201 # 常量
+202 SPACE_TOKEN = '&lt;space&gt;'          # space符号
+203 SPACE_INDEX = 0                    # 0 为space索引
+204 FIRST_INDEX = ord('a') - 1  
+205 
+206 def sparse_tuple_to_texts_ch(tuple,words):
+207     indices = tuple[0]
+208     values = tuple[1]
+209     results = [''] * tuple[2][0]
+210     for i in range(len(indices)):
+211         index = indices[i][0]
+212         c = values[i]
+213         
+214         c = ' ' if c == SPACE_INDEX else words[c]
+215         results[index] = results[index] + c
+216     # 返回strings的List 
+217     return results
+218     
+219 def ndarray_to_text_ch(value,words):
+220     results = ''
+221     for i in range(len(value)):
+222         results += words[value[i]]
+223     return results.replace('`', ' ')    </pre>
+<hr class="calibre6"/>
+<h4 class="p3">9.5.3　训练模型</h4>
+<p class="ziti3">样本准备好后，就开始模型的搭建了。</p>
+<p class="ziti4">
+<span class="yanse">1．定义占位符</span>
+</p>
+<p class="ziti3">定义3个占位符，具体说明如下。</p>
+<p class="ziti4">·input_tensor：为输入的音频数据[none，none，Mfcc_features]，第一个是batch_size用none来表示；第二个是时序数也用none来表示，因为每一批次的时序都是不同的；第三个是MFCC的特征，是取当前特征n_input和前后n_context个特征的组合，即2× n_context+1个序列，每个序列特征数为n_input，于是得出n_input+（2×n_input * n_context）。</p>
+<p class="ziti4">·targets：音频数据所对应的文本，是一个稀疏矩阵的占位符。</p>
+<p class="ziti4">·seq_length：当前batch数据的序列长度。</p>
+<p class="ziti4">·keep_dropout：dropout的参数。</p>
+<p class="ziti3">代码9-23　yuyinchall（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">59  ……
+60  input_tensor = tf.placeholder(tf.float32, [None, None, n_input + (2
+   * n_input * n_context)], name='input') #语音MFCC features
+61  # ctc_loss计算时需要使用sparse_placeholder来生成 SparseTensor
+62 targets = tf.sparse_placeholder(tf.int32, name='targets')#文本
+63 # 1d array of size [batch_size]
+64 seq_length = tf.placeholder(tf.int32, [None], name='seq_length') #序列长
+65 keep_dropout= tf.placeholder(tf.float32)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．构建网络模型</span>
+</p>
+<p class="ziti3">网络模型使用了双向RNN的结构，并将其封装在BiRNN_model函数里。调用的代码如下。</p>
+<p class="ziti3">代码9-23　yuyinchall（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">66 logits = BiRNN_model( input_tensor, tf.to_int64(seq_length), n_input, 
+n_context,words_size +1, keep_dropout)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">BiRNN_model的定义如下。</p>
+<p class="ziti3">使用3个1024节点的全连接层，然后是一个双向RNN，最后接上2个全连接层，并且都带有dropout层。这里使用的激活函数是带截断的Relu，截断值设为20。学习参数的初始化使用标准差为0.046875的random_normal。keep_dropout_rate为0.95。</p>
+<p class="ziti3">代码9-23　yuyinchall（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">67 ……
+68 b_stddev = 0.046875
+69 h_stddev = 0.046875
+70 
+71 n_hidden = 1024
+72 n_hidden_1 = 1024
+73 n_hidden_2 =1024
+74 n_hidden_5 = 1024
+75 n_cell_dim = 1024
+76 n_hidden_3 = 2 * 1024
+77 
+78 keep_dropout_rate=0.95
+79 relu_clip = 20
+80  
+81  def BiRNN_model( batch_x, seq_length, n_input, n_context,n_character ,
+keep_dropout):
+82  
+83 # batch_x_shape: [batch_size, n_steps, n_input + 2*n_input*n_context]
+84   batch_x_shape = tf.shape(batch_x)
+85  
+86   # 将输入转成时间序列优先
+87   batch_x = tf.transpose(batch_x, [1, 0, 2])
+88   # 再转成2维传入第一层
+89   batch_x = tf.reshape(batch_x,
+90                         [-1, n_input + 2 * n_input * n_context])   # (n_steps*batch_size, n_input + 2*n_input*n_context)
+91
+92   # 使用clipped RELU activation and dropout.
+93   # 第一层
+94   with tf.name_scope('fc1'):
+95       b1 = variable_on_cpu('b1', [n_hidden_1], tf.random_normal_
+      initializer(stddev=b_stddev))
+96       h1 = variable_on_cpu('h1', [n_input + 2 * n_input * n_context, 
+      n_hidden_1],
+97                          tf.random_normal_initializer(stddev=h_stddev))
+98       layer_1 = tf.minimum(tf.nn.relu(tf.add(tf.matmul(batch_x, h1), 
+      b1)), relu_clip)
+99       layer_1 = tf.nn.dropout(layer_1, keep_dropout)
+100
+101  # 第二层
+102  with tf.name_scope('fc2'):
+103        b2 = variable_on_cpu('b2', [n_hidden_2], tf.random_normal_
+       initializer(stddev=b_stddev))
+104        h2 = variable_on_cpu('h2', [n_hidden_1, n_hidden_2], tf.random_
+       normal_initializer(stddev=h_stddev))
+105        layer_2 = tf.minimum(tf.nn.relu(tf.add(tf.matmul(layer_1, h2), 
+       b2)), relu_clip)
+106      layer_2 = tf.nn.dropout(layer_2, keep_dropout)
+107  # 第三层
+108  with tf.name_scope('fc3'):
+109        b3 = variable_on_cpu('b3', [n_hidden_3], tf.random_normal_
+       initializer(stddev=b_stddev))
+110        h3 = variable_on_cpu('h3', [n_hidden_2, n_hidden_3], tf.random_
+       normal_initializer(stddev=h_stddev))
+111        layer_3 = tf.minimum(tf.nn.relu(tf.add(tf.matmul(layer_2, h3), 
+       b3)), relu_clip)
+112      layer_3 = tf.nn.dropout(layer_3, keep_dropout)
+113
+114  # 双向RNN
+115  with tf.name_scope('lstm'):
+116      # 前向 cell:
+117        lstm_fw_cell = tf.contrib.rnn.BasicLSTMCell(n_cell_dim, forget_
+       bias=1.0, state_is_tuple=True)
+118  lstm_fw_cell = tf.contrib.rnn.DropoutWrapper(lstm_fw_cell,
+119                                               input_keep_prob=keep_dropout)
+120     # 反向 cell:
+121        lstm_bw_cell = tf.contrib.rnn.BasicLSTMCell(n_cell_dim, forget_
+       bias=1.0, state_is_tuple=True)
+122     lstm_bw_cell = tf.contrib.rnn.DropoutWrapper(lstm_bw_cell,
+123                                               input_keep_prob=keep_dropout)
+124
+125      # 'layer_3'  ' [n_steps, batch_size, 2*n_cell_dim] '
+126      layer_3 = tf.reshape(layer_3, [-1, batch_x_shape[0], n_hidden_3])
+127
+128        outputs, output_states = tf.nn.bidirectional_dynamic_rnn
+       (cell_fw=lstm_fw_cell,
+129                                                     cell_bw=lstm_bw_cell,
+130                                                     inputs=layer_3,
+131                                                     dtype=tf.float32,
+132                                                     time_major=True,
+133                                               sequence_length=seq_length)
+134
+135        # 连接正、反向结果[n_steps, batch_size, 2*n_cell_dim]
+136      outputs = tf.concat(outputs, 2)
+137      # 转化形状[n_steps*batch_size, 2*n_cell_dim]        
+138      outputs = tf.reshape(outputs, [-1, 2 * n_cell_dim])
+139
+140    with tf.name_scope('fc5'):
+141        b5 = variable_on_cpu('b5', [n_hidden_5], tf.random_normal_
+       initializer(stddev=b_stddev))
+142        h5 = variable_on_cpu('h5', [(2 * n_cell_dim), n_hidden_5], 
+       tf.random_normal_initializer(stddev=h_stddev))
+143        layer_5 = tf.minimum(tf.nn.relu(tf.add(tf.matmul(outputs, h5), 
+       b5)), relu_clip)
+144      layer_5 = tf.nn.dropout(layer_5, keep_dropout)
+145
+146  with tf.name_scope('fc6'):
+147      # 全连接层用于softmax分类
+148        b6 = variable_on_cpu('b6', [n_character], tf.random_normal_
+       initializer(stddev=b_stddev))
+149        h6 = variable_on_cpu('h6', [n_hidden_5, n_character], tf.random_
+       normal_initializer(stddev=h_stddev))
+150      layer_6 = tf.add(tf.matmul(layer_5, h6), b6)
+151
+152    # 将二维[n_steps*batch_size, n_character]转成三维 time-major [n_
+   steps, batch_size, n_character].
+153  layer_6 = tf.reshape(layer_6, [-1, batch_x_shape[0], n_character])
+154
+155  # Output shape: [n_steps, batch_size, n_character]
+156  return layer_6
+157
+158  """
+159 使用 CPU memory.
+160 """    
+161 def variable_on_cpu(name, shape, initializer):
+162  # 使用/cpu:0 device 
+163  with tf.device('/cpu:0'):
+164 
+165        var = tf.get_variable(name=name, shape=shape, initializer=
+       initializer)
+166    return var</pre>
+<hr class="calibre6"/>
+<p class="ziti3">这里的shape变化比较复杂，需要先将输入变为二维的Tensor，才可以传入全连接层。全连接层进入BIRNN时也需要形状转换成三维的Tensor，BIRNN输出的结果是2×n_hidden，所以后面的全连接层输入是2×n_hidden，最终输出时还要再转回三维的Tensor。</p>
+<p class="ziti3">与图片分类不同的是，RNN输出的outputs没有取outputs[-1]，而是全部进入了后面的全连接层。语音识别是对输入的每个时序对应的结果进行转换，所以要将RNN的全部结果送入后面的全连接层；而RNN中的图片识别只是把行当成时序，只需要知道最后一行输入后的结果，所以只取了最后一个时序的输出。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 这里使用了一个小技巧。通过函数variable_on_cpu来声明学习参数变量，将所有的学习参数定义在CPU的内存中，可以让GPU的内存充分地用于运算。</p>
+<p class="ziti4">
+<span class="yanse">3．定义损失函数即优化器</span>
+</p>
+<p class="ziti3">语音识别是属于非常典型的时间序列分类问题，前面讲过，对于这样的问题要使用ctc_loss的方法来计算损失值。优化器还是使用AdamOptimizer，学习率为0.001。代码如下。</p>
+<p class="ziti3">代码9-23　yuyinchall（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">167  ……
+168  #调用ctc_loss
+169   avg_loss = tf.reduce_mean(ctc_ops.ctc_loss(targets, logits, seq_
+  length))
+170  
+171 ###############################
+172 #优化器
+173 
+174 learning_rate = 0.001
+175 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).
+minimize(avg_loss)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">4．定义解码并评估模型节点</span>
+</p>
+<p class="ziti3">使用ctc_beam_search_decoder 函数以CTC的方式对预测结果logits进行解码，生成了decoded。前面说过，decoded是一个只有一个元素的数组，所以将其decoded[0]传入edit_distance函数，计算与正确标签targets之间的levenshtein距离。下列代码第182行中的targets与decoded[0]都是稀疏矩阵张量（SparseTensor）类型。对得到的distance取reduce_mean，可以得出该模型对于当前batch的平均错误率。</p>
+<p class="ziti3">代码9-23　yuyinchall（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">176  ……
+177   with tf.name_scope("decode"):    
+178     decoded, log_prob = ctc_ops.ctc_beam_search_decoder( logits, seq_
+    length, merge_repeated=False)
+179     
+180   with tf.name_scope("accuracy"):
+181     distance = tf.edit_distance( tf.cast(decoded[0], tf.int32), 
+    targets)
+182     # 计算label error rate (accuracy)
+183     ler = tf.reduce_mean(distance, name='label_error_rate')</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">5．建立session并添加检查点处理</span>
+</p>
+<p class="ziti3">到此模型已经建立好了，剩下的就是训练部分的搭建了。由于样本比较大，运算时间比较长，所以很有必要为模型添加检查点功能。如下代码在session建立之前，定义一个类（名为saver），用于保存检查点的相关操作，并指定检查点文件夹为当前路径下的log\yuyinchalltest\，然后启动session，进行初始，同时在指定路径下查找最后一次检查点。如果有文件就载入到模型，同时更新迭代次数epoch。</p>
+<p class="ziti3">代码9-23　yuyinchall（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">184 ……
+185  epochs = 100
+186  savedir = "log/yuyinchalltest/"
+187  saver = tf.train.Saver(max_to_keep=1)             # 生成saver
+188  # 创建session
+189  sess = tf.Session() 
+190  # 没有模型，就重新初始化
+191  sess.run(tf.global_variables_initializer())
+192  
+193  kpt = tf.train.latest_checkpoint(savedir)
+194  print("kpt:",kpt)
+195  startepo= 0
+196  if kpt!=None:
+197     saver.restore(sess, kpt) 
+198     ind = kpt.find("-")
+199     startepo = int(kpt[ind+1:])
+200     print(startepo)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">6．通过循环来迭代训练模型</span>
+</p>
+<p class="ziti3">记录下开始时间，启用循环，进行迭代训练，每次循环通过next_batch函数取一批次样本数据，并设置keep_dropout参数，通过sess.run来运行模型的优化器，同时输出loss的值。总样本迭代100次，每次迭代中，一批次取8条数据。</p>
+<p class="ziti3">代码9-23　yuyinchall（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">201 ……
+202  # 准备运行训练步骤
+203  section = '\n{0:=^40}\n'
+204  print(section.format('Run training epoch'))
+205  
+206  train_start = time.time()
+207  for epoch in range(epochs):                      #样本集迭代次数
+208     epoch_start = time.time()
+209     if epoch&lt;startepo:
+210         continue
+211    
+212     print("epoch start:",epoch,"total epochs= ",epochs)
+213 #######################运行batch####
+214     n_batches_per_epoch = int(np.ceil(len(labels) / batch_size))
+215     print("total loop ",n_batches_per_epoch,"in one epoch，",batch_size,"items in one loop") 
+216     
+217     train_cost = 0
+218     train_ler = 0
+219     next_idx =0
+220     
+221     for batch in range(n_batches_per_epoch): #每次取batch_size条数据，共循环n_batches_per_epoch次
+222         #取数据
+223         next_idx,source,source_lengths,sparse_labels = \
+224             next_batch(labels,next_idx ,batch_size)
+225         feed = {input_tensor: source, targets: sparse_labels,seq_
+        length: source_lengths,keep_dropout:keep_dropout_rate}
+226         
+227         #计算 avg_loss optimizer 
+228         batch_cost, _ = sess.run([avg_loss, optimizer],  feed_dict=
+        feed )
+229         train_cost += batch_cost </pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">7．定期评估模型，输出模型解码结果</span>
+</p>
+<p class="ziti3">每取20次batch数据，就将过程信息打印出来，将样本数据送入模型进行语音识别，并输出预测结果。为防止打印信息过多，每次只打印一条信息，并将其文件名、原始的文本和解码文本打印出来。</p>
+<p class="ziti3">代码9-23　yuyinchall（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">230  ……
+231          if (batch +1)%20 == 0:
+232             print('loop:',batch, 'Train cost: ', train_cost/(batch+1))
+233             feed2 = {input_tensor: source, targets: sparse_labels,
+            seq_length: source_lengths,keep_dropout:1.0}
+234 
+235             d,train_ler = sess.run([decoded[0],ler], feed_dict=feed2)
+236             dense_decoded = tf.sparse_tensor_to_dense( d, default_
+  value=-1).eval(session=sess)
+237             dense_labels = sparse_tuple_to_texts_ch(sparse_labels,
+            words)
+238             
+239             counter =0
+240             print('Label err rate: ', train_ler)
+241             for orig, decoded_arr in zip(dense_labels, dense_decoded):
+242                 # 转成strings
+243                 decoded_str = ndarray_to_text_ch(decoded_arr,words)
+244                 print(' file {}'.format( counter))
+245                 print('Original: {}'.format(orig))
+246                 print('Decoded:  {}'.format(decoded_str))
+247                 counter=counter+1
+248                 break
+249             
+250     epoch_duration = time.time() - epoch_start
+251     
+252     log = 'Epoch {}/{}, train_cost: {:.3f}, train_ler: {:.3f}, time: 
+    {:.2f} sec'
+253     print(log.format(epoch ,epochs, train_cost,train_ler,epoch_
+    duration))
+254     saver.save(sess, savedir+"yuyinch.cpkt", global_step=epoch)
+255         
+256 train_duration = time.time() - train_start
+257 print('Training complete, total duration: {:.2f} min'.format(train_
+duration / 60))
+258 
+259 sess.close()  </pre>
+<hr class="calibre6"/>
+<p class="ziti3">通过sess.run计算decoded[0]的值只是个SparseTensor类型，需要用tf.sparse_tensor_ to_dense将其转成dense矩阵（记住Tensor Flow里的类型必须用eval或session.run才能得到真实值），然后再调用sparse_tuple_to_texts_ch将其转成文本dense_labels。</p>
+<p class="ziti3">在每次迭代的最后加入检查点保存代码，以便中途中断可以恢复。</p>
+<p class="ziti3">运行以上代码，经过一段时间之后（十几小时或几十个小时），会得到如下输出：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">……
+file 0
+Original: 另外 加工 修理 和 修配 业务 不 属于 营业税 的 应 税 劳务 不 缴纳 营业税
+Decoded:  另外 加工 理 和 修配 务 不 属于 营业税 的 应 税 劳务 不 缴纳 营业税
+loop: 79 Train cost:  10.3595850527
+Label err rate： 0.0189385
+ file 0
+Original：这 碗 离 娘 饭 姑娘 再有 离 娘 痛楚 也 要 每样 都 吃 一点 才 算 循 规 遵 俗 的
+Decoded： 这 碗 离 娘 饭 姑 有 离 娘 痛楚 也 要 每样 都 吃 一点 才 外算 循 规 遵 俗 的
+loop: 99 Train cost：10.3084330273
+Label err rate： 0.0270463
+ file 0
+Epoch 99/100, train_cost: 1176.815, train_ler: 0.047, time: 706.20 sec
+WARNING:tensorflow:Error encountered when serializing LAYER_NAME_UIDS.
+Type is unsupported, or the types of the items don't match field type in CollectionDef.
+'dict' object has no attribute 'name'
+Training complete, total duration: 1182.50 min</pre>
+<hr class="calibre6"/>
+<p class="ziti3">由此可见程序基本可以将样本库中的语音全部识别出来，错误率在0.02左右。最后打印的警告是出至TensorFlow中保存模型节点时的，不影响整体功能，可以不用管。</p>
+<p class="ziti3">一般来讲，将训练好的模型作为识别后端，通过编写程序录音采集，将WAV文件传入进行解码，即可实现在线实时的语音识别了。</p>
+<h4 class="p3">9.5.4　练习题</h4>
+<p class="ziti3">（1）试着按照前面例子中的样本形式，自己录制一些语音样本，并做出对应的文本文件，用该代码训练出适应自己声音的语音模型。</p>
+<p class="ziti3">（2）实例68中的模型里，fc5层使用的是全连接的方法，还可以使用全局平均池化层的方式代替，读者可以试着改写一下代码，看看效果。</p>
+<p class="ziti3">（3）尝试在BIRNN部分加入更深的RNN层，来获得更好的识别率。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

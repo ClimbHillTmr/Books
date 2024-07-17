@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">12.2　DCGAN——基于深度卷积的GAN</h3>
+<p class="ziti3">DCGAN即使用卷积网络的对抗网络，其原理和GAN一样，只是把CNN卷积技术用于GAN模式的网络里，G（生成器）网在生成数据时，使用反卷积的重构技术来重构原始图片。D（判别器）网用卷积技术来识别图片特征，进而作出判别。</p>
+<p class="ziti3">同时，DCGAN中的卷积神经网络也做了一些结构的改变，以提高样本的质量和收敛速度：</p>
+<p class="ziti4">·G网中取消所有池化层，使用转置卷积（transposed convolutional layer）并且步长大于等于2进行上采样。</p>
+<p class="ziti4">·D网中也用加入stride的卷积代替pooling。</p>
+<p class="ziti4">·在D网和G网中均使用批量化归一（batch normalization），而在最后一层时通常不会使用batch normalizaiton，这是为了保证模型能够学习到数据的正确均值和方差。</p>
+<p class="ziti4">·去掉了FC层，使网络变为全卷积网络。</p>
+<p class="ziti4">·G网中使用ReLU作为激活函数，最后一层使用Tanh作为激活函数。</p>
+<p class="ziti4">·D网中使用LeakyReLU作为激活函数。</p>
+<p class="ziti3">DCGAN中换成了两个卷积神经网络（CNN）的G和D，可以更好地学到对输入图像层次化的表示，尤其在生成器部分会有更好的模拟效果。DCGAN在训练中会使用Adam优化算法。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

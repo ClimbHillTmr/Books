@@ -1,0 +1,427 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">8.6　反卷积神经网络</h3>
+<p class="ziti3">反卷积是指，通过测量输出和已知输入重构未知输入的过程。在神经网络中，反卷积过程并不具备学习的能力，仅仅是用于可视化一个已经训练好的卷积网络模型，没有学习训练的过程。</p>
+<p class="ziti3">如图8-18所示为VGG 16反卷积神经网络的结构，展示了一个卷积网络与反卷积网络结合的过程。VGG 16是一个深度神经网络模型，在后面会专门介绍。它的反卷积就是将中间的数据，按照前面卷积、池化等变化的过程，完全相反地做一遍，从而得到类似原始输入的数据。</p>
+<div class="pic"><img alt="" src="Image00144.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图8-18　VGG 16反卷积结构</p>
+<h4 class="p3">8.6.1　反卷积神经网络的应用场景</h4>
+<p class="ziti3">由于反卷积网络的特性，导致它有许多特别的应用，一般可以用于信道均衡、图像恢复、语音识别、地震学、无损探伤等未知输入估计和过程辨识方面的问题。</p>
+<p class="ziti3">在神经网络的研究中，反卷积更多的是充当可视化的作用。对于一个复杂的深度卷积网络，通过每层若干个卷积核的变换，我们无法知道每个卷积核关注的是什么，变换后的特征是什么样子。通过反卷积的还原，可以对这些问题有个清晰的可视化，以各层得到的特征图作为输入，进行反卷积，得到反卷积结果，用以验证显示各层提取到的特征图。</p>
+<h4 class="p3">8.6.2　反卷积原理</h4>
+<p class="ziti3">反卷积，可以理解为卷积操作的逆操作。这里千万不要当成反卷积操作可以复原卷积操作的输入值，反卷积并没有那个功能，它仅仅是将卷积变换过程中的步骤反向变换一次而已，通过将卷积核转置，与卷积后的结果再做一遍卷积，所以它还有个名字叫是转置卷积。</p>
+<p class="ziti3">虽然它不能还原出原来卷积的样子，但是在作用上具有类似的效果，可以将带有小部分缺失的信息最大化地恢复，也可以用来恢复被卷积生成后的原始输入。</p>
+<p class="ziti3">反卷积的具体操作比较复杂，具体步骤如下。</p>
+<p class="ziti3">（1）首先是将卷积核反转（并不是转置，而是上下左右方向进行递序操作）。</p>
+<p class="ziti3">（2）再将卷积结果作为输入，做补0的扩充操作，即往每一个元素后面补0。这一步是根据步长来的，对每一个元素沿着步长的方向补（步长-1）个0。例如，步长为1就不用补0了。</p>
+<p class="ziti3">（3）在扩充后的输入基础上再对整体补0。以原始输入的shape作为输出，按照前面介绍的卷积padding规则，计算pading的补0位置及个数，得到的补0位置要上下和左右各自颠倒一下。</p>
+<p class="ziti3">（4）将补0后的卷积结果作为真正的输入，反转后的卷积核为filter，进行步长为1的卷积操作。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 计算padding按规则补0时，统一按照padding='SAME'、步长为1×1的方式来计算。</p>
+<p class="ziti3">如图8-19所示，以一个[1，4，4，1]的矩阵为例，进行filter为2×2，步长为2×2的卷积操作（如图8-19a所示），其对应的反卷积操作步骤如图8-19b所示。</p>
+<div class="pic"><img alt="" src="Image00145.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图8-19　卷积与反卷积操作</p>
+<p class="ziti3">在反卷积过程中，首先将2×2矩阵通过步长补0的方式变成4×4，再通过padding反方向补0，然后与反转后的filter使用步长为1×1的卷积操作，最终得出了结果。但是这个结果已经与原来的全1矩阵不等了，说明转置卷积只能恢复部分特征，无法百分百地恢复原始数据。</p>
+<h4 class="p3">8.6.3　实例45：演示反卷积的操作</h4>
+<p class="ziti3">在编写反卷积代码时，心中想着一个正向的卷积过程会很有帮助。在TensorFlow中反卷积是通过函数tf.nn.conv2d_transpose来实现的，其定义如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">def conv2d_transpose(value,
+                     filter,
+                     output_shape,
+                     strides,
+                     padding="SAME",
+                     data_format="NHWC",
+                     name=None):</pre>
+<hr class="calibre6"/>
+<p class="ziti3">具体参数说明如下。</p>
+<p class="ziti4">·value：代表通过卷积操作之后的张量，一般用NHWC类型。</p>
+<p class="ziti4">·filter：代表卷积核。</p>
+<p class="ziti4">·output_shape：代表输出的张量形状也是个四维张量。</p>
+<p class="ziti4">·strides：代表步长。</p>
+<p class="ziti4">·padding：代表原数据生成value时使用的补0的方式，是用来检查输入形状和输出形状是否合规的。</p>
+<p class="ziti4">·return：反卷积后的结果，按照output_shape指定的形状。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ NHWC类型是神经网络中在处理图像方面常用的类型，4个字母分别代表4个意思，即N-个数、H-高、W-宽、C-通道数。也就是我们常见的四维张量。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ output_shape并不是一个随便填写的形状，它必须是能够生成value参数的原数据的形状，如果输出形状不对，函数会报错。</p>
+<p class="ziti3">跟进TensorFlow的源码中可以看到，反卷积操作其实是使用了gen_nn_ops.conv2d_ backprop_input函数来最终实现的，相当于TensorFlow中利用了卷积操作在反向传播的处理函数中做反卷积操作，即卷积操作的反向传播就是反卷积操作。</p>
+<p class="ziti3">下面通过例子将前面图示的数据演示出来，并且比较一下SAME和VALID下对应卷积和反卷积的影响。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">通过对模拟数据进行卷积与反卷积的操作，来比较卷积与反卷积中padding在SAME、VALID下的变化。</p>
+<p class="ziti3">代码8-12　反卷积操作</p>
+<hr class="calibre6"/>
+<pre class="ziti5">import numpy as np
+import tensorflow as tf 
+#模拟数据
+img = tf.Variable(tf.constant(1.0,shape = [1, 4, 4, 1])) 
+ 
+filter =  tf.Variable(tf.constant([1.0,0,-1,-2],shape = [2, 2, 1, 1]))
+#分别进行VALID与SAME操作
+conv = tf.nn.conv2d(img, filter, strides=[1, 2, 2, 1], padding='VALID') 
+cons = tf.nn.conv2d(img, filter, strides=[1, 2, 2, 1], padding='SAME')
+print(conv.shape)
+print(cons.shape)
+#再进行反卷积
+contv= tf.nn.conv2d_transpose(conv, filter, [1,4,4,1],strides=[1, 2, 2, 
+1], padding='VALID')
+conts = tf.nn.conv2d_transpose(cons, filter, [1,4,4,1],strides=[1, 2, 2, 
+1], padding='SAME')
+ 
+with tf.Session() as sess:  
+    sess.run(tf.global_variables_initializer() )  
+ 
+    print("conv:\n",sess.run([conv,filter])) 
+    print("cons:\n",sess.run([cons]))    
+    print("contv:\n",sess.run([contv])) 
+    print("conts:\n",sess.run([conts]))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">先定义一个[1，4，4，1]的矩阵，矩阵里的值全为1，进行filter为2×2、步长为2×2的卷积操作，分别使用padding为SAME和VALID的两种情况生成卷积数据，然后将结果放到 tf.nn.conv2d_transpose里，再次使用padding为SAME和VALID的两种情况生成数据，运行上面代码，输出如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">(1, 2, 2, 1)
+(1, 2, 2, 1)
+conv:
+ [array([[[[-2.],
+         [-2.]],
+        [[-2.],
+         [-2.]]]], dtype=float32), array([[[[ 1.]],
+        [[ 0.]]],
+       [[[-1.]],
+        [[-2.]]]], dtype=float32)]
+cons:
+ [array([[[[-2.],
+         [-2.]],
+        [[-2.],
+         [-2.]]]], dtype=float32)]
+contv:
+ [array([[[[-2.],
+         [ 0.],
+         [-2.],
+         [ 0.]],
+        [[ 2.],
+         [ 4.],
+         [ 2.],
+         [ 4.]],
+        [[-2.],
+         [ 0.],
+         [-2.],
+         [ 0.]],
+        [[ 2.],
+         [ 4.],
+         [ 2.],
+         [ 4.]]]], dtype=float32)]
+conts:
+ [array([[[[-2.],
+         [ 0.],
+         [-2.],
+         [ 0.]],
+        [[ 2.],
+         [ 4.],
+         [ 2.],
+         [ 4.]],
+        [[-2.],
+         [ 0.],
+         [-2.],
+         [ 0.]],
+        [[ 2.],
+         [ 4.],
+         [ 2.],
+         [ 4.]]]], dtype=float32)]</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到，输出的结果与图8-19是一样的，并且也验证了当panding为SAME并且不需要补0时，卷积和反卷积对于panding是SAME和VALID都是相同的。</p>
+<h4 class="p3">8.6.4　反池化原理</h4>
+<p class="ziti3">反池化是属于池化的逆操作，是无法通过池化的结果还原出全部的原始数据。因为池化的过程就是只保留主要信息，舍去部分信息。如想从池化后的这些主要信息恢复出全部信息，则存在着信息缺失，这时只能通过补位来实现最大程度的信息完整。</p>
+<p class="ziti3">池化有两种最大池化和平均池化，其反池化也需要与其对应。</p>
+<p class="ziti4">·平均池化的操作比较简单。首先还原成原来的大小，然后将池化结果中的每个值都填入其对应于原始数据区域中的相应位置即可，如图8-20所示。</p>
+<div class="pic"><img alt="" src="Image00146.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图8-20　反平均池化</p>
+<p class="ziti4">·最大池化的反池化会复杂一些。要求在池化过程中记录最大激活值的坐标位置，然后在反池化时，只把池化过程中最大激活值所在位置坐标的值激活，其他的值置为0。当然，这个过程只是一种近似。因为在池化的过程中，除了最大值所在的位置，其他的值也是不为0的。如图8-21所示。</p>
+<div class="pic"><img alt="" src="Image00147.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图8-21　反最大池化</p>
+<h4 class="p3">8.6.5　实例46：演示反池化的操作</h4>
+<p class="ziti3">TensorFlow中目前还没有反池化操作的函数。对于最大池化，也不支持输出最大激活值的位置，但是同样有个池化的反向传播函数tf.nn.max_pool_with_argmax。该函数可以输出位置，需要开发者利用这个函数做一些改动，自己封装一个最大池化操作，然后再根据mask写出反池化函数，下面以反最大池化为例。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">定义一个数组作为模拟图片，将其进行最大池化，接着再进行反池化，比较原始数据与反池化后的数据。</p>
+<p class="ziti3">首先重新定义最大池化函数，代码如下。</p>
+<p class="ziti3">代码8-13　反池化操作</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 def max_pool_with_argmax(net, stride):
+02     _, mask = tf.nn.max_pool_with_argmax( net,ksize=[1, stride, stride, 
+    1], strides=[1, stride, stride, 1],padding='SAME')
+03     mask = tf.stop_gradient(mask)
+04     net = tf.nn.max_pool(net, ksize=[1, stride, stride, 1],strides=[1, 
+    stride, stride, 1], padding='SAME') 
+05     return net, mask</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在上面代码里，先调用tf.nn.max_pool_with_argmax函数获得每个最大值的位置mask，再将反向传播的mask梯度计算停止（后面会有关于梯度停止的介绍），接着再用tf.nn.max_pool函数计算最大池化操作，然后将mask和池化结果一起返回。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ tf.nn.max_pool_with_argmax的方法只支持GPU操作，所以利用这个方法目前还不能在CPU机器上使用。</p>
+<p class="ziti3">接下来定义一个数组，并使用最大池化函数对其进行池化操作，比较一下与自带的tf.nn.max_pool函数是否一样，看看输出的mask是什么效果。</p>
+<p class="ziti3">代码8-13　反池化操作（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">06 img=tf.constant([  
+07         [[0.0,4.0],[0.0,4.0],[0.0,4.0],[0.0,4.0]],  
+08         [[1.0,5.0],[1.0,5.0],[1.0,5.0],[1.0,5.0]],  
+09         [[2.0,6.0],[2.0,6.0],[2.0,6.0],[2.0,6.0]],  
+10         [[3.0,7.0],[3.0,7.0], [3.0,7.0],[3.0,7.0]]
+11     ])  
+12   
+13 img=tf.reshape(img,[1,4,4,2])  
+14 pooling2=tf.nn.max_pool(img,[1,2,2,1],[1,2,2,1],padding='SAME')  
+15 encode, mask = max_pool_with_argmax(img, 2)
+16 with tf.Session() as sess:  
+17     print("image:")  
+18     image=sess.run(img)  
+19     print (image)     
+20     result=sess.run(pooling2)  
+21     print ("pooling2:\n",result)
+22     result,mask2=sess.run([encode, mask])  
+23     print ("encode:\n",result,mask2)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">代码运行后，输出如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">image:
+[[[[ 0.  4.]
+   [ 0.  4.]
+   [ 0.  4.]
+   [ 0.  4.]]
+ 
+  [[ 1.  5.]
+   [ 1.  5.]
+   [ 1.  5.]
+   [ 1.  5.]]
+ 
+  [[ 2.  6.]
+   [ 2.  6.]
+   [ 2.  6.]
+   [ 2.  6.]]
+ 
+  [[ 3.  7.]
+   [ 3.  7.]
+   [ 3.  7.]
+   [ 3.  7.]]]]
+pooling2:
+ [[[[ 1.  5.]
+   [ 1.  5.]]
+ 
+  [[ 3.  7.]
+   [ 3.  7.]]]]
+encode:
+ [[[[ 1.  5.]
+   [ 1.  5.]]
+ 
+  [[ 3.  7.]
+   [ 3.  7.]]]] [[[[ 8  9]
+   [12 13]]
+ 
+  [[24 25]
+   [28 29]]]]</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到，定义的最大池化与原来的版本输出是一样的。mask的值是将整个数组flat（扁平化）后的索引，但却保持与池化结果一致的shape。</p>
+<p class="ziti3">了解这些信息后，就可以接着写代码，定义一个反最大池化的操作了。</p>
+<p class="ziti3">代码8-13　反池化操作（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">24 def unpool(net, mask, stride):
+25 
+26     ksize = [1, stride, stride, 1]
+27     input_shape = net.get_shape().as_list()
+28     #  计算new shape
+29     output_shape = (input_shape[0], input_shape[1] * ksize[1], input_
+    shape[2] * ksize[2], input_shape[3])
+30     # 计算索引
+31     one_like_mask = tf.ones_like(mask)
+32     batch_range = tf.reshape(tf.range(output_shape[0], dtype=tf.
+    int64), shape=[input_shape[0], 1, 1, 1])
+33     b = one_like_mask * batch_range
+34     y = mask // (output_shape[2] * output_shape[3])
+35     x = mask % (output_shape[2] * output_shape[3]) // output_shape[3]
+36     feature_range = tf.range(output_shape[3], dtype=tf.int64)
+37     f = one_like_mask * feature_range
+38     # 转置索引 
+39     updates_size = tf.size(net)
+40     indices = tf.transpose(tf.reshape(tf.stack([b, y, x, f]), [4, 
+    updates_size]))
+41     values = tf.reshape(net, [updates_size])
+42     ret = tf.scatter_nd(indices, values, output_shape)
+43     return ret</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面代码的大概思路是找到mask对应的索引，将max的值填到指定地方。这里不做过多解释，读者可以将反向传播函数当成一个工具，以后直接使用即可。</p>
+<p class="ziti3">下面调用反池化函数，并将结果打印出来。</p>
+<p class="ziti3">代码8-13　反池化操作（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">44 img2 = unpool(encode,mask,2)
+45 with tf.Session() as sess:  
+46     ……
+47     print ("encode:\n",result,mask2)
+48     result=sess.run(img2)  
+49     print ("reslut:\n",result)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">代码运行后，输出结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">reslut:
+ [[[[ 0.  0.]
+   [ 0.  0.]
+   [ 0.  0.]
+   [ 0.  0.]]
+ 
+  [[ 1.  5.]
+   [ 0.  0.]
+   [ 1.  5.]
+   [ 0.  0.]]
+ 
+  [[ 0.  0.]
+   [ 0.  0.]
+   [ 0.  0.]
+   [ 0.  0.]]
+ 
+  [[ 3.  7.]
+   [ 0.  0.]
+   [ 3.  7.]
+   [ 0.  0.]]]]</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到，最大值已经填入对应的位置，其他地方的值为0。</p>
+<h4 class="p3">8.6.6　实例47：演示gradients基本用法</h4>
+<p class="ziti3">这部分内容本来是要放在前面章节讲的，考虑到读者直接了解梯度相关的知识有些生硬，而且一时也用不上，所以就将这部分内容移到了本节中，这样，通过例子中引出的知识点，会使读者学习起来更加通顺。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">通过定义两个矩阵变量相乘来演示使用gradients求梯度。</p>
+<p class="ziti3">在反向传播过程中，神经网络需要对每一个loss对应的学习参数求偏导，算出的这个值也叫梯度，用来乘以学习率然后更新学习参数使用的。它是通过tf.gradients函数来实现的。tf.gradients函数里第一个参数为求导公式的结果，第二个参数为指定公式中的哪个变量来求偏导。下面通过例子介绍tf.gradients函数的用法。</p>
+<p class="ziti3">代码8-14　gradients0</p>
+<hr class="calibre6"/>
+<pre class="ziti5">import tensorflow as tf
+ 
+w1 = tf.Variable([[1,2]])
+w2 = tf.Variable([[3,4]])
+ 
+y = tf.matmul(w1, [[9],[10]])
+grads = tf.gradients(y,[w1])       #求w1的梯度
+ 
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    gradval = sess.run(grads)
+    print(gradval)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行后输出结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">[array([[ 9, 10]])]</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面例子中，由于y是由w1与[[9]，[10]]相乘而来，所以其导数也就是[[9]，[10]]（即斜率）。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 如果求梯度的式子中没有要求偏导的变量，系统会报错。例如，写成grads = tf.gradients（y，[w1，w2]）。</p>
+<h4 class="p3">8.6.7　实例48：使用gradients对多个式子求多变量偏导</h4>
+<p class="ziti3">tf.gradients函数还可以同时对多个式子求关于多个变量的偏导，见如下代码</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">有两个OP，4个参数，演示使用gradients同时为两个式子4个参数求梯度。</p>
+<p class="ziti3">代码8-15　gradients1</p>
+<hr class="calibre6"/>
+<pre class="ziti5">import tensorflow as tf
+ 
+tf.reset_default_graph()
+w1 = tf.get_variable('w1', shape=[2])
+w2 = tf.get_variable('w2', shape=[2])
+ 
+w3 = tf.get_variable('w3', shape=[2])
+w4 = tf.get_variable('w4', shape=[2])
+ 
+y1 = w1 + w2+ w3
+y2 = w3 + w4
+# grad_ys求梯度的输入值
+gradients = tf.gradients([y1,y2],[w1,w2,w3,w4],grad_ys=[tf. convert_to_
+tensor([1.,2.]),tf.convert_to_tensor([3.,4.])])
+       
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    print(sess.run(gradients))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，输出结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">[array([1.,2.], dtype=float32), array([1.,2.], dtype=float32), array([ 4., 
+6.], dtype=float32),array([ 3., 4.], dtype=float32)]</pre>
+<hr class="calibre6"/>
+<p class="ziti3">这里使用了tf.gradients函数的第三个参数，即给定公式结果的值，来求参数偏导，这里相当于y1为[1.，2.]、y2为[3.，4.]。对于y1来讲，求关于w1的偏导时，会认为w2和w3为常数，所以w1和w2的导数为0，即w1的梯度就为[1.，2.]。同理可以得出w2和w3均为[1.，2.]，接着求y2的偏导数，得到w3与w4均为[3.，4.]。然后将两个式子中的w3结果累加起来，所以w3就为[4.，6.]。</p>
+<h4 class="p3">8.6.8　实例49：演示梯度停止的实现</h4>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">演示梯度停止的用法，并观察当变量设置梯度停止后，对其求梯度的结果。</p>
+<p class="ziti3">对于反向传播过程中某种特殊情况需要停止梯度的运算时，在TensorFlow中提供了一个tf.stop_gradient函数，被它定义过的节点将没有梯度运算功能。</p>
+<p class="ziti3">例如，在前面代码中加入y3结点。通过gradients2来计算其相关变量的梯度。</p>
+<p class="ziti3">代码8-16　gradients2</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 ……
+02 a = w1+w2
+03 a_stoped = tf.stop_gradient(a)              #令a梯度停止
+04 y3= a_stoped+w3
+05 
+06 gradients = tf.gradients([y1,y2],[w1,w2,w3,w4], grad_ys=[tf.convert_
+to_tensor([1.,2.]),
+07                                                          
+  tf.convert_to_tensor([3.,4.])])
+08                                                           
+09 gradients2 = tf.gradients(y3,[w1,w2,w3], grad_ys=tf.convert_to_tensor
+([1.,2.]))          
+10 print(gradients2) 
+11                                                     
+12 with tf.Session() as sess:
+13     sess.run(tf.global_variables_initializer())
+14     print(sess.run(gradients))
+15     print(sess.run(gradients2)) </pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5"> [None, None, &lt;tf.Tensor 'gradients_1/add_4_grad/Reshape_1:0' shape=(2,) 
+dtype=float32&gt;]
+Traceback (most recent call last):
+……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到程序运行出错，并且在出错前显示了gradients2的内容，w1和w2对应的位置都为None，这是由于梯度被停止了。后面的程序试图去求一个None的梯度，所以报错了。</p>
+<p class="ziti3">再定义一个gradients3，只求存在的梯度，同时将print（sess.run（gradients2））注释掉，代码如下。</p>
+<p class="ziti3">代码8-16　gradients2（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">16 gradients3 = tf.gradients(y3, [ w3], grad_ys=tf.convert_to_tensor
+([1.,2.])) 
+17                                                        
+18 with tf.Session() as sess:
+19     sess.run(tf.global_variables_initializer())
+20     print(sess.run(gradients))
+21     #print(sess.run(gradients2))   #程序试图去求一个None的梯度，所以报错
+22     print(sess.run(gradients3))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，输出结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">[None, None, &lt;tf.Tensor 'gradients_1/add_4_grad/Reshape_1:0' shape=(2,) 
+dtype=float32&gt;]
+[array([ 1.,  2.], dtype=float32), array([ 1.,  2.], dtype=float32), 
+array([ 4.,  6.], dtype=float32), array([ 3.,  4.], dtype=float32)]
+[array([ 1.,  2.], dtype=float32)]</pre>
+<hr class="calibre6"/>
+<p class="ziti3">这时就可以正常运算了。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

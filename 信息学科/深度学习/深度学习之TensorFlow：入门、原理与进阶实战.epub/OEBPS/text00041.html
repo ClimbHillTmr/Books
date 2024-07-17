@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">6.4　损失函数——用真实值与预测值的距离来指导模型的收敛方向</h3>
+<p class="ziti3">损失函数是绝对网络学习质量的关键。在学到后面章节就会发现，无论什么样的网络结构，如果使用的损失函数不正确，最终都将难以训练出正确的模型。这里先介绍几个常见的loss函数，针对不同的网络结构还会有更多的loss函数，在后面章节会伴随不同的网络模型来介绍。</p>
+<h4 class="p3">6.4.1　损失函数介绍</h4>
+<p class="ziti3">损失函数的作用前面已经说过了，用于描述模型预测值与真实值的差距大小。一般有两种比较常见的算法——均值平方差（MSE）和交叉熵。下面来分别介绍每个算法的具体内容。</p>
+<p class="ziti4">
+<span class="yanse">1．均值平方差</span>
+</p>
+<p class="ziti3">均值平方差（Mean Squared Error，MSE），也称“均方误差”，在神经网络中主要是表达预测值与真实值之间的差异，在数理统计中，均方误差是指参数估计值与参数真值之差平方的期望值。公式定义见式（6-12），主要是对每一个真实值与预测值相减的平方取平均值：</p>
+<div class="pic"><img alt="" src="Image00094.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">均方误差的值越小，表明模型越好。类似的损失算法还有均方根误差RMSE（将MSE开平方）、平均绝对值误差MAD（对一个真实值与预测值相减的绝对值取平均值）等。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 在神经网络计算时，预测值要与真实值控制在同样的数据分布内，假设将预测值经过Sigmoid激活函数得到取值范围在0～1之间，那么真实值也归一化成0～1之间。这样在做loss计算时才会有较好的效果。</p>
+<p class="ziti4">
+<span class="yanse">2．交叉熵</span>
+</p>
+<p class="ziti3">交叉熵（crossentropy）也是loss算法的一种，一般用在分类问题上，表达的意识为预测输入样本属于某一类的概率 。其表达式见式（6-13），其中y代表真实值分类（0或1），a代表预测值。</p>
+<div class="pic"><img alt="" src="Image00095.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">交叉熵也是值越小，代表预测结果越准。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 这里用于计算的a也是通过分布统一化处理的（或者是经过Sigmoid函数激活的），取值范围在0～1之间。如果真实值和预测值都是1，前面一项y*ln（a）就是1*ln（1）等于0，后一项（1-y）*ln（1-a）也就是0*ln（0）等于0，loss为0，反之loss函数为其他数。</p>
+<p class="ziti4">
+<span class="yanse">3．总结：损失算法的选取</span>
+</p>
+<p class="ziti3">损失函数的选取取决于输入标签数据的类型：如果输入的是实数、无界的值，损失函数使用平方差；如果输入标签是位矢量（分类标志），使用交叉熵会更适合。</p>
+<h4 class="p3">6.4.2　TensorFlow中常见的loss函数</h4>
+<p class="ziti3">下面看看TensorFlow中都有哪些常见的loss函数。</p>
+<p class="ziti4">
+<span class="yanse">1．均值平方差</span>
+</p>
+<p class="ziti3">在TensorFlow没有单独的MSE函数，不过由于公式比较简单，往往开发者都会自己组合，而且也可以写出n种写法，例如：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">MSE=tf.reduce_mean(tf.pow(tf.sub(logits, outputs), 2.0))
+MSE=tf.reduce_mean(tf. square(tf.sub(logits, outputs)))
+MSE=tf.reduce_mean(tf. square(logits- outputs))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">代码中logits代表标签值，outputs代表预测值。</p>
+<p class="ziti3">同样也可以组合其他类似loss，例如：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Rmse= tf.sqrt(tf.reduce_mean(tf.pow(tf.sub(logits, outputs), 2.0)))
+mad= tf.reduce_mean (tf.complex_abs(tf.sub(logits, outputs))</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．交叉熵</span>
+</p>
+<p class="ziti3">在TensorFlow中常见的交叉熵函数有：</p>
+<p class="ziti4">·Sigmoid交叉熵；</p>
+<p class="ziti4">·softmax交叉熵；</p>
+<p class="ziti4">·Sparse交叉熵；</p>
+<p class="ziti4">·加权Sigmoid交叉熵。</p>
+<p class="ziti3">在TensorFlow里常用的损失函数如表6-2所示。</p>
+<p class="middle-img">表6-2　TensorFlow中的交叉熵</p>
+<div class="pic"><img alt="" src="Image00096.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">当然，也可以像MSE那样使用自己组合的公式计算交叉熵，举例，对于softmax后的结果logits我们可以对其使用公式-tf.reduce_sum（labels*tf.log（logits），1），就等同于softmax_cross_entropy_with_logits得到的结果。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

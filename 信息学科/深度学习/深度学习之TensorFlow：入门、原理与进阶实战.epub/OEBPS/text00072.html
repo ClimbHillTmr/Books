@@ -1,0 +1,162 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">9.9　实例75：制作一个简单的聊天机器人</h3>
+<p class="ziti3">实例74中的Seq2Seq模型的代码可以作为很好的框架来扩展使用，简单地改变一下数据样本，即可扩展到许多更有意思的应用中。例如，让机器人对对联、讲故事、生成文章摘要、汉语翻译成英语、聊天机器人等都可以实现。这些扩展应用基本上不需要改动太多的代码就可以完成，本节以聊天机器人来举例演示。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">准备一部分聊天对话的语料，使用Seq2Seq模式对其进行学习，拟合特征，从而实现聊天机器人的功能。</p>
+<p class="ziti3">基于9.8.6节例子中的代码文件，本例中需要变化的代码主要在处理样本方面，包括“9-33 datautil.py”“9-35 train.py”“9-36 test.py”。“9-34 seq2seq_model.py”文件为模型文件，可以不做变化，如需要修改网络结构，可以在其seq2seq_f函数中改变cell的组成即可。这样新生成的文件就是“9-37 datautil.py”“9-38 seq2seq_model.py”“9-39 train.py”“9-40 test.py”，具体步骤如下。</p>
+<h4 class="p3">9.9.1　构建项目框架</h4>
+<p class="ziti3">新建一个文件夹（本例为“实例75 dialog”），将“实例74”原有代码全部复制进去，然后建立一个子文件夹datacn用于放样本，同时在datacn文件夹里建立checkpoints、dialog、fromids和toids这4个文件夹。</p>
+<h4 class="p3">9.9.2　准备聊天样本</h4>
+<p class="ziti3">因本例只是演示作用，因此并没有用正规样本，只是随意写了几句对话放到了两个文件里，然后将文件放到dialog下。</p>
+<h4 class="p3">9.9.3　预处理样本</h4>
+<p class="ziti3">修改代码“9-33 datautil.py”文件，将main函数修改如下，更新data_dir、raw_data_dir_to路径，将英文字典相关的代码全部注释掉见代码第15～21行。</p>
+<p class="ziti3">代码9-37　datautil</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 ……
+02 data_dir = "datacn/"
+03 raw_data_dir_to = "datacn/dialog/"
+04 vocabulary_filech = "dictch.txt"
+05 
+06 plot_histograms = plot_scatter =True
+07 vocab_size =40000
+08 
+09 max_num_lines =1
+10 max_target_size = 200
+11 max_source_size = 200
+12 
+13 def main():
+14     vocabulary_filenamech = os.path.join(data_dir, vocabulary_filech)
+15 ##############################
+16     #创建英文字典
+17 #    training_dataen, counten, dictionaryen, reverse_dictionaryen,
+     textsszen =create_vocabulary(vocabulary_filenameen
+18 #                                  ,raw_data_dir,vocab_size,Isch=False,
+                                   normalize_digits = True)
+19 #    print("training_data",len(training_dataen))
+20 #    print("dictionary",len(dictionaryen)) 
+21 #########################
+22     #创建中文字典    
+23     training_datach, countch, dictionarych, reverse_dictionarych,
+    textsszch =create_vocabulary(vocabulary_filenamech
+24                                    ,raw_data_dir_to,vocab_size,Isch=True,
+                                   normalize_digits = True)
+25     source_file,target_file =splitFileOneline(training_datach,
+      textsszch)
+26     print("training_datach",len(training_datach))
+27     print("dictionarych",len(dictionarych)) 
+28     analysisfile(source_file,target_file)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">创建中文字典之后，通过splitFileOneline函数将原有样本分为from和to，即把对话中的两个角色分到两个文档里。splitFileOneline的定义如下：</p>
+<p class="ziti3">代码9-37　datautil（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">29 #将读好的对话文本按行分开，一行问，一行答。存为两个文件。training_data为总数据，
+textssz为每行的索引
+30 def splitFileOneline(training_data ,textssz):
+31     source_file = os.path.join(data_dir+'fromids/', "data_source_
+    test.txt")
+32     target_file = os.path.join(data_dir+'toids/', "data_target_
+    test.txt")
+33     create_seq2seqfile(training_data,source_file ,target_file,
+      textssz)
+34     return source_file,target_file</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行之后可以看到，在datacn下生成了中文字典，并且在datacn\fromids与datacn\toids下生成了两个ids文件。</p>
+<h4 class="p3">9.9.4　训练样本</h4>
+<p class="ziti3">训练样本步骤只修改代码“9-35 train.py”中的样本部分即可，代码如下，将原来在main函数之前的翻译相关的信息代码全部去掉，换成dialog的相关信息，更新checkpoint_dir与buckets，定义getdialogInfo。为了返回值不变，返回的英文词典和英文词典中的英文词数量替换成返回中文词典和中文词典中的中文词数量。</p>
+<p class="ziti3">代码9-39　train</p>
+<hr class="calibre6"/>
+<pre class="ziti5">……
+checkpoint_dir= "datacn/checkpoints/"
+ 
+_buckets =[(5, 5), (10, 10), (20, 20)]
+def getdialogInfo():
+    vocabch, rev_vocabch=datautil.initialize_vocabulary(os.path.join(datautil.data_
+dir, datautil.vocabulary_filech))
+    vocab_sizech= len(vocabch)
+    print("vocab_sizech",vocab_sizech) 
+    filesfrom,_=datautil.getRawFileList(datautil.data_dir+"fromids/")
+    filesto,_=datautil.getRawFileList(datautil.data_dir+"toids/")
+    source_train_file_path = filesfrom[0]
+    target_train_file_path= filesto[0]
+return vocab_sizech,vocab_sizech,rev_vocabch,rev_vocabch,source_train_file_
+path,target_train_file_path
+def main():
+vocab_sizeen,vocab_sizech,rev_vocaben,rev_vocabch,source_train_file_
+path,target_train_file_path = getdialogInfo()
+……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在main函数的第一句中，修改调用的函数为getdialogInfo以获得dialog的信息，修改完样本后，就可以运行该文件进行模型训练了。由于样本量非常小（仅仅是演示而已），因此模型训练的时间也很短，几分钟即可。</p>
+<h4 class="p3">9.9.5　测试模型</h4>
+<p class="ziti3">与上一步类似，修改代码“9-36 test.py”中的样本部分即可，代码如下，将原来在main函数之前的翻译相关的信息代码全部去掉，换成dialog的相关信息，更新checkpoint_dir与buckets，定义getdialogInfo。为了返回值不变，将原来返回的英文词典中的英文词数量变为返回中文词典中的中文词数量用中文词典代替英文词典，并且在转换成ids的地方需要将isch改为True。</p>
+<p class="ziti3">代码9-40　test</p>
+<hr class="calibre6"/>
+<pre class="ziti5">hidden_size = 100
+checkpoint_dir= "datacn/checkpoints/"
+_buckets =[(5, 5), (10, 10), (20, 20)]
+def getdialogInfo():
+    vocabch,rev_vocabch=datautil.initialize_vocabulary(os.path.join
+     (datautil.data_dir, datautil.vocabulary_filech))
+    vocab_sizech= len(vocabch)
+    print("vocab_sizech",vocab_sizech) 
+    filesfrom,_=datautil.getRawFileList(datautil.data_dir+"fromids/")
+    filesto,_=datautil.getRawFileList(datautil.data_dir+"toids/")   
+    source_train_file_path = filesfrom[0]
+    target_train_file_path= filesto[0]
+    return vocab_sizech,vocab_sizech,vocabch,rev_vocabch
+ 
+def main():
+    vocab_sizeen,vocab_sizech,vocaben,rev_vocabch= getdialogInfo()
+……
+        while True:  
+           prompt = "请输入: "
+           sentence = input(prompt)
+           conversation_history.append(sentence.strip())
+           conversation_history = conversation_history[-convo_hist_limit:]
+            
+            token_ids=list(reversed(datautil.sentence_to_ids("".join
+            (conversation_history) ,vocaben,normalize_digits=True,
+            Isch=True) )  )
+……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">同样在main函数的第一行中修改代码，调用getdialogInfo获得信息。</p>
+<p class="ziti3">整个代码完成后运行程序，并输入类似样本中简单的对话，可以看到如下结果：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">请输入: 你好
+[20]
+outputs [30, 2, 2, 2, 2] 2
+您好
+ 
+请输入: 你吃了吗
+[12, 7, 4, 6]
+outputs [5, 4, 7, 2, 2] 2
+我 吃 了
+ 
+请输入: 吃的啥
+[3, 10, 4]
+outputs [5, 4, 10, 2, 2] 2
+我 吃 的
+ 
+请输入: 你吃啥
+[3, 4, 6]
+outputs [5, 4, 17, 2, 2] 2
+我 吃 三文鱼
+ 
+请输入: 还有吗
+[12, 11]
+outputs [5, 29, 13, 16, 2] 2
+我 没吃够 呢 不能</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到，在样本里最后一句的回答完全不一样，但是神经网络仿佛学到了里面的语义。在简单的问话：“还有吗？”可以读懂说话人的意思是想要，于是输出：“我 没吃够 呢 不能”。从聊天机器人的例子可以看出，通过学习某个专业方面的对话样本（如某个业务的客服对话），会在该业务下产生很好的语义，并有很好的专业交流。</p>
+<p class="ziti3">该例只是演示，主要目的是为了让读者学会如何应用框架代码，有兴趣的读者可以找些样本，自己动手试试，将前面举例的几种场景应用到模型中。当然，前面列出的场景只是一部分，只要符合序列对序列的模式都可以用Seq2Seq的框架来学习。希望读者可以举一反三，在此基础上做出更多出色的应用。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

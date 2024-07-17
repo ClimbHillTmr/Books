@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_220" class="calibre8">A.2　反向传播</h2>
+<p class="calibre1">首先是 Cross Entropy Error 层的反向传播。Cross Entropy Error 层的反向传播可以画成图 A-4 那样。</p>
+<p class="tu"><img src="../images/00349.jpeg" alt="" width="93%" class="calibre47"/></p>
+<p class="calibre1"><strong class="calibre2">图 A-4　交叉熵误差的反向传播</strong></p>
+<p class="calibre1">求这个计算图的反向传播时，要注意下面几点。</p>
+<blockquote class="calibre10">
+<ul class="calibre12">
+<li class="di_2ji_wu_xu_lie_biao">反向传播的初始值（图 A-4 中最右边的值）是 1（因为 <img src="../images/00350.gif" alt="\frac{\partial L}{\partial L}=1" class="calibre24"/>）。</li>
+<li class="di_2ji_wu_xu_lie_biao">“×”节点的反向传播将正向传播时的输入值翻转，乘以上游传过来的导数后，再传给下游。</li>
+<li class="di_2ji_wu_xu_lie_biao">“+”节点将上游传来的导数原封不动地传给下游。</li>
+<li class="di_2ji_wu_xu_lie_biao">“log”节点的反向传播遵从下式。</li>
+</ul>
+</blockquote>
+<p class="tu"><img src="../images/00351.gif" alt="\begin{aligned}&amp;y=\log x\\&amp;\frac{\partial y}{\partial x}=\frac{1}{x}\end{aligned}" class="calibre24"/></p>
+<p class="calibre1">遵从以上几点，就可以轻松求得 Cross Entropy Error 的反向传播。结果 <img src="../images/00352.gif" alt="\Bigl(-\frac{t_1}{y_1},-\frac{t_2}{y_2},-\frac{t_3}{y_3}\Bigr)" class="calibre24"/> 是传给 Softmax 层的反向传播的输入。</p>
+<p class="calibre1">下面是 Softmax 层的反向传播的步骤。因为 Softmax 层有些复杂，所以我们来逐一进行确认。</p>
+<p class="calibre1"><strong class="calibre2">步骤 1</strong></p>
+<p class="tu"><img src="../images/00353.jpeg" alt="" width="93%" class="calibre47"/></p>
+<p class="calibre1">前面的层（Cross Entropy Error 层）的反向传播的值传过来。</p>
+<p class="calibre1"><strong class="calibre2">步骤 2</strong></p>
+<p class="tu"><img src="../images/00354.jpeg" alt="" width="93%" class="calibre47"/></p>
+<p class="calibre1">“×”节点将正向传播的值翻转后相乘。这个过程中会进行下面的计算。</p>
+<p class="tu"><img src="../images/00355.gif" alt="-\frac{t_1}{y_1}\exp(a_1)=-t_1\frac{S}{\exp(a_1)}\exp(a_1)=-t_1S\quad\quad\quad\quad\quad({\rm A}.3)" class="calibre24"/></p>
+<p class="calibre1"><strong class="calibre2">步骤 3</strong></p>
+<p class="tu"><img src="../images/00356.jpeg" alt="{%}" class="calibre24"/></p>
+<p class="calibre1">正向传播时若有分支流出，则反向传播时它们的反向传播的值会相加。因此，这里分成了三支的反向传播的值 <img src="../images/00357.gif" alt="(-t_1S,-t_2S,-t_3S)" class="calibre24"/> 会被求和。然后，还要对这个相加后的值进行“/”节点的反向传播，结果为 <img src="../images/00358.gif" alt="\frac{1}{S}(t_1+t_2+t_3)" class="calibre24"/>。这里，<img src="../images/00223.gif" alt="(t_1,t_2,t_3)" class="calibre24"/> 是教师标签，也是 one-hot 向量。one-hot 向量意味着 <img src="../images/00223.gif" alt="(t_1,t_2,t_3)" class="calibre24"/>中只有一个元素是 1，其余都是 0。因此，<img src="../images/00223.gif" alt="(t_1,t_2,t_3)" class="calibre24"/> 的和为 1。</p>
+<p class="calibre1"><strong class="calibre2">步骤 4</strong></p>
+<p class="tu"><img src="../images/00359.jpeg" alt="" width="93%" class="calibre47"/></p>
+<p class="calibre1">“+”节点原封不动地传递上游的值。</p>
+<p class="calibre1"><strong class="calibre2">步骤 5</strong></p>
+<p class="tu"><img src="../images/00360.jpeg" alt="" width="93%" class="calibre47"/></p>
+<p class="calibre1">“×”节点将值翻转后相乘。这里，式子变形时使用了 <img src="../images/00361.gif" alt="y_1=\frac{\exp(a_1)}{S}" class="calibre24"/>。</p>
+<p class="calibre1"><strong class="calibre2">步骤 6</strong></p>
+<p class="tu"><img src="../images/00362.jpeg" alt="" width="93%" class="calibre47"/></p>
+<p class="calibre1">“exp”节点中有下面的关系式成立。</p>
+<p class="tu"><img src="../images/00363.gif" alt="\begin{aligned}&amp;y=\exp(x)\\&amp;\frac{\partial y}{\partial x}=\exp(x)\end{aligned}\quad\quad\quad\quad\quad({\rm A}.4)" class="calibre24"/></p>
+<p class="calibre1">根据这个式子，向两个分支的输入和乘以 <img src="../images/00364.gif" alt="\exp(a_1)" class="calibre24"/> 后的值就是我们要求的反向传播。用式子写出来的话，就是 <img src="../images/00365.gif" alt="\Bigl(\frac{1}{S}-\frac{t_1}{\exp(a_1)}\Bigr)\exp(a_1)" class="calibre24"/>，整理之后为 <img src="../images/00366.gif" alt="y_1-t_1" class="calibre24"/>。综上，我们推导出，正向传播时输入是 <img src="../images/00367.gif" alt="a_1" class="calibre24"/> 的节点，它的反向传播是 <img src="../images/00366.gif" alt="y_1-t_1" class="calibre24"/>。剩下的 <img src="../images/00368.gif" alt="a_2" class="calibre24"/>、<img src="../images/00369.gif" alt="a_3" class="calibre24"/> 也可以按照相同的步骤求出来（结果分别为 <img src="../images/00370.gif" alt="y_2-t_2" class="calibre24"/> 和 <img src="../images/00371.gif" alt="y_3-t_3" class="calibre24"/>）。此外，除了这里介绍的 3 类别分类外，对于 <em class="calibre7">n</em> 类别分类的情况，也可以推导出同样的结果。</p>
+</body></html>

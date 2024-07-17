@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">8.1　全连接网络的局限性</h3>
+<p class="ziti3">在第7章的代码“7-5 mnist多层分类.py”的实例中，仅使用了一个28×28像素的小图片数据集就完成了分类任务。但在实际应用中要处理的图片像素一般都是1024，甚至更大。这么大的图片输入到全连接网络中后会有什么效果呢？我们可以分析一下。</p>
+<p class="ziti3">如果只有两个隐藏层，每层各用了256个节点，则MNIST数据集所需要的参数是（28×28×256+256×256+256×10）个w，再加上（256+256+10）个b。</p>
+<p class="ziti4">
+<span class="yanse">1．图像变大导至色彩数变多，不好解决</span>
+</p>
+<p class="ziti3">如果换为1000像素呢？仅一层就需要1000×1000×256≈2亿个w（可以把b都忽略）。这只是灰度图，如果是RGB的真彩色图呢？再乘上3后则约等于6亿。如果想要得到更好的效果，再加几个隐藏层……可以想象，需要的学习参数量将是非常多的，不仅消耗大量的内存，同时也需要大量的运算，这显然不是我们想要的结果。</p>
+<p class="ziti4">
+<span class="yanse">2．不便处理高维数据</span>
+</p>
+<p class="ziti3">对于比较复杂的高维数据，如按照全连接的方法，则只能通过增加节点、增加层数的方式来解决。而增加节点会引起参数过多的问题。因为由于隐藏层神经网络使用的是Sigmoid或Tanh激活函数，其反向传播的有效层数也只能在4～6层左右。所以，层数再多只会使反向传播的修正值越来越小，网络无法训练。</p>
+<p class="ziti3">而卷积神经网络使用了参数共享的方式，换了一个角度来解决问题，不仅在准确率上大大提升，也把参数降了下来。下面就来学习一下卷积神经网络。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

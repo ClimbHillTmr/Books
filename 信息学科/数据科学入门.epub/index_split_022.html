@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>数据科学入门</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<p id="filepos138267" class="calibre_"><span class="calibre6"><span class="bold"> 3.1　</span></span><span class="calibre6"><tt class="calibre7"><span class="bold">matplotlib</span></tt></span><span class="calibre6"><span class="bold">  </span></span></p><p class="calibre_">有许多工具可以用来可视化数据，我们将使用的是应用最广的 <tt class="calibre7">matplotlib</tt> 库（尽管这暴露了它的年龄。详见 <a href="http://matplotlib.org/" class="calibre3">http://matplotlib.org/</a> ）。如果你的兴趣是制作用于网络的精良的交互可视化，它可能不是好的选择，但对于条形图、线图和散点图这些简单的图形来说，它很好用。</p><p class="calibre_">特别地，我们会使用 <tt class="calibre7">matplotlib.pyplot</tt> 模块。在最简单的应用中，<tt class="calibre7">pyplot</tt> 保持着一种内部状态，你可以在其中一步步地创建可视化。一旦创建工作完成，就可以保存（用 <tt class="calibre7">savefig()</tt> ）或显示（用 <tt class="calibre7">show()</tt> ）你的图形。</p><p class="calibre_">例如，制作一个（就像图 3-1 这样）非常简单的图形，就可以采取以下步骤：</p><blockquote class="calibre_14"><span class="calibre11"><tt class="calibre7"><br class="calibre12"/>from matplotlib import pyplot as plt<br class="calibre12"/><br class="calibre12"/>years = [1950, 1960, 1970, 1980, 1990, 2000, 2010]<br class="calibre12"/>gdp = [300.2, 543.3, 1075.9, 2862.5, 5979.6, 10289.7, 14958.3]<br class="calibre12"/><br class="calibre12"/># 创建一幅线图，x轴是年份，y轴是gdp<br class="calibre12"/>plt.plot(years, gdp, color='green', marker='o', linestyle='solid')<br class="calibre12"/><br class="calibre12"/># 添加一个标题<br class="calibre12"/>plt.title("名义GDP")<br class="calibre12"/><br class="calibre12"/># 给y轴加标记<br class="calibre12"/>plt.ylabel("十亿美元")<br class="calibre12"/>plt.show()<br class="calibre12"/><br class="calibre12"/><br class="calibre12"/><br class="calibre12"/></tt></span></blockquote><p class="calibre_19"><img src="images/00145.jpg" class="calibre_20"/>
+</p><p class="calibre_">
+<span class="bold">图 3-1：一个简单的线图</span>
+</p><p class="calibre_">制作出版级别的精良图片要更加复杂，本章不作深入探讨。对图形进行自定义的方式有多种，如坐标轴标记、线型以及点的形状等。我们并不会面面俱到地讲解这些参数，只会在我们的例子中提到（并关注）其中的一些。</p><blockquote class="calibre_14"><img src="images/00100.jpg" class="calibre_10"/> 　尽管我们并不会用到 <tt class="calibre7">matplotlib</tt> 太多的功能，但它着实能够制作出复杂的图中图、精致的图形格式和交互图形。如果你想做得比本书更深入，请查阅它的文档。</blockquote><div class="mbp_pagebreak" id="calibre_pb_22"></div>
+<div class="calibre5">本书由「<a href="https://epubw.com" class="calibre3">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="calibre3">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body></html>

@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">5.5　测试模型</h3>
+<p class="ziti3">还记得MNIST里面有测试数据吗？现在我们使用测试数据来测试一下训练完的模型吧。</p>
+<p class="ziti3">与前面的过程类似，也是先将计算测试的网络结构建立起来，然后通过最终节点的eval将测试值运算出来。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 这个过程仍然是在session里进行的。</p>
+<p class="ziti3">测试错误率的算法是：直接判断预测的结果与真实的标签是否相同，如是相同的就表明是正确的，如是不相同的就表示是错误的。然后将正确的个数除以总个数，得到的值即为正确率。由于是onehot编码，这里使用了tf.argmax函数返回onehot编码中数值为1的那个元素的下标。下面是具体代码。</p>
+<p class="ziti3">代码5-2　MNIST分类（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">45 # 测试 model
+46     correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
+47     # 计算准确率
+48     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+49     print ("Accuracy:", accuracy.eval({x: mnist.test.images, y: mnist.
+    test.labels}))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面代码执行后，显示信息如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Accuracy: 0.8316</pre>
+<hr class="calibre6"/>
+<p class="ziti3">测试正确率的算法与损失值的算法略有差别，但代表的意义却很类似。当然，也可以直接拿计算损失值的交叉熵结果来代表模型测试的错误率。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ （1）并不是所有模型的测试错误率和训练时的最后一次损失值都很接近，这取决于训练样本和测试样本的分布情况，也取决于模型本身的拟合质量。关于拟合质量问题，将在后面章节详细介绍。</p>
+<p class="ziti4">（2）读者自己运行时，得到的值可能和本书中的值不一样。甚至每次运行时，得到的值也不一样。原因是每次初始的权重w都是随机的。由于初始权重不同，而且每次训练的批次数据也不同，所以最终生成的模型也不会完全相同。但如果核心算法保持一致，则会保证最终的结果不会有太大的偏差。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">10.6　栈式自编码</h3>
+<p class="ziti3">接下来一起看看什么是栈式自编码。</p>
+<h4 class="p3">10.6.1　栈式自编码介绍</h4>
+<p class="ziti3">栈式自编码神经网络（Stacked Autoencoder，SA），是对自编码网络的一种使用方法，是一个由多层训练好的自编码器组成的神经网络。由于网络中的每一层都是单独训练而来，相当于都初始化了一个合理的数值。所以，这样的网络会更容易训练，并且有更快的收敛性及更高的准确度。</p>
+<p class="ziti3">栈式自编码常常被用于预训练（初始化）深度神经网络之前的权重预训练步骤。例如，在一个分类问题上，可以按照从前向后的顺序执行每一层通过自编码器来训练，最终将网络中最深层的输出作为softmax分类器的输入特征，通过softmax层将其分开。</p>
+<p class="ziti3">为了使这个过程容易理解，下面以训练一个包含两个隐含层的栈式自编码网络为例，一步一步为大家介绍具体操作。</p>
+<p class="ziti3">（1）训练一个自编码器，得到原始输入的一阶特征表示h<sup class="calibre8">（1）</sup>
+ （如图10-10中的features1所示）。</p>
+<div class="pic"><img alt="" src="Image00210.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-10　栈式自编码一层结构</p>
+<p class="ziti3">（2）将上一步输出的特征h<sup class="calibre8">（1）</sup>
+ 作为输入，对其进行再一次的自编码，并同时获取特征h<sup class="calibre8">（2）</sup>
+ （如图10-11中的featuresII所示）。</p>
+<div class="pic"><img alt="" src="Image00211.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-11　栈式自编码二层结构</p>
+<p class="ziti3">（3）把上一步的特征h<sup class="calibre8">（2）</sup>
+ 连上softmax分类器，得到了一个图片数字标签分类的模型，具体网络结构如图10-12所示。</p>
+<div class="pic"><img alt="" src="Image00212.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-12　栈式自编码三层结构</p>
+<p class="ziti3">（4）把这3层结合起来，就构成了一个包含两个隐藏层加一个softmax的栈式自编码网络，它可以对数字图片分类。具体网络结构如图10-13所示。</p>
+<div class="pic"><img alt="" src="Image00213.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-13　栈式自编码级联结构</p>
+<h4 class="p3">10.6.2　栈式自编码在深度学习中的意义</h4>
+<p class="ziti3">看到这里或许有读者会有疑问，为什么要这么麻烦，直接使用多层神经网络来训练不是也可以吗？在这里是为大家介绍一种训练方法，而这个训练更像是手动训练，之所以我们愿意这么麻烦，主要是因为其有以下几个优点：</p>
+<p class="ziti4">·每一层都可以单独训练，保证降维特征的可控性。</p>
+<p class="ziti4">·对于高维度的分类问题，一下拿出一套完整可用的模型相对来讲并不是容易的事，因为节点太多，参数太多，一味地增加深度只会使结果越来越不可控，成为测底的黑盒，而使用栈式自编码逐层降维，可以将复杂问题简单化，更容易完成任务。</p>
+<p class="ziti4">·任意深层，理论上是越深层的神经网络对现实的拟合度越高，但是传统的多层神经网络，由于使用的是误差反向传播方式，导致层越深，传播的误差越小。栈式自编码巧妙地绕过这个问题，直接使用降维后的特征值进行二次训练，可以任意层数的加深。</p>
+<p class="ziti3">栈式自编码神经网络具有强大的表达能力和深度神经网络的所有优点，它通常能够获取到输入的“层次型分组”或者“部分-整体分解”结构，自编码器倾向于学习得到与样本相对应的低维向量，该向量可以更好地表示高维样本的数据特征。</p>
+<p class="ziti3">如果网络输入的是图像，第一层会学习去识别边，二层会学习组合边、构成轮廓角等，更高层会学习组合更形象的特征。例如，人脸图像，学习如何识别眼睛、鼻子、嘴等。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

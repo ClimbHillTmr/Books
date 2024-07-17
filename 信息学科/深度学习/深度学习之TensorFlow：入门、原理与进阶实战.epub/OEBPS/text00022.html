@@ -1,0 +1,144 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">4.2　TensorFlow基础类型定义及操作函数介绍</h3>
+<p class="ziti3">下面介绍TensorFlow的基础类型、基础函数。这部分学完，读者将会对TensorFlow的基础语法有了系统的了解，为后面学习写代码或读代码扫清障碍。</p>
+<p class="ziti3">本节表格中的示例代码前面默认都有以下代码。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">import numpy as np
+import tensorflow as tf</pre>
+<hr class="calibre6"/>
+<p class="ziti3">代码中的tf代表tensorflow库，np代表numpy库。</p>
+<h4 class="p3">4.2.1　张量及操作</h4>
+<p class="ziti3">张量可以说是TensorFlow的标志，因为整个框架的名称TensorFlow就是张量流的意思。下面来一起全面地认识一下张量。</p>
+<p class="ziti4">
+<span class="yanse">1．张量介绍</span>
+</p>
+<p class="ziti3">TensorFlow程序使用tensor数据结构来代表所有的数据。计算图中，操作间传递的数据都是Tensor。</p>
+<p class="ziti3">可以把tensor看为一个n维的数组或列表，每个tensor中包含了类型（type）、阶（rank）和形状（shape）。</p>
+<p class="ziti3">（1）tensor类型</p>
+<p class="ziti3">为了方便理解，这里将tensor的类型与Python的类型放在一起做个比较，如表4-4所示。</p>
+<p class="middle-img">表4-4　张量类型</p>
+<div class="pic"><img alt="" src="Image00045.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">（2）rank（阶）</p>
+<p class="ziti3">rank（阶）指的就是维度。但张量的阶和矩阵的阶并不是同一个概念，主要是看有几层中括号。例如，对于一个传统意义上的3阶矩阵a=[[1，2，3]，[4，5，6]，[7，8，9]]来讲，在张量中的阶数表示为2阶（因为它有两层中括号）。</p>
+<p class="ziti3">表4-5列出了标量、向量、矩阵的阶数。</p>
+<p class="middle-img">表4-5　标量向量和矩阵的阶数</p>
+<div class="pic"><img alt="" src="Image00046.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">（3）shape（形状）</p>
+<p class="ziti3">shape（形状）用于描述张量内部的组织关系。“形状”可以通过Python中的整数列表或元组（int list或tuples）来表示，也可以用TensorFlow中的相关形状函数来表示。</p>
+<p class="ziti3">举例：一个二阶张量a=[[1，2，3]，[4，5，6]]形状是两行三列，描述为（2，3）。</p>
+<p class="ziti4">
+<span class="yanse">2．张量相关操作</span>
+</p>
+<p class="ziti3">张量的相关操作包括类型转换、数值操作、形状变换和数据操作。</p>
+<p class="ziti3">（1）类型转换</p>
+<p class="ziti3">类型转换的相关函数如表4-6所示。</p>
+<p class="middle-img">表4-6　类型变换相关函数</p>
+<div class="pic"><img alt="" src="Image00047.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">（2）数值操作</p>
+<p class="ziti3">数值操作的相关函数如表4-7所示。</p>
+<p class="middle-img">表4-7　类型变换相关函数</p>
+<div class="pic"><img alt="" src="Image00048.jpg" class="calibre4"/>
+</div>
+<div class="pic"><img alt="" src="Image00039.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">（3）形状变换</p>
+<p class="ziti3">形状变换的相关函数如表4-8所示。</p>
+<p class="middle-img">表4-8　形状变换的相关函数</p>
+<div class="pic"><img alt="" src="Image00049.jpg" class="calibre4"/>
+</div>
+<div class="pic"><img alt="" src="Image00050.jpg" class="calibre4"/>
+</div>
+<div class="pic"><img alt="" src="Image00051.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">（4）数据操作</p>
+<p class="ziti3">数据操作的相关函数如表4-9所示。</p>
+<p class="middle-img">表4-9　数据操作相关函数</p>
+<div class="pic"><img alt="" src="Image00052.jpg" class="calibre4"/>
+</div>
+<div class="pic"><img alt="" src="Image00053.jpg" class="calibre4"/>
+</div>
+<div class="pic"><img alt="" src="Image00054.jpg" class="calibre4"/>
+</div>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ TensorFlow开头的代码都不能直接运行，必须放到session里面才可以。例如：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01  import numpy as np
+02  import tensorflow as tf 
+03  
+04  x = tf.constant(2)
+05  y = tf.constant(5)
+06  def f1(): return tf.multiply(x, 17)
+07  def f2(): return tf.add(y, 23)
+08  r = tf.cond(tf.less(x, y), f1, f2)
+09  print(r) #这样是错的
+10  
+11  #生成两行三列的张量，值为1
+12  with tf.Session() as sess:
+13      print(sess.run( r  )) #这样才可以</pre>
+<hr class="calibre6"/>
+<h4 class="p3">4.2.2　算术运算函数</h4>
+<p class="ziti3">如表4-10中列出了TensorFlow关于算术运算方面的函数。</p>
+<p class="middle-img">表4-10　算术操作</p>
+<div class="pic"><img alt="" src="Image00055.jpg" class="calibre4"/>
+</div>
+<div class="pic"><img alt="" src="Image00056.jpg" class="calibre4"/>
+</div>
+<h4 class="p3">4.2.3　矩阵相关的运算</h4>
+<p class="ziti3">矩阵相关的操作函数如表4-11所示。</p>
+<p class="middle-img">表4-11　矩阵操作函数</p>
+<div class="pic"><img alt="" src="Image00057.jpg" class="calibre4"/>
+</div>
+<div class="pic"><img alt="" src="Image00058.jpg" class="calibre4"/>
+</div>
+<h4 class="p3">4.2.4　复数操作函数</h4>
+<p class="ziti3">关于复数的操作函数如表4-12所示。</p>
+<p class="middle-img">表4-12　复数操作函数</p>
+<div class="pic"><img alt="" src="Image00059.jpg" class="calibre4"/>
+</div>
+<div class="pic"><img alt="" src="Image00060.jpg" class="calibre4"/>
+</div>
+<h4 class="p3">4.2.5　规约计算</h4>
+<p class="ziti3">规约计算的操作都会有降维的功能，在所有reduce_xxx系列操作函数中，都是以xxx的手段降维，每个函数都有axis这个参数，即沿某个方向，使用xxx方法对输入的Tensor进行降维。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 提示：</span>
+ axis的默认值是None，即把input_tensor降到0维，即一个数。</p>
+<p class="ziti3">对于二维input_tensor而言：axis=0，则按列计算；axis=1，则按行计算。</p>
+<p class="ziti3">参数reduction_indices是为了兼容以前的版本与axis保证相同的含义。如表4-13所示为规约计算函数及其说明。</p>
+<p class="middle-img">表4-13　规约计算函数</p>
+<div class="pic"><img alt="" src="Image00061.jpg" class="calibre4"/>
+</div>
+<div class="pic"><img alt="" src="Image00062.jpg" class="calibre4"/>
+</div>
+<h4 class="p3">4.2.6　分割</h4>
+<p class="ziti3">分割操作是TensorFlow不常用的操作，在复杂的网络模型里偶尔才会用到。如表4-14所示为分割操作的相关函数。</p>
+<p class="middle-img">表4-14　分割相关函数</p>
+<div class="pic"><img alt="" src="Image00063.jpg" class="calibre4"/>
+</div>
+<div class="pic"><img alt="" src="Image00064.jpg" class="calibre4"/>
+</div>
+<h4 class="p3">4.2.7　序列比较与索引提取</h4>
+<p class="ziti3">对于序列和数组的操作，是本书中常用的方法，具体的函数如表4-15所示。</p>
+<p class="middle-img">表4-15　序列比较与索引提取相关函数</p>
+<div class="pic"><img alt="" src="Image00065.jpg" class="calibre4"/>
+</div>
+<h4 class="p3">4.2.8　错误类</h4>
+<p class="ziti3">作为一个完整的框架，有它自己的错误处理。TensorFlow中的错误类如表4-16所示，该部分不常用，可以作为工具，使用时查询一下即可。</p>
+<p class="middle-img">表4-16　错误类</p>
+<div class="pic"><img alt="" src="Image00066.jpg" class="calibre4"/>
+</div>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>数据科学入门</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<p id="filepos756586" class="calibre_"><span class="calibre6"><span class="bold"> 24.6　题外话：组合器 </span></span></p><p class="calibre_">你很可能已经注意到，许多 mapper 可能包括一些额外的信息。比如，在计数单词的时候，与其发送 <tt class="calibre7">(word, 1)</tt> 并累加求和，不如发送 <tt class="calibre7">(word, None)</tt> 再取其长度。</p><p class="calibre_">我们没有这么做的一个原因是，在分布式情景下，我们有时会想用<span class="bold">组合器</span> （combiner）来缩减在计算机之间转移的数据数量。如果一个 mapper 机器发现单词“data”500 次，可以让它在移交数据给缩减机器之前把 500 个 <tt class="calibre7">("data", 1)</tt> 组合成一个单独的 <tt class="calibre7">("data", 500)</tt> 。这使得转移的数据少了很多，算法会大大加快。</p><p class="calibre_">基于我们编写 reducer 的方法，它能正确地处理这些组合的数据。（如果我们已经用 <tt class="calibre7">len</tt> 函数写了 reducer，它就不能处理组合了。）</p><div class="mbp_pagebreak" id="calibre_pb_177"></div>
+<div class="calibre5">本书由「<a href="https://epubw.com" class="calibre3">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="calibre3">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body></html>

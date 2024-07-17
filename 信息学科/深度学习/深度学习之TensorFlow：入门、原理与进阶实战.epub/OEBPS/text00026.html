@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">4.6　动态图（Eager）</h3>
+<p class="ziti3">动态图是相对于静态图而言的。所谓的动态图是指在Python中代码被调用后，其操作立即被执行的计算。其与静态图最大的区别是不需要使用session来建立会话了。即，在静态图中，需要在会话中调用run方法才可以获得某个张量的具体值；而在动态图中，直接运行就可以或得到具体值了。</p>
+<p class="ziti3">动态图是在TensorFlow 1.3版本之后出现的。它使TensorFlow 的入门变得更简单，也使研发更直观。</p>
+<p class="ziti3">启用动态图只需要在程序的最开始处加上两行代码：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">import tensorflow.contrib.eager as tfe
+tfe.enable_eager_execution()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">这两行代码的作用就是开启动态图计算功能。例如，调用tf.matmul时，将会立即计算两个数相乘的值，而不是一个op。</p>
+<p class="ziti3">Eager还处于一个试用阶段，也是TensorFlow大力推广的新特性，未来或许会成为趋势。想了解更多内容，可以参考如下网址：</p>
+<p class="ziti3">
+<a href="https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/eager" class="pcalibre calibre2">https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/eager。</a>
+<br class="calibre3"/>
+</p>
+<p class="ziti3">在创建动态图的过程中，默认也建立了一个session。所有的代码都在该session中进行，而且该session具有进程相同的生命周期。这表明一旦使用动态图就无法实现静态图中关闭session的功能。这便是动态图的不足之处：无法实现多session操作。如果当前代码只需要一个session来完成的话，建议优先选择动态图Eager来实现。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

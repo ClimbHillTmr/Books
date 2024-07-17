@@ -1,0 +1,319 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">12.3　InfoGAN和ACGAN：指定类别生成模拟样本的GAN</h3>
+<p class="ziti3">InfoGAN是一种把信息论与GAN相融合的神经网络，能够使网络具有信息解读功能。下面来一起看看它的介绍。</p>
+<h4 class="p3">12.3.1　InfoGAN：带有隐含信息的GAN</h4>
+<p class="ziti3">GAN的生成器在构建样本时使用了任意的噪声向量z，并从低维的噪声数据z中还原出来高维的样本数据。这说明数据z中含有具有与样本相同的特征。</p>
+<p class="ziti3">由于随意使用的噪声都能还原出高维样本数据，表明噪声中的特征数据部分是与无用的数据部分高度地纠缠在一起的，即我们能够知道噪声中含有有用特征，但无法知道哪些是有用特征。</p>
+<p class="ziti3">InfoGAN是GAN模型的一种改进，是一种能够学习样本中的关键维度信息的GAN，即对生成样本的噪音进行了细化。先来看它的结构，相比对抗自编码，InfoGAN的思路正好相反，InfoGAN是先固定标准高斯分布作为网络输入，再慢慢调整网络输出去匹配复杂样本分布。</p>
+<div class="pic"><img alt="" src="Image00255.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图12-2　InfoGAN模型</p>
+<p class="ziti3">如图12-2所示，InfoGAN生成器是从标准高斯分布中随机采样来作为输入，生成模拟样本，解码器是将生成器输出的模拟样本还原回生成器输入的随机数中的一部分，判别器是将样本作为输入来区分真假样本。</p>
+<p class="ziti3">InfoGAN的理论思想是将输入的随机标准高斯分布当成噪音数据，并将噪音分为两类，第一类是不可压缩的噪音Z，第二类是可解释性的信息C。假设在一个样本中，决定其本身的只有少量重要的维度，那么大多数的维度是可以忽略的。而这里的解码器可以更形象地叫成重构器，即通过重构一部分输入的特征来确定与样本互信息的那些维度。最终被找到的维度可以代替原始样本的特征（类似PCA算法中的主成份），实现降维、解耦的效果。</p>
+<h4 class="p3">12.3.2　AC-GAN：带有辅助分类信息的GAN</h4>
+<p class="ziti3">AC-GAN（Auxiliary Classifier GAN），即在判别器discriminator中再输出相应的分类概率，然后增加输出的分类与真实分类的损失计算，使生成的模拟数据与其所属的class一一对应。</p>
+<p class="ziti3">一般来讲，AC-GAN可以属于InfoGAN的一部分，class信息可以作为InfoGAN中的潜在信息，只不过这部分信息可以使用半监督方式来学习。</p>
+<h4 class="p3">12.3.3　实例88：构建InfoGAN生成MNIST模拟数据</h4>
+<p class="ziti3">本例演示在MNISTT数据集上使用InfoGAN网络模型生成模拟数据，并且加入标签信息的loss函数同时实现AC-GAN网络。其中的D和G都是用卷积网络来实现的，相当于DCGAN基础上的InfoGAN例子。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">通过使用InfoGAN网络学习MNIST数据特征，生成以假乱真的MNIST模拟样本，并发现内部潜在的特征信息。</p>
+<p class="ziti3">具体实现可以分为如下几个步骤。</p>
+<p class="ziti4">
+<span class="yanse">1．引入头文件并加载MNIST数据</span>
+</p>
+<p class="ziti3">假设MNIST数据放在本地磁盘根目录的data下。本例中将使用前面介绍的slim模块构建网络结构，所以需要引入slim。当然也可以不用slim，引入slim的目的是为了编写代码比较方便，不用考虑输入维度即相关权重的定义，最主要的是slim还对反卷积有封装，后面会用到。</p>
+<p class="ziti3">代码12-1　Mnistinfogan</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import numpy as np
+02 import tensorflow as tf
+03 import matplotlib.pyplot as plt
+04 from scipy.stats import norm
+05 import tensorflow.contrib.slim as slim
+06 
+07 from tensorflow.examples.tutorials.mnist import input_data
+08 mnist = input_data.read_data_sets("/data/")#, one_hot=True)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．网络结构介绍</span>
+</p>
+<p class="ziti3">建立两个噪声数据（一般噪声和隐含信息）与label结合放到生成器中，生成模拟样本，然后将模拟样本和真实样本分别输入到判别器中，生成判别结果、重构造的隐含信息，以及样本标签。</p>
+<p class="ziti3">在优化时，让判别器对真实的样本判别结果为1、对模拟数据的判别结果为0来做损失值计算（loss）；对生成器让判别结果为1来做损失值计算（loss）。</p>
+<p class="ziti4">
+<span class="yanse">3．定义生成器与判别器</span>
+</p>
+<p class="ziti3">由于是先从模拟噪声数据来恢复样本，所以在生成器中要使用反卷积函数。这里通过“两个全连接＋两个反卷积”模拟样本的生成，并且每一层都有BN（批量归一化）处理。</p>
+<p class="ziti3">代码12-1　Mnistinfogan（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">09 def generator(x):#生成器函数
+10     reuse = len([t for t in tf.global_variables() if t.name.startswith
+    ('generator')]) &gt; 0
+11    
+12     with tf.variable_scope('generator', reuse = reuse):
+13         x = slim.fully_connected(x, 1024)
+14       
+15         x = slim.batch_norm(x, activation_fn=tf.nn.relu)
+16         x = slim.fully_connected(x, 7*7*128)
+17         x = slim.batch_norm(x, activation_fn=tf.nn.relu)
+18         x = tf.reshape(x, [-1, 7, 7, 128])
+19      
+20         x = slim.conv2d_transpose(x, 64, kernel_size=[4,4], stride=2, 
+        activation_fn = None)
+21         
+22         x = slim.batch_norm(x, activation_fn = tf.nn.relu)
+23         z = slim.conv2d_transpose(x, 1, kernel_size=[4, 4], stride=2, 
+        activation_fn=tf.nn.sigmoid)
+24         
+25     return z
+26 
+27 def leaky_relu(x):
+28      return tf.where(tf.greater(x, 0), x, 0.01 * x)
+29 #判别器函数
+30 def discriminator(x, num_classes=10, num_cont=2):
+31     reuse = len([t for t in tf.global_variables() if t.name.startswith
+      ('discriminator')]) &gt; 0
+32   
+33     with tf.variable_scope('discriminator', reuse=reuse):
+34         x = tf.reshape(x, shape=[-1, 28, 28, 1])
+35         x = slim.conv2d(x, num_outputs = 64, kernel_size=[4,4], 
+        stride=2, activation_fn=leaky_relu)
+36         x = slim.conv2d(x, num_outputs=128, kernel_size=[4,4], 
+        stride=2, activation_fn=leaky_relu)
+37         
+38         x = slim.flatten(x)
+39         shared_tensor = slim.fully_connected(x, num_outputs=1024, 
+        activation_fn = leaky_relu)
+40         recog_shared = slim.fully_connected(shared_tensor, num_
+        outputs=128, activation_fn = leaky_relu)
+41         disc = slim.fully_connected(shared_tensor, num_outputs=1, 
+        activation_fn=None) 
+42         disc = tf.squeeze(disc, -1)
+43         
+44         recog_cat = slim.fully_connected(recog_shared, num_outputs=
+        num_classes, activation_fn=None) #判别类型
+45         recog_cont = slim.fully_connected(recog_shared, num_outputs=
+        num_cont, activation_fn=tf.nn.sigmoid) #判别info
+46     return disc, recog_cat, recog_cont</pre>
+<hr class="calibre6"/>
+<p class="ziti3">如果判别器输入的是真正的样本，同样也要经过两次卷积，再接两次全连接，生成的数据可以分别连接不同的输出层产生不同的结果，其中1维的输出层产生判别结果1或是0，10维的输出层产生分类结果，2维输出层产生隐含维度信息。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 在生成器与判别器中都会使用各自的命名空间，这是在多网络模型里定义变量的一个好习惯。在指定训练参数、获取及显示训练参数时，都可以通过指定的命名空间来拿到对应的变量，不至于混乱。</p>
+<p class="ziti4">
+<span class="yanse">4．定义网络模型</span>
+</p>
+<p class="ziti3">令一般噪声的维度为38，应节点为z_rand；隐含信息维度为2，应节点为z_con，二者都是符合标准高斯分布的随机数。将它们与one_hot转换后的标签连接在一起放到生成器中。</p>
+<p class="ziti3">代码12-1　Mnistinfogan（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">47 batch_size = 10
+48 classes_dim = 10   # 10 个类别
+49 con_dim = 2   # 隐含信息变量的维度
+50 rand_dim = 38  
+51 n_input  = 784
+52 
+53 x = tf.placeholder(tf.float32, [None, n_input])
+54 y = tf.placeholder(tf.int32, [None])
+55 
+56 z_con = tf.random_normal((batch_size, con_dim)) #2列
+57 z_rand = tf.random_normal((batch_size, rand_dim)) #38列
+58 z = tf.concat(axis=1, values=[tf.one_hot(y, depth = classes_dim), 
+z_con, z_rand]) # z的函数为50
+59 gen = generator(z)
+60 genout= tf.squeeze(gen, -1)
+61 
+62 # 判别器的标准结果
+63 y_real = tf.ones(batch_size) #真
+64 y_fake = tf.zeros(batch_size) #假
+65 
+66 # discriminator
+67 disc_real, class_real, _ = discriminator(x) #真样本的输出
+68 disc_fake, class_fake, con_fake = discriminator(gen) #模拟样本的输出
+69 pred_class = tf.argmax(class_fake, dimension=1)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">对应判别器的结果，定义了一个值全为0的数组y_fake和一个值全为1的y_real，并且将x与生成的模拟数据gen放到判别器中，得到对应的输出。</p>
+<p class="ziti4">
+<span class="yanse">5．定义损失函数与优化器</span>
+</p>
+<p class="ziti3">判别器中，判别结果的loss有两个：真实输入的结果与模拟输入的结果。将二者结合在一起生成loss_d。生成器的loss为自己输出的模拟数据，让它在判别器中为真，定义为loss_g。</p>
+<p class="ziti3">然后还要定义网络中共有的loss值：真实的标签与输入真实样本判别出的标签、真实的标签与输入模拟样本判别出的标签、隐含信息的重构误差。然后创建两个优化器，将它们放到对应的优化器中。</p>
+<p class="ziti3">这里用了一个技巧：将判别器的学习率设小，将生成器的学习率设大一些。这么做是为了让生成器有更快的进化速度来模拟真实数据，优化同样是用AdamOptimizer方法。具体代码如下。</p>
+<p class="ziti3">代码12-1　Mnistinfogan（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">70 # 判别器loss
+71 loss_d_r = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits
+(logits=disc_real, labels=y_real))
+72 loss_d_f = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits
+(logits=disc_fake, labels=y_fake))
+73 loss_d = (loss_d_r + loss_d_f) / 2  #判别器的loss
+74 # 生成器loss
+75 loss_g = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits
+(logits=disc_fake, labels=y_real)) #生成器的loss
+76 # 计算 factor loss
+77 loss_cf = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_
+logits(logits=class_fake, labels=y)) #分类正确，但生成的样本错了
+78 loss_cr = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_
+logits(logits=class_real, labels=y)) #生成的样本与分类都正确，但是与输入的分类对不上
+79 loss_c =(loss_cf + loss_cr) / 2
+80 # 隐含信息变量的loss
+81 loss_con =tf.reduce_mean(tf.square(con_fake-z_con))
+82 
+83 # 获得可训练的学习参数列表
+84 t_vars = tf.trainable_variables()
+85 d_vars = [var for var in t_vars if 'discriminator' in var.name]
+86 g_vars = [var for var in t_vars if 'generator' in var.name]
+87 
+88 disc_global_step = tf.Variable(0, trainable=False)
+89 gen_global_step = tf.Variable(0, trainable=False)
+90 
+91 train_disc = tf.train.AdamOptimizer(0.0001).minimize(loss_d + loss_c 
++ loss_con, var_list = d_vars, global_step = disc_global_step)
+92 train_gen = tf.train.AdamOptimizer(0.001).minimize(loss_g + loss_c + 
+loss_con, var_list = g_vars, global_step = gen_global_step)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">所谓的AC-GAN就是将loss_cr加入到loss_c中。如果没有loss_cr，令loss_c= loss_cf，对于网络生成模拟数据是不影响的，但是却会损失真实分类与模拟数据间的对应关系。</p>
+<p class="ziti4">
+<span class="yanse">6．开始训练与测试</span>
+</p>
+<p class="ziti3">建立session，在循环里使用run来运行前面构建的两个优化器。</p>
+<p class="ziti3">代码12-1　Mnistinfogan（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">93 training_epochs = 3
+94 display_step = 1
+95 
+96 with tf.Session() as sess:
+97     sess.run(tf.global_variables_initializer())
+98     
+99     for epoch in range(training_epochs):
+100         avg_cost = 0.
+101         total_batch = int(mnist.train.num_examples/batch_size)
+102 
+103         # 遍历全部数据集
+104         for i in range(total_batch):
+105 
+106             batch_xs, batch_ys = mnist.train.next_batch(batch_size) #取数据
+107             feeds = {x: batch_xs, y: batch_ys}
+108 
+109             # 输入数据，运行优化器
+110             l_disc, _, l_d_step = sess.run([loss_d, train_disc, disc_
+            global_step],feeds)
+111             l_gen, _, l_g_step = sess.run([loss_g, train_gen, gen_
+            global_step],feeds)
+112 
+113         # 显示训练中的详细信息
+114         if epoch % display_step == 0:
+115             print("Epoch:", '%04d' % (epoch + 1), "cost=", "{:.9f} 
+            ".format(l_disc),l_gen)
+116 
+117     print("完成!")
+118     # 测试
+119     print ("Result:", loss_d.eval({x: mnist.test.images[:batch_size],
+    y:mnist.test.labels[:batch_size]})
+120                         , loss_g.eval({x: mnist.test.images[:batch_
+                        size],y:mnist.test.labels[:batch_size]}))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">测试部分分别使用loss_d和loss_g的eval来完成。运行代码后输出如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Extracting /data/train-images-idx3-ubyte.gz
+Extracting /data/train-labels-idx1-ubyte.gz
+Extracting /data/t10k-images-idx3-ubyte.gz
+Extracting /data/t10k-labels-idx1-ubyte.gz
+Epoch: 0001 cost= 0.536611855  0.795714
+Epoch: 0002 cost= 0.610126615  0.928032
+Epoch: 0003 cost= 0.699066639  1.10242
+完成!
+Result: 0.56922 1.00881</pre>
+<hr class="calibre6"/>
+<p class="ziti3">整个数据集运行3次后，通过模型的测试结果可以看到，判别的误差在0.57左右，基本可以认为对真假数据无法分辨。</p>
+<p class="ziti4">
+<span class="yanse">7．可视化</span>
+</p>
+<p class="ziti3">可视化部分会生成两个图片：原样本与对应的模拟数据图片、利用隐含信息生成的模拟样本图片。</p>
+<p class="ziti4">·原样本与对应的模拟数据图片会将对应的分类、预测分类、隐含信息一起打印出来。</p>
+<p class="ziti4">·利用隐含信息生成的模拟样本图片会在整个[0，1]空间里均匀抽样，与样本的标签混合在一起，生成模拟数据。</p>
+<p class="ziti3">代码12-1　Mnistinfogan（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">121 # 根据图片模拟生成图片
+122     show_num = 10
+123     gensimple,d_class,inputx,inputy,con_out = sess.run(
+124         [genout,pred_class,x,y,con_fake], feed_dict={x: mnist.test.
+        images[:batch_size],y: mnist.test.labels[:batch_size]})
+125 
+126     f, a = plt.subplots(2, 10, figsize=(10, 2))
+127     for i in range(show_num):
+128         a[0][i].imshow(np.reshape(inputx[i], (28, 28)))
+129         a[1][i].imshow(np.reshape(gensimple[i], (28, 28)))
+130         print("d_class",d_class[i],"inputy",inputy[i],"con_out",
+          con_out[i])
+131         
+132     plt.draw()
+133     plt.show()  
+134     #将隐含信息分布对应的图片打印出来
+135     my_con=tf.placeholder(tf.float32, [batch_size,2])
+136     myz = tf.concat(axis=1, values=[tf.one_hot(y, depth = classes_dim), 
+    my_con, z_rand])
+137     mygen = generator(myz)
+138     mygenout= tf.squeeze(mygen, -1) 
+139     
+140     my_con1 = np.ones([10,2])
+141     a = np.linspace(0.0001, 0.99999, 10)
+142     y_input= np.ones([10])
+143     figure = np.zeros((28 * 10, 28 * 10))
+144     my_rand = tf.random_normal((10, rand_dim))
+145     for i in range(10):
+146         for j in range(10):
+147             my_con1[j][0]=a[i]
+148             my_con1[j][1]=a[j]
+149             y_input[j] = j
+150         mygenoutv =  sess.run(mygenout,feed_dict={y:y_input,my_
+        con:my_con1})
+151         for jj in range(10):
+152             digit = mygenoutv[jj].reshape(28, 28)
+153             figure[i * 28: (i + 1) * 28,
+154                    jj * 28: (jj + 1) * 28] = digit
+155     
+156     plt.figure(figsize=(10, 10))
+157     plt.imshow(figure, cmap='Greys_r')
+158     plt.show()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码后，生成如下结果，输出图片如图12-3所示。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">d_class 7 inputy 7 con_out [  1.92287825e-05   1.04916848e-01]
+d_class 2 inputy 2 con_out [ 0.86672944  0.00166412]
+d_class 1 inputy 1 con_out [ 0.00043415  0.06153901]
+d_class 0 inputy 0 con_out [ 0.00313404  0.00186323]
+d_class 4 inputy 4 con_out [ 0.01356777  0.9993856 ]
+d_class 1 inputy 1 con_out [  2.54907101e-01   1.13632974e-04]
+d_class 4 inputy 4 con_out [ 0.95273513  0.74673545]
+d_class 9 inputy 9 con_out [  4.87649202e-01   7.44661302e-05]
+d_class 5 inputy 5 con_out [ 0.00222825  0.99024838]
+d_class 9 inputy 9 con_out [  6.79908317e-06   3.18196639e-02]</pre>
+<hr class="calibre6"/>
+<div class="pic"><img alt="" src="Image00256.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图12-3　InfoGAN实例结果1</p>
+<p class="ziti3">在上面的结果中，可以很容易观察到，除了可控的类别信息一致外，隐含信息中某些维度具有非常显著的语义信息。例如，第二个元素“2”的第一个维度数值很大，表现出来就是倾斜很大，同样第5个元素“4”会看上去粗一些，这与其第二个维度的数值很大也是有关的。所以显然网络模型已经学到了MNIST 数据集的重要信息（主成分）。将隐含信息对应的0、1间的数值抽样配合类别标签的图像生成结果如图12-4所示。</p>
+<div class="pic"><img alt="" src="Image00257.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图12-4　InfoGAN实例结果2</p>
+<h4 class="p3">12.3.4　练习题</h4>
+<p class="ziti3">在前面的例子中找到如下代码，并修改：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">loss_cf = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits
+(logits=class_fake, labels=y)) #分类正确，但生成的样本错了
+loss_cr = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits
+(logits=class_real, labels=y)) #生成的样本与分类正确，但是与输入的分类对不上
+loss_c =(loss_cf + loss_cr) / 2</pre>
+<hr class="calibre6"/>
+<p class="ziti3">令loss_c分别等于loss_cr和loss_cf。运行代码观察结果，体验loss_cr和loss_cf两个loss值的作用。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

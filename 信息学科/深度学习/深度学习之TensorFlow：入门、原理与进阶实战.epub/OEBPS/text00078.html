@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">10.4　去噪自编码</h3>
+<p class="ziti3">要想取得好的特征只靠重构输入数据是不够的，在实际应用中，还需要让这些特征具有抗干扰的能力，即当输入数据发生一定程度的扰动时，生成的特征仍然保持不变。这时需要添加噪声来为模型增加更大的困难。在这种情况下训练出来的模型才会有更好的鲁棒性，于是就有了本节所介绍的去噪自动编码器。</p>
+<p class="ziti3">去噪自动编码器（Denoising Autoencoder，DA），是在自动编码的基础上，训练数据加入噪声，输出的标签仍是原始的样本（没有加过噪声的），这样自动编码器必须学习去除噪声而获得真正的没有被噪声污染过的输入特征。因此，这就迫使编码器去学习输入信号的更加鲁棒的特征表达，即具有更加强悍的泛化能力。</p>
+<p class="ziti3">在实际训练中，人为加入的噪声有两种途径：</p>
+<p class="ziti3">（1）在选择训练数据集时，额外选择一些样本集以外的数据。</p>
+<p class="ziti3">（2）改变已有的样本数据集中的数据（使样本个体不完整，或通过噪声与样本进行的加减乘除之类的运算，使样本数据发生变化）。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

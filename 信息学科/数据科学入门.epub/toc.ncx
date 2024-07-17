@@ -1,0 +1,1455 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" xml:lang="zho">
+  <head>
+    <meta content="31d33029-7ae1-492d-909f-58ba609c15e3" name="dtb:uid"/>
+    <meta content="2" name="dtb:depth"/>
+    <meta content="calibre (3.38.0)" name="dtb:generator"/>
+    <meta content="0" name="dtb:totalPageCount"/>
+    <meta content="0" name="dtb:maxPageNumber"/>
+  </head>
+  <docTitle>
+    <text>数据科学入门</text>
+  </docTitle>
+  <navMap>
+    <navPoint class="chapter" id="num_1" playOrder="1">
+      <navLabel>
+        <text>版权声明</text>
+      </navLabel>
+      <content src="index_split_002.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_2" playOrder="2">
+      <navLabel>
+        <text>O'Reilly Media, Inc. 介绍</text>
+      </navLabel>
+      <content src="index_split_003.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_3" playOrder="3">
+      <navLabel>
+        <text>业界评论</text>
+      </navLabel>
+      <content src="index_split_004.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_4" playOrder="4">
+      <navLabel>
+        <text>前言</text>
+      </navLabel>
+      <content src="index_split_005.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_5" playOrder="5">
+      <navLabel>
+        <text>数据科学</text>
+      </navLabel>
+      <content src="index_split_005.html#filepos24485"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_6" playOrder="6">
+      <navLabel>
+        <text>从零开始</text>
+      </navLabel>
+      <content src="index_split_006.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_7" playOrder="7">
+      <navLabel>
+        <text>本书排版约定</text>
+      </navLabel>
+      <content src="index_split_007.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_8" playOrder="8">
+      <navLabel>
+        <text>示例代码的使用</text>
+      </navLabel>
+      <content src="index_split_008.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_9" playOrder="9">
+      <navLabel>
+        <text>Safari® Books Online</text>
+      </navLabel>
+      <content src="index_split_009.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_10" playOrder="10">
+      <navLabel>
+        <text>联系我们</text>
+      </navLabel>
+      <content src="index_split_010.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_11" playOrder="11">
+      <navLabel>
+        <text>致谢</text>
+      </navLabel>
+      <content src="index_split_011.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_12" playOrder="12">
+      <navLabel>
+        <text>第 1 章　导论</text>
+      </navLabel>
+      <content src="index_split_012.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_13" playOrder="13">
+      <navLabel>
+        <text>1.1　数据的威力</text>
+      </navLabel>
+      <content src="index_split_013.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_14" playOrder="14">
+      <navLabel>
+        <text>1.2　什么是数据科学</text>
+      </navLabel>
+      <content src="index_split_014.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_15" playOrder="15">
+      <navLabel>
+        <text>1.3　激励假设：DataSciencester</text>
+      </navLabel>
+      <content src="index_split_015.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_16" playOrder="16">
+      <navLabel>
+        <text>1.3.1　寻找关键联系人</text>
+      </navLabel>
+      <content src="index_split_015.html#filepos46674"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_17" playOrder="17">
+      <navLabel>
+        <text>1.3.2　你可能知道的数据科学家</text>
+      </navLabel>
+      <content src="index_split_015.html#filepos53555"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_18" playOrder="18">
+      <navLabel>
+        <text>1.3.3　工资与工作年限</text>
+      </navLabel>
+      <content src="index_split_015.html#filepos62088"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_19" playOrder="19">
+      <navLabel>
+        <text>1.3.4　付费账户</text>
+      </navLabel>
+      <content src="index_split_015.html#filepos67031"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_20" playOrder="20">
+      <navLabel>
+        <text>1.3.5　兴趣主题</text>
+      </navLabel>
+      <content src="index_split_015.html#filepos68842"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_21" playOrder="21">
+      <navLabel>
+        <text>1.4　展望</text>
+      </navLabel>
+      <content src="index_split_016.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_22" playOrder="22">
+      <navLabel>
+        <text>第 2 章　Python 速成</text>
+      </navLabel>
+      <content src="index_split_017.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_23" playOrder="23">
+      <navLabel>
+        <text>2.1　基础内容</text>
+      </navLabel>
+      <content src="index_split_018.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_24" playOrder="24">
+      <navLabel>
+        <text>2.1.1　Python获取</text>
+      </navLabel>
+      <content src="index_split_018.html#filepos73458"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_25" playOrder="25">
+      <navLabel>
+        <text>2.1.2　Python之禅</text>
+      </navLabel>
+      <content src="index_split_018.html#filepos75087"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_26" playOrder="26">
+      <navLabel>
+        <text>2.1.3　空白形式</text>
+      </navLabel>
+      <content src="index_split_018.html#filepos76042"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_27" playOrder="27">
+      <navLabel>
+        <text>2.1.4　模块</text>
+      </navLabel>
+      <content src="index_split_018.html#filepos79119"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_28" playOrder="28">
+      <navLabel>
+        <text>2.1.5　算法</text>
+      </navLabel>
+      <content src="index_split_018.html#filepos81540"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_29" playOrder="29">
+      <navLabel>
+        <text>2.1.6　函数</text>
+      </navLabel>
+      <content src="index_split_018.html#filepos82170"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_30" playOrder="30">
+      <navLabel>
+        <text>2.1.7　字符串</text>
+      </navLabel>
+      <content src="index_split_018.html#filepos84958"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_31" playOrder="31">
+      <navLabel>
+        <text>2.1.8　异常</text>
+      </navLabel>
+      <content src="index_split_018.html#filepos86567"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_32" playOrder="32">
+      <navLabel>
+        <text>2.1.9　列表</text>
+      </navLabel>
+      <content src="index_split_018.html#filepos87272"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_33" playOrder="33">
+      <navLabel>
+        <text>2.1.10　元组</text>
+      </navLabel>
+      <content src="index_split_018.html#filepos91479"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_34" playOrder="34">
+      <navLabel>
+        <text>2.1.11　字典</text>
+      </navLabel>
+      <content src="index_split_018.html#filepos92985"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_35" playOrder="35">
+      <navLabel>
+        <text>2.1.12　集合</text>
+      </navLabel>
+      <content src="index_split_018.html#filepos101450"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_36" playOrder="36">
+      <navLabel>
+        <text>2.1.13　控制流</text>
+      </navLabel>
+      <content src="index_split_018.html#filepos103422"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_37" playOrder="37">
+      <navLabel>
+        <text>2.1.14　真和假</text>
+      </navLabel>
+      <content src="index_split_018.html#filepos105534"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_38" playOrder="38">
+      <navLabel>
+        <text>2.2　进阶内容</text>
+      </navLabel>
+      <content src="index_split_019.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_39" playOrder="39">
+      <navLabel>
+        <text>2.2.1　排序</text>
+      </navLabel>
+      <content src="index_split_019.html#filepos109616"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_40" playOrder="40">
+      <navLabel>
+        <text>2.2.2　列表解析</text>
+      </navLabel>
+      <content src="index_split_019.html#filepos111066"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_41" playOrder="41">
+      <navLabel>
+        <text>2.2.3　生成器和迭代器</text>
+      </navLabel>
+      <content src="index_split_019.html#filepos113647"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_42" playOrder="42">
+      <navLabel>
+        <text>2.2.4　随机性</text>
+      </navLabel>
+      <content src="index_split_019.html#filepos116661"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_43" playOrder="43">
+      <navLabel>
+        <text>2.2.5　正则表达式</text>
+      </navLabel>
+      <content src="index_split_019.html#filepos120073"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_44" playOrder="44">
+      <navLabel>
+        <text>2.2.6　面向对象的编程</text>
+      </navLabel>
+      <content src="index_split_019.html#filepos121287"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_45" playOrder="45">
+      <navLabel>
+        <text>2.2.7　函数式工具</text>
+      </navLabel>
+      <content src="index_split_019.html#filepos124529"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_46" playOrder="46">
+      <navLabel>
+        <text>2.2.8　枚举</text>
+      </navLabel>
+      <content src="index_split_019.html#filepos128979"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_47" playOrder="47">
+      <navLabel>
+        <text>2.2.9　压缩和参数拆分</text>
+      </navLabel>
+      <content src="index_split_019.html#filepos130421"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_48" playOrder="48">
+      <navLabel>
+        <text>2.2.10　args和kwargs</text>
+      </navLabel>
+      <content src="index_split_019.html#filepos132381"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_49" playOrder="49">
+      <navLabel>
+        <text>2.2.11　欢迎来到DataSciencester</text>
+      </navLabel>
+      <content src="index_split_019.html#filepos135851"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_50" playOrder="50">
+      <navLabel>
+        <text>2.3　延伸学习</text>
+      </navLabel>
+      <content src="index_split_020.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_51" playOrder="51">
+      <navLabel>
+        <text>第 3 章　可视化数据</text>
+      </navLabel>
+      <content src="index_split_021.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_52" playOrder="52">
+      <navLabel>
+        <text>3.1　matplotlib</text>
+      </navLabel>
+      <content src="index_split_022.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_53" playOrder="53">
+      <navLabel>
+        <text>3.2　条形图</text>
+      </navLabel>
+      <content src="index_split_023.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_54" playOrder="54">
+      <navLabel>
+        <text>3.3　线图</text>
+      </navLabel>
+      <content src="index_split_024.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_55" playOrder="55">
+      <navLabel>
+        <text>3.4　散点图</text>
+      </navLabel>
+      <content src="index_split_025.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_56" playOrder="56">
+      <navLabel>
+        <text>3.5　延伸学习</text>
+      </navLabel>
+      <content src="index_split_026.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_57" playOrder="57">
+      <navLabel>
+        <text>第 4 章　线性代数</text>
+      </navLabel>
+      <content src="index_split_027.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_58" playOrder="58">
+      <navLabel>
+        <text>4.1　向量</text>
+      </navLabel>
+      <content src="index_split_028.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_59" playOrder="59">
+      <navLabel>
+        <text>4.2　矩阵</text>
+      </navLabel>
+      <content src="index_split_029.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_60" playOrder="60">
+      <navLabel>
+        <text>4.3　延伸学习</text>
+      </navLabel>
+      <content src="index_split_030.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_61" playOrder="61">
+      <navLabel>
+        <text>第 5 章　统计学</text>
+      </navLabel>
+      <content src="index_split_031.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_62" playOrder="62">
+      <navLabel>
+        <text>5.1　描述单个数据集</text>
+      </navLabel>
+      <content src="index_split_032.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_63" playOrder="63">
+      <navLabel>
+        <text>5.1.1　中心倾向</text>
+      </navLabel>
+      <content src="index_split_032.html#filepos175437"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_64" playOrder="64">
+      <navLabel>
+        <text>5.1.2　离散度</text>
+      </navLabel>
+      <content src="index_split_032.html#filepos180844"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_65" playOrder="65">
+      <navLabel>
+        <text>5.2　相关</text>
+      </navLabel>
+      <content src="index_split_033.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_66" playOrder="66">
+      <navLabel>
+        <text>5.3　辛普森悖论</text>
+      </navLabel>
+      <content src="index_split_034.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_67" playOrder="67">
+      <navLabel>
+        <text>5.4　相关系数其他注意事项</text>
+      </navLabel>
+      <content src="index_split_035.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_68" playOrder="68">
+      <navLabel>
+        <text>5.5　相关和因果</text>
+      </navLabel>
+      <content src="index_split_036.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_69" playOrder="69">
+      <navLabel>
+        <text>5.6　延伸学习</text>
+      </navLabel>
+      <content src="index_split_037.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_70" playOrder="70">
+      <navLabel>
+        <text>第 6 章　概率</text>
+      </navLabel>
+      <content src="index_split_038.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_71" playOrder="71">
+      <navLabel>
+        <text>6.1　不独立和独立</text>
+      </navLabel>
+      <content src="index_split_039.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_72" playOrder="72">
+      <navLabel>
+        <text>6.2　条件概率</text>
+      </navLabel>
+      <content src="index_split_040.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_73" playOrder="73">
+      <navLabel>
+        <text>6.3　贝叶斯定理</text>
+      </navLabel>
+      <content src="index_split_041.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_74" playOrder="74">
+      <navLabel>
+        <text>6.4　随机变量</text>
+      </navLabel>
+      <content src="index_split_042.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_75" playOrder="75">
+      <navLabel>
+        <text>6.5　连续分布</text>
+      </navLabel>
+      <content src="index_split_043.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_76" playOrder="76">
+      <navLabel>
+        <text>6.6　正态分布</text>
+      </navLabel>
+      <content src="index_split_044.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_77" playOrder="77">
+      <navLabel>
+        <text>6.7　中心极限定理</text>
+      </navLabel>
+      <content src="index_split_045.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_78" playOrder="78">
+      <navLabel>
+        <text>6.8　延伸学习</text>
+      </navLabel>
+      <content src="index_split_046.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_79" playOrder="79">
+      <navLabel>
+        <text>第 7 章　假设与推断</text>
+      </navLabel>
+      <content src="index_split_047.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_80" playOrder="80">
+      <navLabel>
+        <text>7.1　统计假设检验</text>
+      </navLabel>
+      <content src="index_split_048.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_81" playOrder="81">
+      <navLabel>
+        <text>7.2　案例：掷硬币</text>
+      </navLabel>
+      <content src="index_split_049.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_82" playOrder="82">
+      <navLabel>
+        <text>7.3　置信区间</text>
+      </navLabel>
+      <content src="index_split_050.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_83" playOrder="83">
+      <navLabel>
+        <text>7.4　P-hacking</text>
+      </navLabel>
+      <content src="index_split_051.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_84" playOrder="84">
+      <navLabel>
+        <text>7.5　案例：运行A/B测试</text>
+      </navLabel>
+      <content src="index_split_052.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_85" playOrder="85">
+      <navLabel>
+        <text>7.6　贝叶斯推断</text>
+      </navLabel>
+      <content src="index_split_053.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_86" playOrder="86">
+      <navLabel>
+        <text>7.7　延伸学习</text>
+      </navLabel>
+      <content src="index_split_054.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_87" playOrder="87">
+      <navLabel>
+        <text>第 8 章　梯度下降</text>
+      </navLabel>
+      <content src="index_split_055.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_88" playOrder="88">
+      <navLabel>
+        <text>8.1　梯度下降的思想</text>
+      </navLabel>
+      <content src="index_split_056.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_89" playOrder="89">
+      <navLabel>
+        <text>8.2　估算梯度</text>
+      </navLabel>
+      <content src="index_split_057.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_90" playOrder="90">
+      <navLabel>
+        <text>8.3　使用梯度</text>
+      </navLabel>
+      <content src="index_split_058.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_91" playOrder="91">
+      <navLabel>
+        <text>8.4　选择正确步长</text>
+      </navLabel>
+      <content src="index_split_059.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_92" playOrder="92">
+      <navLabel>
+        <text>8.5　综合</text>
+      </navLabel>
+      <content src="index_split_060.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_93" playOrder="93">
+      <navLabel>
+        <text>8.6　随机梯度下降法</text>
+      </navLabel>
+      <content src="index_split_061.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_94" playOrder="94">
+      <navLabel>
+        <text>8.7　延伸学习</text>
+      </navLabel>
+      <content src="index_split_062.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_95" playOrder="95">
+      <navLabel>
+        <text>第 9 章　获取数据</text>
+      </navLabel>
+      <content src="index_split_063.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_96" playOrder="96">
+      <navLabel>
+        <text>9.1　stdin和stdout</text>
+      </navLabel>
+      <content src="index_split_064.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_97" playOrder="97">
+      <navLabel>
+        <text>9.2　读取文件</text>
+      </navLabel>
+      <content src="index_split_065.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_98" playOrder="98">
+      <navLabel>
+        <text>9.2.1　文本文件基础</text>
+      </navLabel>
+      <content src="index_split_065.html#filepos287593"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_99" playOrder="99">
+      <navLabel>
+        <text>9.2.2　限制的文件</text>
+      </navLabel>
+      <content src="index_split_065.html#filepos290727"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_100" playOrder="100">
+      <navLabel>
+        <text>9.3　网络抓取</text>
+      </navLabel>
+      <content src="index_split_066.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_101" playOrder="101">
+      <navLabel>
+        <text>9.3.1　HTML和解析方法</text>
+      </navLabel>
+      <content src="index_split_066.html#filepos296598"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_102" playOrder="102">
+      <navLabel>
+        <text>9.3.2　案例：关于数据的O'Reilly图书</text>
+      </navLabel>
+      <content src="index_split_066.html#filepos302689"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_103" playOrder="103">
+      <navLabel>
+        <text>9.4　使用API</text>
+      </navLabel>
+      <content src="index_split_067.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_104" playOrder="104">
+      <navLabel>
+        <text>9.4.1　JSON（和XML）</text>
+      </navLabel>
+      <content src="index_split_067.html#filepos314688"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_105" playOrder="105">
+      <navLabel>
+        <text>9.4.2　使用无验证的API</text>
+      </navLabel>
+      <content src="index_split_067.html#filepos317216"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_106" playOrder="106">
+      <navLabel>
+        <text>9.4.3　寻找API</text>
+      </navLabel>
+      <content src="index_split_067.html#filepos320657"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_107" playOrder="107">
+      <navLabel>
+        <text>9.5　案例：使用Twitter API</text>
+      </navLabel>
+      <content src="index_split_068.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_108" playOrder="108">
+      <navLabel>
+        <text>获取证明文件</text>
+      </navLabel>
+      <content src="index_split_068.html#filepos322709"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_109" playOrder="109">
+      <navLabel>
+        <text>9.6　延伸学习</text>
+      </navLabel>
+      <content src="index_split_069.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_110" playOrder="110">
+      <navLabel>
+        <text>第 10 章　数据工作</text>
+      </navLabel>
+      <content src="index_split_070.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_111" playOrder="111">
+      <navLabel>
+        <text>10.1　探索你的数据</text>
+      </navLabel>
+      <content src="index_split_071.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_112" playOrder="112">
+      <navLabel>
+        <text>10.1.1　探索一维数据</text>
+      </navLabel>
+      <content src="index_split_071.html#filepos333336"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_113" playOrder="113">
+      <navLabel>
+        <text>10.1.2　二维数据</text>
+      </navLabel>
+      <content src="index_split_071.html#filepos336722"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_114" playOrder="114">
+      <navLabel>
+        <text>10.1.3　多维数据</text>
+      </navLabel>
+      <content src="index_split_071.html#filepos338902"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_115" playOrder="115">
+      <navLabel>
+        <text>10.2　清理与修改</text>
+      </navLabel>
+      <content src="index_split_072.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_116" playOrder="116">
+      <navLabel>
+        <text>10.3　数据处理</text>
+      </navLabel>
+      <content src="index_split_073.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_117" playOrder="117">
+      <navLabel>
+        <text>10.4　数据调整</text>
+      </navLabel>
+      <content src="index_split_074.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_118" playOrder="118">
+      <navLabel>
+        <text>10.5　降维</text>
+      </navLabel>
+      <content src="index_split_075.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_119" playOrder="119">
+      <navLabel>
+        <text>10.6　延伸学习</text>
+      </navLabel>
+      <content src="index_split_076.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_120" playOrder="120">
+      <navLabel>
+        <text>第 11 章　机器学习</text>
+      </navLabel>
+      <content src="index_split_077.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_121" playOrder="121">
+      <navLabel>
+        <text>11.1　建模</text>
+      </navLabel>
+      <content src="index_split_078.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_122" playOrder="122">
+      <navLabel>
+        <text>11.2　什么是机器学习</text>
+      </navLabel>
+      <content src="index_split_079.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_123" playOrder="123">
+      <navLabel>
+        <text>11.3　过拟合和欠拟合</text>
+      </navLabel>
+      <content src="index_split_080.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_124" playOrder="124">
+      <navLabel>
+        <text>11.4　正确性</text>
+      </navLabel>
+      <content src="index_split_081.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_125" playOrder="125">
+      <navLabel>
+        <text>11.5　偏倚-方差权衡</text>
+      </navLabel>
+      <content src="index_split_082.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_126" playOrder="126">
+      <navLabel>
+        <text>11.6　特征提取和选择</text>
+      </navLabel>
+      <content src="index_split_083.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_127" playOrder="127">
+      <navLabel>
+        <text>11.7　延伸学习</text>
+      </navLabel>
+      <content src="index_split_084.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_128" playOrder="128">
+      <navLabel>
+        <text>第 12 章　k 近邻法</text>
+      </navLabel>
+      <content src="index_split_085.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_129" playOrder="129">
+      <navLabel>
+        <text>12.1　模型</text>
+      </navLabel>
+      <content src="index_split_086.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_130" playOrder="130">
+      <navLabel>
+        <text>12.2　案例：最喜欢的编程语言</text>
+      </navLabel>
+      <content src="index_split_087.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_131" playOrder="131">
+      <navLabel>
+        <text>12.3　维数灾难</text>
+      </navLabel>
+      <content src="index_split_088.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_132" playOrder="132">
+      <navLabel>
+        <text>12.4　延伸学习</text>
+      </navLabel>
+      <content src="index_split_089.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_133" playOrder="133">
+      <navLabel>
+        <text>第 13 章　朴素贝叶斯算法</text>
+      </navLabel>
+      <content src="index_split_090.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_134" playOrder="134">
+      <navLabel>
+        <text>13.1　一个简易的垃圾邮件过滤器</text>
+      </navLabel>
+      <content src="index_split_091.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_135" playOrder="135">
+      <navLabel>
+        <text>13.2　一个复杂的垃圾邮件过滤器</text>
+      </navLabel>
+      <content src="index_split_092.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_136" playOrder="136">
+      <navLabel>
+        <text>13.3　算法的实现</text>
+      </navLabel>
+      <content src="index_split_093.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_137" playOrder="137">
+      <navLabel>
+        <text>13.4　测试模型</text>
+      </navLabel>
+      <content src="index_split_094.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_138" playOrder="138">
+      <navLabel>
+        <text>13.5　延伸学习</text>
+      </navLabel>
+      <content src="index_split_095.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_139" playOrder="139">
+      <navLabel>
+        <text>第 14 章　简单线性回归</text>
+      </navLabel>
+      <content src="index_split_096.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_140" playOrder="140">
+      <navLabel>
+        <text>14.1　模型</text>
+      </navLabel>
+      <content src="index_split_097.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_141" playOrder="141">
+      <navLabel>
+        <text>14.2　利用梯度下降法</text>
+      </navLabel>
+      <content src="index_split_098.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_142" playOrder="142">
+      <navLabel>
+        <text>14.3　最大似然估计</text>
+      </navLabel>
+      <content src="index_split_099.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_143" playOrder="143">
+      <navLabel>
+        <text>14.4　延伸学习</text>
+      </navLabel>
+      <content src="index_split_100.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_144" playOrder="144">
+      <navLabel>
+        <text>第 15 章　多重回归分析</text>
+      </navLabel>
+      <content src="index_split_101.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_145" playOrder="145">
+      <navLabel>
+        <text>15.1　模型</text>
+      </navLabel>
+      <content src="index_split_102.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_146" playOrder="146">
+      <navLabel>
+        <text>15.2　最小二乘模型的进一步假设</text>
+      </navLabel>
+      <content src="index_split_103.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_147" playOrder="147">
+      <navLabel>
+        <text>15.3　拟合模型</text>
+      </navLabel>
+      <content src="index_split_104.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_148" playOrder="148">
+      <navLabel>
+        <text>15.4　解释模型</text>
+      </navLabel>
+      <content src="index_split_105.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_149" playOrder="149">
+      <navLabel>
+        <text>15.5　拟合优度</text>
+      </navLabel>
+      <content src="index_split_106.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_150" playOrder="150">
+      <navLabel>
+        <text>15.6　题外话：Bootstrap</text>
+      </navLabel>
+      <content src="index_split_107.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_151" playOrder="151">
+      <navLabel>
+        <text>15.7　回归系数的标准误差</text>
+      </navLabel>
+      <content src="index_split_108.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_152" playOrder="152">
+      <navLabel>
+        <text>15.8　正则化</text>
+      </navLabel>
+      <content src="index_split_109.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_153" playOrder="153">
+      <navLabel>
+        <text>15.9　延伸学习</text>
+      </navLabel>
+      <content src="index_split_110.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_154" playOrder="154">
+      <navLabel>
+        <text>第 16 章　逻辑回归</text>
+      </navLabel>
+      <content src="index_split_111.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_155" playOrder="155">
+      <navLabel>
+        <text>16.1　问题</text>
+      </navLabel>
+      <content src="index_split_112.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_156" playOrder="156">
+      <navLabel>
+        <text>16.2　Logistic函数</text>
+      </navLabel>
+      <content src="index_split_113.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_157" playOrder="157">
+      <navLabel>
+        <text>16.3　应用模型</text>
+      </navLabel>
+      <content src="index_split_114.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_158" playOrder="158">
+      <navLabel>
+        <text>16.4　拟合优度</text>
+      </navLabel>
+      <content src="index_split_115.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_159" playOrder="159">
+      <navLabel>
+        <text>16.5　支持向量机</text>
+      </navLabel>
+      <content src="index_split_116.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_160" playOrder="160">
+      <navLabel>
+        <text>16.6　延伸学习</text>
+      </navLabel>
+      <content src="index_split_117.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_161" playOrder="161">
+      <navLabel>
+        <text>第 17 章　决策树</text>
+      </navLabel>
+      <content src="index_split_118.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_162" playOrder="162">
+      <navLabel>
+        <text>17.1　什么是决策树</text>
+      </navLabel>
+      <content src="index_split_119.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_163" playOrder="163">
+      <navLabel>
+        <text>17.2　熵</text>
+      </navLabel>
+      <content src="index_split_120.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_164" playOrder="164">
+      <navLabel>
+        <text>17.3　分割之熵</text>
+      </navLabel>
+      <content src="index_split_121.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_165" playOrder="165">
+      <navLabel>
+        <text>17.4　创建决策树</text>
+      </navLabel>
+      <content src="index_split_122.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_166" playOrder="166">
+      <navLabel>
+        <text>17.5　综合运用</text>
+      </navLabel>
+      <content src="index_split_123.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_167" playOrder="167">
+      <navLabel>
+        <text>17.6　随机森林</text>
+      </navLabel>
+      <content src="index_split_124.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_168" playOrder="168">
+      <navLabel>
+        <text>17.7　延伸学习</text>
+      </navLabel>
+      <content src="index_split_125.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_169" playOrder="169">
+      <navLabel>
+        <text>第 18 章　神经网络</text>
+      </navLabel>
+      <content src="index_split_126.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_170" playOrder="170">
+      <navLabel>
+        <text>18.1　感知器</text>
+      </navLabel>
+      <content src="index_split_127.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_171" playOrder="171">
+      <navLabel>
+        <text>18.2　前馈神经网络</text>
+      </navLabel>
+      <content src="index_split_128.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_172" playOrder="172">
+      <navLabel>
+        <text>18.3　反向传播</text>
+      </navLabel>
+      <content src="index_split_129.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_173" playOrder="173">
+      <navLabel>
+        <text>18.4　实例：战胜CAPTCHA</text>
+      </navLabel>
+      <content src="index_split_130.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_174" playOrder="174">
+      <navLabel>
+        <text>18.5　延伸学习</text>
+      </navLabel>
+      <content src="index_split_131.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_175" playOrder="175">
+      <navLabel>
+        <text>第 19 章　聚类分析</text>
+      </navLabel>
+      <content src="index_split_132.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_176" playOrder="176">
+      <navLabel>
+        <text>19.1　原理</text>
+      </navLabel>
+      <content src="index_split_133.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_177" playOrder="177">
+      <navLabel>
+        <text>19.2　模型</text>
+      </navLabel>
+      <content src="index_split_134.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_178" playOrder="178">
+      <navLabel>
+        <text>19.3　示例：聚会</text>
+      </navLabel>
+      <content src="index_split_135.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_179" playOrder="179">
+      <navLabel>
+        <text>19.4　选择聚类数目k</text>
+      </navLabel>
+      <content src="index_split_136.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_180" playOrder="180">
+      <navLabel>
+        <text>19.5　示例：对色彩进行聚类</text>
+      </navLabel>
+      <content src="index_split_137.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_181" playOrder="181">
+      <navLabel>
+        <text>19.6　自下而上的分层聚类</text>
+      </navLabel>
+      <content src="index_split_138.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_182" playOrder="182">
+      <navLabel>
+        <text>19.7　延伸学习</text>
+      </navLabel>
+      <content src="index_split_139.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_183" playOrder="183">
+      <navLabel>
+        <text>第 20 章　自然语言处理</text>
+      </navLabel>
+      <content src="index_split_140.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_184" playOrder="184">
+      <navLabel>
+        <text>20.1　词云</text>
+      </navLabel>
+      <content src="index_split_141.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_185" playOrder="185">
+      <navLabel>
+        <text>20.2　n-grams模型</text>
+      </navLabel>
+      <content src="index_split_142.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_186" playOrder="186">
+      <navLabel>
+        <text>20.3　语法</text>
+      </navLabel>
+      <content src="index_split_143.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_187" playOrder="187">
+      <navLabel>
+        <text>20.4　题外话：吉布斯采样</text>
+      </navLabel>
+      <content src="index_split_144.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_188" playOrder="188">
+      <navLabel>
+        <text>20.5　主题建模</text>
+      </navLabel>
+      <content src="index_split_145.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_189" playOrder="189">
+      <navLabel>
+        <text>20.6　延伸学习</text>
+      </navLabel>
+      <content src="index_split_146.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_190" playOrder="190">
+      <navLabel>
+        <text>第 21 章　网络分析</text>
+      </navLabel>
+      <content src="index_split_147.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_191" playOrder="191">
+      <navLabel>
+        <text>21.1　中介中心度</text>
+      </navLabel>
+      <content src="index_split_148.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_192" playOrder="192">
+      <navLabel>
+        <text>21.2　特征向量中心度</text>
+      </navLabel>
+      <content src="index_split_149.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_193" playOrder="193">
+      <navLabel>
+        <text>21.2.1　矩阵乘法</text>
+      </navLabel>
+      <content src="index_split_149.html#filepos657760"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_194" playOrder="194">
+      <navLabel>
+        <text>21.2.2　中心度</text>
+      </navLabel>
+      <content src="index_split_149.html#filepos664730"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_195" playOrder="195">
+      <navLabel>
+        <text>21.3　有向图与PageRank</text>
+      </navLabel>
+      <content src="index_split_150.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_196" playOrder="196">
+      <navLabel>
+        <text>21.4　延伸学习</text>
+      </navLabel>
+      <content src="index_split_151.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_197" playOrder="197">
+      <navLabel>
+        <text>第 22 章　推荐系统</text>
+      </navLabel>
+      <content src="index_split_152.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_198" playOrder="198">
+      <navLabel>
+        <text>22.1　手工甄筛</text>
+      </navLabel>
+      <content src="index_split_153.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_199" playOrder="199">
+      <navLabel>
+        <text>22.2　推荐流行事物</text>
+      </navLabel>
+      <content src="index_split_154.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_200" playOrder="200">
+      <navLabel>
+        <text>22.3　基于用户的协同过滤方法</text>
+      </navLabel>
+      <content src="index_split_155.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_201" playOrder="201">
+      <navLabel>
+        <text>22.4　基于物品的协同过滤算法</text>
+      </navLabel>
+      <content src="index_split_156.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_202" playOrder="202">
+      <navLabel>
+        <text>22.5　延伸学习</text>
+      </navLabel>
+      <content src="index_split_157.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_203" playOrder="203">
+      <navLabel>
+        <text>第 23 章　数据库与 SQL</text>
+      </navLabel>
+      <content src="index_split_158.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_204" playOrder="204">
+      <navLabel>
+        <text>23.1　CREATE TABLE与INSERT</text>
+      </navLabel>
+      <content src="index_split_159.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_205" playOrder="205">
+      <navLabel>
+        <text>23.2　UPDATE</text>
+      </navLabel>
+      <content src="index_split_160.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_206" playOrder="206">
+      <navLabel>
+        <text>23.3　DELETE</text>
+      </navLabel>
+      <content src="index_split_161.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_207" playOrder="207">
+      <navLabel>
+        <text>23.4　SELECT</text>
+      </navLabel>
+      <content src="index_split_162.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_208" playOrder="208">
+      <navLabel>
+        <text>23.5　GROUP BY</text>
+      </navLabel>
+      <content src="index_split_163.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_209" playOrder="209">
+      <navLabel>
+        <text>23.6　ORDER BY</text>
+      </navLabel>
+      <content src="index_split_164.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_210" playOrder="210">
+      <navLabel>
+        <text>237　JOIN</text>
+      </navLabel>
+      <content src="index_split_165.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_211" playOrder="211">
+      <navLabel>
+        <text>23.8　子查询</text>
+      </navLabel>
+      <content src="index_split_166.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_212" playOrder="212">
+      <navLabel>
+        <text>23.9　索引</text>
+      </navLabel>
+      <content src="index_split_167.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_213" playOrder="213">
+      <navLabel>
+        <text>23.10　查询优化</text>
+      </navLabel>
+      <content src="index_split_168.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_214" playOrder="214">
+      <navLabel>
+        <text>23.11　NoSQL</text>
+      </navLabel>
+      <content src="index_split_169.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_215" playOrder="215">
+      <navLabel>
+        <text>23.12　延伸学习</text>
+      </navLabel>
+      <content src="index_split_170.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_216" playOrder="216">
+      <navLabel>
+        <text>第 24 章　MapReduce</text>
+      </navLabel>
+      <content src="index_split_171.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_217" playOrder="217">
+      <navLabel>
+        <text>24.1　案例：单词计数</text>
+      </navLabel>
+      <content src="index_split_172.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_218" playOrder="218">
+      <navLabel>
+        <text>24.2　为什么是MapReduce</text>
+      </navLabel>
+      <content src="index_split_173.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_219" playOrder="219">
+      <navLabel>
+        <text>24.3　更加一般化的MapReduce</text>
+      </navLabel>
+      <content src="index_split_174.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_220" playOrder="220">
+      <navLabel>
+        <text>24.4　案例：分析状态更新</text>
+      </navLabel>
+      <content src="index_split_175.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_221" playOrder="221">
+      <navLabel>
+        <text>24.5　案例：矩阵计算</text>
+      </navLabel>
+      <content src="index_split_176.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_222" playOrder="222">
+      <navLabel>
+        <text>24.6　题外话：组合器</text>
+      </navLabel>
+      <content src="index_split_177.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_223" playOrder="223">
+      <navLabel>
+        <text>24.7　延伸学习</text>
+      </navLabel>
+      <content src="index_split_178.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_224" playOrder="224">
+      <navLabel>
+        <text>第 25 章　数据科学前瞻</text>
+      </navLabel>
+      <content src="index_split_179.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_225" playOrder="225">
+      <navLabel>
+        <text>25.1　IPython</text>
+      </navLabel>
+      <content src="index_split_180.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_226" playOrder="226">
+      <navLabel>
+        <text>25.2　数学</text>
+      </navLabel>
+      <content src="index_split_181.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_227" playOrder="227">
+      <navLabel>
+        <text>25.3　不从零开始</text>
+      </navLabel>
+      <content src="index_split_182.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_228" playOrder="228">
+      <navLabel>
+        <text>25.3.1　NumPy</text>
+      </navLabel>
+      <content src="index_split_182.html#filepos762626"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_229" playOrder="229">
+      <navLabel>
+        <text>25.3.2　pandas</text>
+      </navLabel>
+      <content src="index_split_182.html#filepos763203"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_230" playOrder="230">
+      <navLabel>
+        <text>25.3.3　scikit-learn</text>
+      </navLabel>
+      <content src="index_split_182.html#filepos763737"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_231" playOrder="231">
+      <navLabel>
+        <text>25.3.4　可视化</text>
+      </navLabel>
+      <content src="index_split_182.html#filepos764602"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_232" playOrder="232">
+      <navLabel>
+        <text>25.3.5　R</text>
+      </navLabel>
+      <content src="index_split_182.html#filepos766749"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_233" playOrder="233">
+      <navLabel>
+        <text>25.4　寻找数据</text>
+      </navLabel>
+      <content src="index_split_183.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_234" playOrder="234">
+      <navLabel>
+        <text>25.5　从事数据科学</text>
+      </navLabel>
+      <content src="index_split_184.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_235" playOrder="235">
+      <navLabel>
+        <text>25.5.1　Hacker News</text>
+      </navLabel>
+      <content src="index_split_184.html#filepos770174"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_236" playOrder="236">
+      <navLabel>
+        <text>25.5.2　消防车</text>
+      </navLabel>
+      <content src="index_split_184.html#filepos771308"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_237" playOrder="237">
+      <navLabel>
+        <text>25.5.3　T恤</text>
+      </navLabel>
+      <content src="index_split_184.html#filepos772315"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_238" playOrder="238">
+      <navLabel>
+        <text>25.5.4　你呢？</text>
+      </navLabel>
+      <content src="index_split_184.html#filepos773842"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_239" playOrder="239">
+      <navLabel>
+        <text>作者简介</text>
+      </navLabel>
+      <content src="index_split_185.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="num_240" playOrder="240">
+      <navLabel>
+        <text>关于封面</text>
+      </navLabel>
+      <content src="index_split_186.html"/>
+    </navPoint>
+  </navMap>
+</ncx>

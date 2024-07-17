@@ -1,0 +1,151 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_31" class="calibre8">1.5　NumPy</h2>
+<p class="calibre1">在深度学习的实现中，经常出现数组和矩阵的计算。NumPy 的数组类（<code class="calibre15">numpy.array</code>）中提供了很多便捷的方法，在实现深度学习时，我们将使用这些方法。本节我们来简单介绍一下后面会用到的 NumPy。</p>
+<h3 id="nav_point_32" class="calibre17">1.5.1　导入 NumPy</h3>
+<p class="calibre1">NumPy 是外部库。这里所说的“外部”是指不包含在标准版 Python 中。因此，我们首先要导入 NumPy 库。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">import numpy as np</b>
+</pre>
+
+<p class="calibre1">Python 中使用 <code class="calibre15">import</code> 语句来导入库。这里的 <code class="calibre15">import numpy as np</code>，直译的话就是“将 numpy 作为 np 导入”的意思。通过写成这样的形式，之后 NumPy 相关的方法均可通过 <code class="calibre15">np</code> 来调用。</p>
+<h3 id="nav_point_33" class="calibre17">1.5.2　生成 NumPy 数组</h3>
+<p class="calibre1">要生成 NumPy 数组，需要使用 <code class="calibre15">np.array()</code> 方法。<code class="calibre15">np.array()</code> 接收 Python 列表作为参数，生成 NumPy 数组（<code class="calibre15">numpy.ndarray</code>）。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">x = np.array([1.0, 2.0, 3.0])</b>
+&gt;&gt;&gt; <b class="calibre19">print(x)</b>
+[ 1. 2. 3.]
+&gt;&gt;&gt; <b class="calibre19">type(x)</b>
+&lt;class 'numpy.ndarray'&gt;
+</pre>
+
+<h3 id="nav_point_34" class="calibre17">1.5.3　NumPy 的算术运算</h3>
+<p class="calibre1">下面是 NumPy 数组的算术运算的例子。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">x = np.array([1.0, 2.0, 3.0])</b>
+&gt;&gt;&gt; <b class="calibre19">y = np.array([2.0, 4.0, 6.0])</b>
+&gt;&gt;&gt; <b class="calibre19">x + y</b>  # 对应元素的加法
+array([ 3.,  6., 9.])
+&gt;&gt;&gt; <b class="calibre19">x - y</b>
+array([ -1.,  -2., -3.])
+&gt;&gt;&gt; <b class="calibre19">x * y</b>  # element-wise product
+array([  2.,   8.,  18.])
+&gt;&gt;&gt; <b class="calibre19">x / y</b>
+array([ 0.5,  0.5,  0.5])
+</pre>
+
+<p class="calibre1">这里需要注意的是，数组 <code class="calibre15">x</code> 和数组 <code class="calibre15">y</code> 的元素个数是相同的（两者均是元素个数为 3 的一维数组）。当 <code class="calibre15">x</code> 和 <code class="calibre15">y</code> 的元素个数相同时，可以对各个元素进行算术运算。如果元素个数不同，程序就会报错，所以元素个数保持一致非常重要。另外，“对应元素的”的英文是 element-wise，比如“对应元素的乘法”就是 element-wise product。</p>
+<p class="calibre1">NumPy 数组不仅可以进行 element-wise 运算，也可以和单一的数值（标量）组合起来进行运算。此时，需要在 NumPy 数组的各个元素和标量之间进行运算。这个功能也被称为广播（详见后文）。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">x = np.array([1.0, 2.0, 3.0])</b>
+&gt;&gt;&gt; <b class="calibre19">x / 2.0</b>
+array([ 0.5,  1. ,  1.5])
+</pre>
+
+<h3 id="nav_point_35" class="calibre17">1.5.4　NumPy 的 <em class="calibre7">N</em> 维数组</h3>
+<p class="calibre1">NumPy 不仅可以生成一维数组（排成一列的数组），也可以生成多维数组。比如，可以生成如下的二维数组（矩阵）。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">A = np.array([[1, 2], [3, 4]])</b>
+&gt;&gt;&gt; <b class="calibre19">print(A)</b>
+[[1 2]
+ [3 4]]
+&gt;&gt;&gt; <b class="calibre19">A.shape</b>
+(2, 2)
+&gt;&gt;&gt; <b class="calibre19">A.dtype</b>
+dtype('int64')
+</pre>
+
+<p class="calibre1">这里生成了一个 2 × 2 的矩阵 <code class="calibre15">A</code>。另外，矩阵 <code class="calibre15">A</code> 的形状可以通过 <code class="calibre15">shape</code> 查看，矩阵元素的数据类型可以通过 <code class="calibre15">dtype</code> 查看。下面，我们来看一下矩阵的算术运算。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">B = np.array([[3, 0],[0, 6]])</b>
+&gt;&gt;&gt; <b class="calibre19">A + B</b>
+array([[ 4,  2],
+       [ 3, 10]])
+&gt;&gt;&gt; <b class="calibre19">A * B</b>
+array([[ 3,  0],
+       [ 0, 24]])
+</pre>
+
+<p class="calibre1">和数组的算术运算一样，矩阵的算术运算也可以在相同形状的矩阵间以对应元素的方式进行。并且，也可以通过标量（单一数值）对矩阵进行算术运算。这也是基于广播的功能。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">print(A)</b>
+[[1 2]
+ [3 4]]
+&gt;&gt;&gt; <b class="calibre19">A * 10</b>
+array([[ 10, 20],
+       [ 30, 40]])
+</pre>
+
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00001.jpeg" alt="" width="5%" class="calibre11"/>　NumPy 数组（<code class="calibre15">np.array</code>）可以生成 <em class="calibre7">N</em> 维数组，即可以生成一维数组、二维数组、三维数组等任意维数的数组。数学上将一维数组称为<strong class="calibre2">向量</strong>，将二维数组称为<strong class="calibre2">矩阵</strong>。另外，可以将一般化之后的向量或矩阵等统称为<strong class="calibre2">张量</strong>（tensor）。本书基本上将二维数组称为“矩阵”，将三维数组及三维以上的数组称为“张量”或“多维数组”。</p>
+</blockquote>
+<h3 id="nav_point_36" class="calibre17">1.5.5　广播</h3>
+<p class="calibre1">NumPy 中，形状不同的数组之间也可以进行运算。之前的例子中，在 2×2 的矩阵 <code class="calibre15">A</code> 和标量 <code class="calibre15">10</code> 之间进行了乘法运算。在这个过程中，如图 1-1 所示，标量 <code class="calibre15">10</code> 被扩展成了 2 × 2 的形状，然后再与矩阵 <code class="calibre15">A</code> 进行乘法运算。这个巧妙的功能称为<strong class="calibre2">广播</strong>（broadcast）。</p>
+<p class="tu"><img src="../images/00003.jpeg" alt="" width="95%" class="calibre21"/></p>
+<p class="calibre1"><strong class="calibre2">图 1-1　广播的例子：标量 10 被当作 2 × 2 的矩阵</strong></p>
+<p class="calibre1">我们通过下面这个运算再来看一个广播的例子。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">A = np.array([[1, 2], [3, 4]])</b>
+&gt;&gt;&gt; <b class="calibre19">B = np.array([10, 20])</b>
+&gt;&gt;&gt; <b class="calibre19">A * B</b>
+array([[ 10, 40],
+       [ 30, 80]])
+</pre>
+
+<p class="calibre1">在这个运算中，如图 1-2 所示，一维数组 <code class="calibre15">B</code> 被“巧妙地”变成了和二位数组 <code class="calibre15">A</code> 相同的形状，然后再以对应元素的方式进行运算。</p>
+<p class="tu"><img src="../images/00004.jpeg" alt="" width="95%" class="calibre21"/></p>
+<p class="calibre1"><strong class="calibre2">图 1-2　广播的例子 2</strong></p>
+<p class="calibre1">综上，因为 NumPy 有广播功能，所以不同形状的数组之间也可以顺利地进行运算。</p>
+<h3 id="nav_point_37" class="calibre17">1.5.6　访问元素</h3>
+<p class="calibre1">元素的索引从 0 开始。对各个元素的访问可按如下方式进行。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">X = np.array([[51, 55], [14, 19], [0, 4]])</b>
+&gt;&gt;&gt; <b class="calibre19">print(X)</b>
+[[51 55]
+ [14 19]
+ [ 0 4]]
+&gt;&gt;&gt; <b class="calibre19">X[0]</b>    # 第0行
+array([51, 55])
+&gt;&gt;&gt; <b class="calibre19">X[0][1]</b> # (0,1)的元素
+55
+</pre>
+
+<p class="calibre1">也可以使用 <code class="calibre15">for</code> 语句访问各个元素。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">for row in X:</b>
+...     <b class="calibre19">print(row)</b>
+...
+[51 55]
+[14 19]
+[0 4]
+</pre>
+
+<p class="calibre1">除了前面介绍的索引操作，NumPy 还可以使用数组访问各个元素。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">X = X.flatten()</b>         # 将X转换为一维数组
+&gt;&gt;&gt; <b class="calibre19">print(X)</b>
+[51 55 14 19  0  4]
+&gt;&gt;&gt; <b class="calibre19">X[np.array([0, 2, 4])]</b> # 获取索引为0、2、4的元素
+array([51, 14,  0])
+</pre>
+
+<p class="calibre1">运用这个标记法，可以获取满足一定条件的元素。例如，要从 <code class="calibre15">X</code> 中抽出大于 15 的元素，可以写成如下形式。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">X &gt; 15</b>
+array([ True,  True, False,  True, False, False], dtype=bool)
+&gt;&gt;&gt; <b class="calibre19">X[X&gt;15]</b>
+array([51, 55, 19])
+</pre>
+
+<p class="calibre1">对 NumPy 数组使用不等号运算符等（上例中是 <code class="calibre15">X &gt; 15</code>），结果会得到一个布尔型的数组。上例中就是使用这个布尔型数组取出了数组的各个元素（取出 <code class="calibre15">True</code> 对应的元素）。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00001.jpeg" alt="" width="5%" class="calibre11"/>　Python 等动态类型语言一般比 C 和 C++ 等静态类型语言（编译型语言）运算速度慢。实际上，如果是运算量大的处理对象，用 C/C++ 写程序更好。为此，当 Python 中追求性能时，人们会用 C/C++ 来实现处理的内容。Python 则承担“中间人”的角色，负责调用那些用 C/ C++ 写的程序。NumPy 中，主要的处理也都是通过 C 或 C++ 实现的。因此，我们可以在不损失性能的情况下，使用 Python便利的语法。</p>
+</blockquote>
+</body></html>

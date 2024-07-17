@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">9.10　时间序列的高级接口TFTS</h3>
+<p class="ziti3">TFTS（TensorFlow Time Series）是一个专门处理时间序列数据的高级接口，从TensorFlow的1.3版本开始，陆续改进迭代，直到1.5版本得到了最终的完善。</p>
+<p class="ziti3">TFTS属于估算器框架下的一个具体应用。估算器是TensorFlow 1.3版本的新功能，是对机器学习全流程的代码封装。使得开发者不需要再编写流程代码，按照估算器的框架专心实现某一部分具有独立功能（如模型结构、样本输入处理）的代码即可。</p>
+<p class="ziti3">TFTS的具体接口在tf.contrib.timeseries下。它支持非线性自动回归模型（估算器：ARRegressor）、基于线性状态空间建模的组件集合模型（包括趋势、预测、向量自回归、移动平均值等，估算器：StructuralEnsembleRegressor）、自定义LSTM模型。</p>
+<p class="ziti3">开发者可以按照估算器的框架对时间序列数据进行训练、预测。该接口不仅具有处理单变量和多变量的时间序列数据的功能，还具有按照标注忽略具体序列数据的功能。</p>
+<p class="ziti3">为了让开发者方便使用，该接口特意给出了4个例子。统一放在如下地址中：</p>
+<p class="ziti3">
+<a href="https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/timeseries/examples" class="pcalibre calibre2">https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/timeseries/examples</a>
+<br class="calibre3"/>
+</p>
+<p class="ziti3">上述网址打开后，可以找到如下4个代码文件，分别对应4个例子，具体介绍如下。</p>
+<p class="ziti4">·known_anomaly.py：单变量时间序列训练及模型评估，并带有按照标注值忽略的功能；</p>
+<p class="ziti4">·multivariate.py ：多变量时间序列训练及模型评估；</p>
+<p class="ziti4">·predict.py：对时间序列进行训练及预测的例子；</p>
+<p class="ziti4">·lstm.py ：自定义lstm模型例子。</p>
+<p class="ziti3">这4个例子中的知识点几乎介绍了TFTS的全部应用。但对模型的导出、载入并未有代码演示。TFTS模型部分使用了saved_model接口。读者可以在如下网站查看关于TFTS的导出、载入说明。</p>
+<p class="ziti3">https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/saved_model/README.md</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ TFTS的预测功能并不是一个独立的计算，它是依赖估算器的evaluate方法的返回值进行的。这就要求在使用predict之前必须进行一次evaluate的调用。但是在TFTS的代码中，对evaluate的封装是默认在开发环境下运行的，每次调用都会生成支持TensorBoard的Summary日志文件。在生产情况下，这个功能会消耗不必要的性能。可以通过注释掉源码库中的对应代码将其关闭。具体做法如下：</p>
+<p class="ziti4">（1）打开文件Anaconda3\lib\site-packages\tensorflow\python\estimator\estimator.py；</p>
+<p class="ziti4">（2）在_evaluate_model函数中，找到如下代码：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">_write_dict_to_summary( 
+    output_dir=eval_dir,
+    dictionary=eval_results,
+current_global_step=eval_results[ops.GraphKeys.GLOBAL_STEP])</pre>
+<hr class="calibre6"/>
+<p class="ziti4">（3）将其全部注释掉即可。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

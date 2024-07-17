@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>数据科学入门</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<p id="filepos457578" class="calibre_"><span class="calibre6"><span class="bold"> 15.1　模型 </span></span></p><p class="calibre_">回想一下，我们在第 14 章中所拟合的模型形式如下所示：</p><p class="calibre_12"><img src="images/00096.jpg" class="calibre_105"/>
+</p><p class="calibre_">现在，如果每个输入 <span class="italic">x<sub class="calibre17"><small class="calibre9"><span class="calibre18"><span class="italic">i</span></span></small></sub>
+</span> 不再是单个数字，而是一个由 <span class="italic">k</span> 个数字 <img src="images/00108.jpg" class="calibre_111"/> 组成的向量，那么我们的多重回归模型则应该为：</p><p class="calibre_12"><img src="images/00118.jpg" class="calibre_112"/>
+</p><p class="calibre_">对于多重回归分析来说，参数向量通常称为 <span class="italic">β</span> 。我们希望这个向量也包括一个常数项，为此，只要向我们的数据中添加一列即可：</p><blockquote class="calibre_14"><span class="calibre11"><tt class="calibre7"><br class="calibre12"/>beta = [alpha, beta_1, ..., beta_k]<br class="calibre12"/><br class="calibre12"/><br class="calibre12"/><br class="calibre12"/></tt></span></blockquote><p class="calibre_15">同时：</p><blockquote class="calibre_14"><span class="calibre11"><tt class="calibre7"><br class="calibre12"/>x_i = [1, x_i1, ..., x_ik]<br class="calibre12"/><br class="calibre12"/><br class="calibre12"/><br class="calibre12"/></tt></span></blockquote><p class="calibre_15">那么，我们的模型可以用下列函数实现：</p><blockquote class="calibre_14"><span class="calibre11"><tt class="calibre7"><br class="calibre12"/>def predict(x_i, beta):<br class="calibre12"/>    """assumes that the first element of each x_i is 1"""<br class="calibre12"/>    return dot(x_i, beta)<br class="calibre12"/><br class="calibre12"/><br class="calibre12"/><br class="calibre12"/></tt></span></blockquote><p class="calibre_15">就本例而言，自变量 <span class="italic">x</span> 是一个向量型列表，每个列表元素如下所示：</p><blockquote class="calibre_14"><span class="calibre11"><tt class="calibre7"><br class="calibre12"/>[1,    # 常数项<br class="calibre12"/> 49,   # 朋友数<br class="calibre12"/> 4,    # 每日工作时长<br class="calibre12"/> 0]    # 没有博士学位<br class="calibre12"/><br class="calibre12"/><br class="calibre12"/><br class="calibre12"/></tt></span></blockquote><div class="mbp_pagebreak" id="calibre_pb_102"></div>
+<div class="calibre5">本书由「<a href="https://epubw.com" class="calibre3">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="calibre3">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body></html>

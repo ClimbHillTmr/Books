@@ -1,0 +1,218 @@
+.calibre {
+    display: block;
+    font-size: 1.25rem;
+    line-height: 2;
+    margin: 0 5pt;
+    padding: 0
+    }
+.calibre1 {
+    display: block;
+    font-size: 1.3em;
+    font-weight: bold;
+    line-height: 2;
+    text-align: center
+    }
+.calibre2 {
+    color: #0468bb;
+    line-height: 2;
+    text-decoration: none
+    }
+.calibre3 {
+    display: block;
+    line-height: 2
+    }
+.calibre4 {
+    height: auto;
+    line-height: 2;
+    width: auto;
+    border: currentColor none 0
+    }
+.calibre5 {
+    line-height: 2
+    }
+.calibre6 {
+    color: gray;
+    display: block;
+    height: 2px;
+    line-height: 2;
+    border: currentColor inset 1px;
+    margin: 0.5em auto
+    }
+.calibre7 {
+    font-size: smaller;
+    line-height: 2;
+    vertical-align: sub
+    }
+.calibre8 {
+    font-size: smaller;
+    line-height: 2;
+    vertical-align: super
+    }
+.contents {
+    display: block;
+    font-family: MicrosoftYaHei;
+    font-size: 1em;
+    line-height: 2;
+    margin-left: 0;
+    text-align: justify
+    }
+.contents-title {
+    display: block;
+    font-family: MicrosoftYaHei;
+    font-size: 2em;
+    font-weight: normal;
+    line-height: 2;
+    text-align: center
+    }
+.contents1 {
+    display: block;
+    font-family: MicrosoftYaHei;
+    font-size: 1em;
+    line-height: 2;
+    margin-left: 1em;
+    text-align: justify
+    }
+.contents2 {
+    display: block;
+    font-family: MicrosoftYaHei;
+    font-size: 1em;
+    line-height: 2;
+    margin-left: 2em;
+    text-align: justify
+    }
+.formula-2em {
+    height: 2em;
+    line-height: 2;
+    width: auto;
+    border: currentColor none 0
+    }
+.middle-img {
+    display: block;
+    font-family: STKaiti;
+    font-size: 1em;
+    line-height: 2;
+    text-align: center;
+    margin: 0
+    }
+.p {
+    color: #0468bb;
+    display: block;
+    font-family: MicrosoftYaHei;
+    font-size: 1.3em;
+    font-weight: normal;
+    line-height: 2;
+    text-align: left;
+    text-indent: 0;
+    margin: 1em 0
+    }
+.p1 {
+    color: #0468bb;
+    display: block;
+    font-family: MicrosoftYaHei;
+    font-size: 1.2em;
+    font-weight: normal;
+    line-height: 2;
+    text-align: left;
+    text-indent: 0;
+    margin: 1em 0
+    }
+.p2 {
+    color: #0468bb;
+    display: block;
+    font-family: MicrosoftYaHei;
+    font-size: 1.5em;
+    font-weight: normal;
+    line-height: 2;
+    text-align: center;
+    margin: 0.67em 0
+    }
+.p3 {
+    color: #0468bb;
+    display: block;
+    font-family: MicrosoftYaHei;
+    font-size: 1.2em;
+    font-weight: normal;
+    line-height: 2;
+    text-align: left;
+    text-indent: 0;
+    margin: 1.33em 0
+    }
+.p4 {
+    color: #0468bb;
+    display: block;
+    font-family: MicrosoftYaHei;
+    font-size: 1.4em;
+    font-weight: normal;
+    line-height: 2;
+    text-align: left;
+    text-indent: 0;
+    margin: 0.83em 0
+    }
+.pic {
+    display: block;
+    line-height: 2;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    text-align: center
+    }
+.yanse {
+    color: #0468bb;
+    font-family: MicrosoftYaHei;
+    font-size: 1em;
+    line-height: 2;
+    text-indent: 2em
+    }
+.ziti {
+    color: #0468bb;
+    display: block;
+    font-family: MicrosoftYaHei;
+    font-size: 1em;
+    line-height: 2;
+    text-align: left;
+    margin: 1em 0
+    }
+.ziti1 {
+    display: block;
+    font-family: MicrosoftYaHei;
+    font-size: 1em;
+    line-height: 2;
+    text-align: left;
+    margin: 1em 0
+    }
+.ziti2 {
+    display: block;
+    font-family: STKaiti;
+    font-size: 1em;
+    line-height: 2;
+    text-align: left;
+    margin: 1em 0
+    }
+.ziti3 {
+    display: block;
+    font-family: MicrosoftYaHei;
+    font-size: 1em;
+    line-height: 2;
+    text-indent: 2em;
+    margin: 1em 0
+    }
+.ziti4 {
+    display: block;
+    font-family: STKaiti;
+    font-size: 1em;
+    line-height: 2;
+    text-indent: 2em;
+    margin: 1em 0
+    }
+.ziti5 {
+    display: block;
+    font-family: monospace;
+    font-size: 0.8em;
+    line-height: 2;
+    white-space: pre-wrap;
+    margin: 1em 0 1em 2em;
+    padding: 0
+    }
+.pcalibre:hover {
+    color: #F60;
+    text-decoration: underline
+    }

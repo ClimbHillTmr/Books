@@ -1,0 +1,102 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_108" class="calibre8">4.5　学习算法的实现</h2>
+<p class="calibre1">关于神经网络学习的基础知识，到这里就全部介绍完了。“损失函数”“mini-batch”“梯度”“梯度下降法”等关键词已经陆续登场，这里我们来确认一下神经网络的学习步骤，顺便复习一下这些内容。神经网络的学习步骤如下所示。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><strong class="calibre2">前提</strong></p>
+<p class="calibre1">神经网络存在合适的权重和偏置，调整权重和偏置以便拟合训练数据的过程称为“学习”。神经网络的学习分成下面 4 个步骤。</p>
+<p class="calibre1"><strong class="calibre2">步骤 1（mini-batch）</strong></p>
+<p class="calibre1">从训练数据中随机选出一部分数据，这部分数据称为 mini-batch。我们的目标是减小 mini-batch 的损失函数的值。</p>
+<p class="calibre1"><strong class="calibre2">步骤 2（计算梯度）</strong></p>
+<p class="calibre1">为了减小 mini-batch 的损失函数的值，需要求出各个权重参数的梯度。梯度表示损失函数的值减小最多的方向。</p>
+<p class="calibre1"><strong class="calibre2">步骤 3（更新参数）</strong></p>
+<p class="calibre1">将权重参数沿梯度方向进行微小更新。</p>
+<p class="calibre1"><strong class="calibre2">步骤 4（重复）</strong></p>
+<p class="calibre1">重复步骤 1、步骤 2、步骤 3。</p>
+</blockquote>
+<p class="calibre1">神经网络的学习按照上面 4 个步骤进行。这个方法通过梯度下降法更新参数，不过因为这里使用的数据是随机选择的mini batch 数据，所以又称为<strong class="calibre2">随机梯度下降法</strong>（stochastic gradient descent）。“随机”指的是“随机选择的”的意思，因此，随机梯度下降法是“对随机选择的数据进行的梯度下降法”。深度学习的很多框架中，随机梯度下降法一般由一个名为 <strong class="calibre2">SGD</strong> 的函数来实现。SGD 来源于随机梯度下降法的英文名称的首字母。</p>
+<p class="calibre1">下面，我们来实现手写数字识别的神经网络。这里以 2 层神经网络（隐藏层为 1 层的网络）为对象，使用 MNIST 数据集进行学习。</p>
+<h3 id="nav_point_109" class="calibre17">4.5.1　2 层神经网络的类</h3>
+<p class="calibre1">首先，我们将这个 2 层神经网络实现为一个名为 <code class="calibre15">TwoLayerNet</code> 的类，实现过程如下所示 <span class="zhu_shi_bian_hao">5</span>。源代码在 <code class="calibre15">ch04/two_layer_net.py</code> 中。</p>
+<p class="zhu_shi_nei_rong"><span class="zhu_shi_bian_hao_xia">5</span><code class="calibre20">TwoLayerNet</code> 的实现参考了斯坦福大学 CS231n 课程提供的 Python 源代码。</p>
+<pre class="calibre18"><code class="calibre20">import sys, os
+sys.path.append(os.pardir)
+from common.functions import *
+from common.gradient import numerical_gradient
+
+class TwoLayerNet:
+
+    def __init__(self, input_size, hidden_size, output_size,
+                 weight_init_std=0.01):
+        # 初始化权重
+        self.params = {}
+        self.params['W1'] = weight_init_std * \
+                            np.random.randn(input_size, hidden_size)
+        self.params['b1'] = np.zeros(hidden_size)
+        self.params['W2'] = weight_init_std * \
+                            np.random.randn(hidden_size, output_size)
+        self.params['b2'] = np.zeros(output_size)
+
+    def predict(self, x):
+        W1, W2 = self.params['W1'], self.params['W2']
+        b1, b2 = self.params['b1'], self.params['b2']
+
+        a1 = np.dot(x, W1) + b1
+        z1 = sigmoid(a1)
+        a2 = np.dot(z1, W2) + b2
+        y = softmax(a2)
+
+        return y
+
+    # x:输入数据, t:监督数据
+    def loss(self, x, t):
+        y = self.predict(x)
+
+        return cross_entropy_error(y, t)
+
+    def accuracy(self, x, t):
+        y = self.predict(x)
+        y = np.argmax(y, axis=1)
+        t = np.argmax(t, axis=1)
+
+        accuracy = np.sum(y == t) / float(x.shape[0])
+        return accuracy
+
+    # x:输入数据, t:监督数据
+    def numerical_gradient(self, x, t):
+        loss_W = lambda W: self.loss(x, t)
+
+        grads = {}
+        grads['W1'] = numerical_gradient(loss_W, self.params['W1'])
+        grads['b1'] = numerical_gradient(loss_W, self.params['b1'])
+        grads['W2'] = numerical_gradient(loss_W, self.params['W2'])
+        grads['b2'] = numerical_gradient(loss_W, self.params['b2'])
+
+        return grads
+
+</code></pre>
+<p class="calibre1">虽然这个类的实现稍微有点长，但是因为和上一章的神经网络的前向处理的实现有许多共通之处，所以并没有太多新东西。我们先把这个类中用到的变量和方法整理一下。表 4-1 中只罗列了重要的变量，表 4-2 中则罗列了所有的方法。</p>
+<p class="calibre1"><strong class="calibre2">表 4-1 TwolayerNet类中使用的变量</strong></p>
+<table width="90%" border="1" class="calibre36">
+<thead class="calibre37">
+<tr class="calibre38">
+<th class="calibre39"><p class="calibre40">变量</p></th>
+<th class="calibre39"><p class="calibre40">说明</p></th>
+</tr>
+</thead>
+<tbody class="calibre41">
+<tr class="calibre38">
+<td class="calibre42"><p class="calibre40"><code class="calibre43">params</code></p></td>
+<td class="calibre42"><p class="calibre40">保存神经网络的参数的字典型变量（实例变量）。<br class="calibre44" id="calibre_pb_47"/>
+</p></td>
+</tr>
+</tbody>
+</table>
+</body></html>

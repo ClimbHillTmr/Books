@@ -1,0 +1,75 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">6.8　单个神经元的扩展——Maxout网络</h3>
+<p class="ziti3">在早期，单个神经元出现之后，为了得到更好的拟合效果，又出现了一种Maxout网络，下面具体介绍。</p>
+<h4 class="p3">6.8.1　Maxout介绍</h4>
+<p class="ziti3">Maxout网络可以理解为单个神经元的扩展，主要是扩展单个神经元里面的激活函数，正常的单个神经元如图6-7所示。</p>
+<p class="ziti3">Maxout是将激活函数变成一个网络选择器，原理就是将多个神经元并列地放在一起，从它们的输出结果中找到最大的那个，代表对特征响应最敏感，然后取这个神经元的结果参与后面的运算，如图6-8所示。</p>
+<div class="pic"><img alt="" src="Image00100.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图6-7　单个神经元</p>
+<div class="pic"><img alt="" src="Image00101.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图6-8　Maxout网络</p>
+<p class="ziti3">它的公式可以理解成：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">z1=w1*x+b1
+z2=w2*x+b2
+z3=w3*x+b3
+z4=w4*x+b4
+z5=w5*x+b5
+……
+out=max(z1,z2,z3,z4,z5……)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">为什么要这样做呢？在前面我们学习了一个神经元的作用，类似人类的神经细胞，不同的神经元会因为输入的不同而产生不同的输出，即不同的细胞关心的信号不同。依赖于这个原理，现在的做法就是相当于同时使用多个神经元放在一起，哪个有效果就用哪个。所以这样的网络会有更好的拟合效果。</p>
+<h4 class="p3">6.8.2　实例27：用Maxout网络实现MNIST分类</h4>
+<p class="ziti3">本例主要是演示Maxout网络的构建方法。</p>
+<p class="ziti3">本例中以6.5节的练习题答案来修改代码，在本书源代码中的代码“6-2 sparesoftmaxwithminist.py”文件里做如下改动。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">Maxout网络的构建方法：通过reduce_max函数对多个神经元的输出来计算Max值，将Max值当作输入按照神经元正反传播方向进行计算。</p>
+<p class="ziti3">通过上述方法构建Maxout网络，实现MNIST分类。</p>
+<p class="ziti3">代码6-4　Maxout网络实现MNIST分类</p>
+<hr class="calibre6"/>
+<pre class="ziti5">……
+z= tf.matmul(x, W) + b
+ 
+maxout = tf.reduce_max(z,axis= 1,keep_dims=True)
+# 设置学习参数
+W2 = tf.Variable(tf.truncated_normal([1, 10], stddev=0.1))
+b2 = tf.Variable(tf.zeros([1]))
+# 构建模型
+pred = tf.nn.softmax(tf.matmul(maxout, W2) + b2)
+……
+learning_rate = 0.04
+#使用一般梯度下降方法的优化器
+optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize 
+(cost)
+ 
+training_epochs = 200
+batch_size = 100
+display_step = 1
+……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在网络模型部分，添加一层Maxout，然后将Maxout作为maxsoft的交叉熵输入。学习率设为0.04，迭代次数设为200。运行代码，得到如下结果：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Epoch: 0001 cost= 5.160553925
+Epoch: 0002 cost= 1.797463597
+……
+Epoch: 0198 cost= 0.290569865
+Epoch: 0199 cost= 0.290143878
+Epoch: 0200 cost= 0.289847674
+ Finished!</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到损失值下降到0.28，随着迭代次数的增加还会继续下降。有兴趣的读者可以自己接着优化。</p>
+<p class="ziti3">Maxout的拟合功能很强大，但是也会有节点过多、参数过多、训练过慢的缺点。在第7章中还会学习一种类似于Maxout的全连接网络，会更深刻地讨论拟合的方法及意义。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

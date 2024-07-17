@@ -1,0 +1,130 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_77" class="calibre8">3.4　3 层神经网络的实现</h2>
+<p class="calibre1">现在我们来进行神经网络的实现。这里我们以图 3-15 的 3 层神经网络为对象，实现从输入到输出的（前向）处理。在代码实现方面，使用上一节介绍的 NumPy 多维数组。巧妙地使用 NumPy 数组，可以用很少的代码完成神经网络的前向处理。</p>
+<p class="tu"><img src="../images/00069.jpeg" alt="" width="90%" class="calibre33"/></p>
+<p class="calibre1"><strong class="calibre2">图 3-15　3 层神经网络：输入层（第 0 层）有 2 个神经元，第 1 个隐藏层（第 1 层）有 3 个神经元，第 2 个隐藏层（第 2 层）有 2 个神经元，输出层（第 3 层）有 2 个神经元</strong></p>
+<h3 id="nav_point_78" class="calibre17">3.4.1　符号确认</h3>
+<p class="calibre1">在介绍神经网络中的处理之前，我们先导入 <img src="../images/00070.gif" alt="w^{(1)}_{12} " class="calibre24"/>、<img src="../images/00071.gif" alt="a^{(1)}_{1} " class="calibre24"/> 等符号。这些符号可能看上去有些复杂，不过因为只在本节使用，稍微读一下就跳过去也问题不大。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00002.jpeg" alt="" width="7%" class="calibre13"/>　本节的重点是神经网络的运算可以作为矩阵运算打包进行。因为神经网络各层的运算是通过矩阵的乘法运算打包进行的（从宏观视角来考虑），所以即便忘了（未记忆）具体的符号规则，也不影响理解后面的内容。</p>
+</blockquote>
+<p class="calibre1">我们先从定义符号开始。请看图 3-16。图 3-16 中只突出显示了从输入层神经元 <img src="../images/00009.gif" alt="x_2" class="calibre24"/> 到后一层的神经元 <img src="../images/00071.gif" alt="a^{(1)}_{1} " class="calibre24"/> 的权重。</p>
+<p class="calibre1">如图 3-16 所示，权重和隐藏层的神经元的右上角有一个“(1)”，它表示权重和神经元的层号（即第 1 层的权重、第 1 层的神经元）。此外，权重的右下角有两个数字，它们是后一层的神经元和前一层的神经元的索引号。比如，<img src="../images/00070.gif" alt="w^{(1)}_{12} " class="calibre24"/> 表示前一层的第 2 个神经元 <img src="../images/00009.gif" alt="x_2" class="calibre24"/> 到后一层的第 1 个神经元 <img src="../images/00071.gif" alt="a^{(1)}_{1} " class="calibre24"/> 的权重。权重右下角按照“后一层的索引号、前一层的索引号”的顺序排列。</p>
+<p class="tu"><img src="../images/00072.jpeg" alt="" width="90%" class="calibre33"/></p>
+<p class="calibre1"><strong class="calibre2">图 3-16　权重的符号</strong></p>
+<h3 id="nav_point_79" class="calibre17">3.4.2　各层间信号传递的实现</h3>
+<p class="calibre1">现在看一下从输入层到第 1 层的第 1 个神经元的信号传递过程，如图 3-17 所示。</p>
+<p class="tu"><img src="../images/00073.jpeg" alt="" width="90%" class="calibre33"/></p>
+<p class="calibre1"><strong class="calibre2">图 3-17　从输入层到第 1 层的信号传递</strong></p>
+<p class="calibre1">图 3-17 中增加了表示偏置的神经元“1”。请注意，偏置的右下角的索引号只有一个。这是因为前一层的偏置神经元（神经元“1”）只有一个 <span class="zhu_shi_bian_hao">4</span>。</p>
+<p class="zhu_shi_nei_rong"><span class="zhu_shi_bian_hao_xia">4</span>任何前一层的偏置神经元“1”都只有一个。偏置权重的数量取决于后一层的神经元的数量（不包括后一层的偏置神经元“1”）。——译者注</p>
+<p class="calibre1">为了确认前面的内容，现在用数学式表示 <img src="../images/00071.gif" alt="a^{(1)}_{1} " class="calibre24"/>。<img src="../images/00071.gif" alt="a^{(1)}_{1} " class="calibre24"/> 通过加权信号和偏置的和按如下方式进行计算。</p>
+<p class="tu"><img src="../images/00074.gif" alt="a^{(1)}_{1}=w^{(1)}_{11}x_1+w^{(1)}_{12}x_2+b^{(1)}_{1}\quad\quad\quad\quad\quad(3.8)" class="calibre24"/></p>
+<p class="calibre1">此外，如果使用矩阵的乘法运算，则可以将第 1 层的加权和表示成下面的式（3.9）。</p>
+<p class="tu"><img src="../images/00075.gif" alt="\boldsymbol{A}^{(1)}=\boldsymbol{XW}^{(1)}+\boldsymbol{B}^{(1)}\quad\quad\quad\quad\quad(3.9)" class="calibre24"/></p>
+<p class="calibre1">其中，<img src="../images/00076.gif" alt="\boldsymbol{A}^{(1)}" class="calibre24"/>、<img src="../images/00066.gif" alt="\boldsymbol{X}" class="calibre24"/>、<img src="../images/00077.gif" alt="\boldsymbol{B}^{(1)}" class="calibre24"/>、<img src="../images/00078.gif" alt="\boldsymbol{W}^{(1)}" class="calibre24"/> 如下所示。</p>
+<p class="tu"><img src="../images/00079.gif" alt="\begin{aligned}&amp;\boldsymbol{A}^{(1)}=\Bigl(a_1^{(1)}~~~a_2^{(1)}~~~a_3^{(1)}\Bigr),~\boldsymbol{X}=\Bigl(x_1~~~x_2\Bigr),~\boldsymbol{B}^{(1)}=\Bigl(b_1^{(1)}~~~b_2^{(1)}~~~b_3^{(1)}\Bigr)\\&amp;\boldsymbol{W}^{(1)}=\begin{pmatrix}w^{(1)}_{11}&amp;w^{(1)}_{21}&amp;w^{(1)}_{31}\\w^{(1)}_{12}&amp;w^{(1)}_{22}&amp;w^{(1)}_{32}\end{pmatrix}\end{aligned}" class="calibre24"/></p>
+<p class="calibre1">下面我们用 NumPy 多维数组来实现式（3.9），这里将输入信号、权重、偏置设置成任意值。</p>
+<pre class="calibre18">
+X = np.array([1.0, 0.5])
+W1 = np.array([[0.1, 0.3, 0.5], [0.2, 0.4, 0.6]])
+B1 = np.array([0.1, 0.2, 0.3])
+
+print(W1.shape) # (2, 3)
+print(X.shape) # (2,)
+print(B1.shape) # (3,)
+
+<b class="calibre19">A1 = np.dot(X, W1) + B1</b>
+</pre>
+
+<p class="calibre1">这个运算和上一节进行的运算是一样的。<code class="calibre15">W1</code> 是 2 × 3 的数组，<code class="calibre15">X</code> 是元素个数为 2 的一维数组。这里，<code class="calibre15">W1</code> 和 <code class="calibre15">X</code> 的对应维度的元素个数也保持了一致。</p>
+<p class="calibre1">接下来，我们观察第 1 层中激活函数的计算过程。如果把这个计算过程用图来表示的话，则如图 3-18 所示。</p>
+<p class="tu"><img src="../images/00080.jpeg" alt="" width="90%" class="calibre33"/></p>
+<p class="calibre1"><strong class="calibre2">图 3-18　从输入层到第 1 层的信号传递</strong></p>
+<p class="calibre1">如图 3-18 所示，隐藏层的加权和（加权信号和偏置的总和）用 <em class="calibre7">a</em> 表示，被激活函数转换后的信号用 <em class="calibre7">z</em> 表示。此外，图中 <em class="calibre7">h</em>() 表示激活函数，这里我们使用的是 sigmoid 函数。用 Python 来实现，代码如下所示。</p>
+<pre class="calibre18">
+<b class="calibre19">Z1 = sigmoid(A1)</b>
+
+print(A1) # [0.3, 0.7, 1.1]
+print(Z1) # [0.57444252, 0.66818777, 0.75026011]
+</pre>
+
+<p class="calibre1">这个 <code class="calibre15">sigmoid()</code> 函数就是之前定义的那个函数。它会接收 NumPy 数组，并返回元素个数相同的 NumPy 数组。</p>
+<p class="calibre1">下面，我们来实现第 1 层到第 2 层的信号传递（图 3-19）。</p>
+<pre class="calibre18">
+W2 = np.array([[0.1, 0.4], [0.2, 0.5], [0.3, 0.6]])
+B2 = np.array([0.1, 0.2])
+
+print(Z1.shape) # (3,)
+print(W2.shape) # (3, 2)
+print(B2.shape) # (2,)
+
+<b class="calibre19">A2 = np.dot(Z1, W2) + B2</b>
+<b class="calibre19">Z2 = sigmoid(A2)</b>
+</pre>
+
+<p class="calibre1">除了第 1 层的输出（<code class="calibre15">Z1</code>）变成了第 2 层的输入这一点以外，这个实现和刚才的代码完全相同。由此可知，通过使用 NumPy 数组，可以将层到层的信号传递过程简单地写出来。</p>
+<p class="tu"><img src="../images/00081.jpeg" alt="" width="90%" class="calibre33"/></p>
+<p class="calibre1"><strong class="calibre2">图 3-19　第 1 层到第 2 层的信号传递</strong></p>
+<p class="calibre1">最后是第 2 层到输出层的信号传递（图 3-20）。输出层的实现也和之前的实现基本相同。不过，最后的激活函数和之前的隐藏层有所不同。</p>
+<pre class="calibre18">
+def identity_function(x):
+    return x
+
+W3 = np.array([[0.1, 0.3], [0.2, 0.4]])
+B3 = np.array([0.1, 0.2])
+
+<b class="calibre19">A3 = np.dot(Z2, W3) + B3</b>
+<b class="calibre19">Y = identity_function(A3)</b> # 或者Y = A3
+</pre>
+
+<p class="calibre1">这里我们定义了 <code class="calibre15">identity_function()</code> 函数（也称为“恒等函数”），并将其作为输出层的激活函数。恒等函数会将输入按原样输出，因此，这个例子中没有必要特意定义 <code class="calibre15">identity_function()</code>。这里这样实现只是为了和之前的流程保持统一。另外，图 3-20 中，输出层的激活函数用 <em class="calibre7">σ</em>() 表示，不同于隐藏层的激活函数 <em class="calibre7">h</em>()（<em class="calibre7">σ</em> 读作 sigma）。</p>
+<p class="tu"><img src="../images/00082.jpeg" alt="" width="90%" class="calibre33"/></p>
+<p class="calibre1"><strong class="calibre2">图 3-20　从第 2 层到输出层的信号传递</strong></p>
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00001.jpeg" alt="" width="5%" class="calibre11"/>　输出层所用的激活函数，要根据求解问题的性质决定。一般地，回归问题可以使用恒等函数，二元分类问题可以使用 sigmoid 函数，多元分类问题可以使用 softmax 函数。关于输出层的激活函数，我们将在下一节详细介绍。</p>
+</blockquote>
+<h3 id="nav_point_80" class="calibre17">3.4.3　代码实现小结</h3>
+<p class="calibre1">至此，我们已经介绍完了 3 层神经网络的实现。现在我们把之前的代码实现全部整理一下。这里，我们按照神经网络的实现惯例，只把权重记为大写字母 <code class="calibre15">W1</code>，其他的（偏置或中间结果等）都用小写字母表示。</p>
+<pre class="calibre18"><code class="calibre20">def init_network():
+    network = {}
+    network['W1'] = np.array([[0.1, 0.3, 0.5], [0.2, 0.4, 0.6]])
+    network['b1'] = np.array([0.1, 0.2, 0.3])
+    network['W2'] = np.array([[0.1, 0.4], [0.2, 0.5], [0.3, 0.6]])
+    network['b2'] = np.array([0.1, 0.2])
+    network['W3'] = np.array([[0.1, 0.3], [0.2, 0.4]])
+    network['b3'] = np.array([0.1, 0.2])
+
+    return network
+
+def forward(network, x):
+    W1, W2, W3 = network['W1'], network['W2'], network['W3']
+    b1, b2, b3 = network['b1'], network['b2'], network['b3']
+
+    a1 = np.dot(x, W1) + b1
+    z1 = sigmoid(a1)
+    a2 = np.dot(z1, W2) + b2
+    z2 = sigmoid(a2)
+    a3 = np.dot(z2, W3) + b3
+    y = identity_function(a3)
+
+    return y
+
+network = init_network()
+x = np.array([1.0, 0.5])
+y = forward(network, x)
+print(y) # [ 0.31682708 0.69627909]
+
+</code></pre>
+<p class="calibre1">这里定义了 <code class="calibre15">init_network()</code> 和 <code class="calibre15">forward()</code> 函数。<code class="calibre15">init_network()</code> 函数会进行权重和偏置的初始化，并将它们保存在字典变量 <code class="calibre15">network</code> 中。这个字典变量 <code class="calibre15">network</code> 中保存了每一层所需的参数（权重和偏置）。<code class="calibre15">forward()</code> 函数中则封装了将输入信号转换为输出信号的处理过程。</p>
+<p class="calibre1">另外，这里出现了 forward（前向）一词，它表示的是从输入到输出方向的传递处理。后面在进行神经网络的训练时，我们将介绍后向（backward，从输出到输入方向）的处理。</p>
+<p class="calibre1">至此，神经网络的前向处理的实现就完成了。通过巧妙地使用 NumPy 多维数组，我们高效地实现了神经网络。</p>
+</body></html>

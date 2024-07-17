@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_219" class="calibre8">A.1　正向传播</h2>
+<p class="calibre1">图 A-1 的计算图中省略了 Softmax 层和 Cross Entropy Error 层的内容。这里，我们来画出这两个层的内容。</p>
+<p class="calibre1">首先是 Softmax 层。softmax 函数可由下式表示。</p>
+<p class="tu"><img src="../images/00345.gif" alt="y_k=\frac{\exp(a_k)}{\sum^n_{i=1}\exp(a_i)}\quad\quad\quad\quad\quad({\rm A}.1)" class="calibre24"/></p>
+<p class="calibre1">因此，用计算图表示 Softmax 层的话，则如图 A-2 所示。</p>
+<p class="tu"><img src="../images/00346.jpeg" alt="" width="93%" class="calibre47"/></p>
+<p class="calibre1"><strong class="calibre2">图 A-2　Softmax 层的计算图（仅正向传播）</strong></p>
+<p class="calibre1">图 A-2 的计算图中，指数的和（相当于式 (A.1) 的分母）简写为 <em class="calibre7">S</em>，最终的输出记为 <img src="../images/00222.gif" alt="(y_1,y_2,y_3)" class="calibre24"/>。</p>
+<p class="calibre1">接下来是 Cross Entropy Error 层。交叉熵误差可由下式表示。</p>
+<p class="tu"><img src="../images/00347.gif" alt="L=-\sum_k t_k\log y_k\quad\quad\quad\quad\quad({\rm A}.2)" class="calibre24"/></p>
+<p class="calibre1">根据式 (A.2)，Cross Entropy Error 层的计算图可以画成图 A-3 那样。</p>
+<p class="calibre1">图 A-3 的计算图很直观地表示出了式 (A.2)，所以应该没有特别难的地方。</p>
+<p class="tu"><img src="../images/00348.jpeg" alt="" width="95%" class="calibre21"/></p>
+<p class="calibre1"><strong class="calibre2">图 A-3　Cross Entropy Error 层的计算图（仅正向传播）</strong></p>
+<p class="calibre1">下一节，我们将看一下反向传播。</p>
+</body></html>

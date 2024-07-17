@@ -1,0 +1,75 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">2.2　在Windows平台下载及安装TensorFlow</h3>
+<p class="ziti3">首先来到<a href="https://github.com/tensorflow/tensorflow" class="pcalibre calibre2">https://github.com/tensorflow/tensorflow</a>
+ ，在该页面中有安装文件的下载地址，如图2-7所示。</p>
+<div class="pic"><img alt="" src="Image00013.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图2-7　TensorFlow安装文件</p>
+<p class="ziti4">
+<span class="yanse">1．在线安装nightly包</span>
+</p>
+<p class="ziti3">nightly安装包是TensorFlow团队2017年下半年推出的安装模式。适用于在一个全新的环境下进行TensorFlow的安装。在安装TensorFlow的同时，默认会把需要依赖的库也一起装上，是非常方便、快捷的安装方式。</p>
+<p class="ziti3">按照图2-7中的方法直接使用命令：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">pip install tf-nightly</pre>
+<hr class="calibre6"/>
+<p class="ziti3">即可下载并安装TensorFlow的最新CPU版本。若要安装最新的GPU版本可以使用如下命令：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">pip install tf-nightly-gpu</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．安装纯净的TensorFlow</span>
+</p>
+<p class="ziti3">如果想安装纯净的TensorFlow版本，直接输入下面命令即可。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">pip install tensorflow</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面是CPU版本，GPU版本的安装命令如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">pip install tensorflow-gpu</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 在网速不稳定的情况下，在线安装有时会因为无法成功下载到完整的安装包而导致安装失败。可以通过重复执行安装命令或采用离线安装的方式来解决。</p>
+<p class="ziti4">
+<span class="yanse">3．更新安装TensorFlow</span>
+</p>
+<p class="ziti3">如果本地已经装有TensorFlow，需要升级为新版本的TensorFlow，只需要将原有版本卸载，再次安装即可。卸载命令如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">pip uninstall &lt;安装时的TensorFlow 名称&gt;</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">4．离线安装</span>
+</p>
+<p class="ziti3">有时由于网络环境的因素，无法实现在线安装，需要在网络环境好的地方提前将安装包下载下来进行离线安装。</p>
+<p class="ziti3">（1）下载安装包。</p>
+<p class="ziti3">可以访问以下网站来查找TensorFlow的发布版本：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">h ttps://storage.googleapis.com/tensorflow/</pre>
+<hr class="calibre6"/>
+<p class="ziti3">该网站内容是以XML方式提供的，查找起来不是很方便。可以通过地址加上指定的文件名方式进行下载。例如，一个TensorFlow 1.4.0的CPU版本安装包下载路径为：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">https://storage.googleapis.com/tensorflow/windows/cpu/tensorflow-1.4.0-cp35-cp35m-win_amd64.whl</pre>
+<hr class="calibre6"/>
+<p class="ziti3">TensorFlow1.4.0的GPU版本安装包下载路径为：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">https://storage.googleapis.com/tensorflow/windows/gpu/tensorflow_gpu-1.4.0-cp35-cp35m-win_amd64.whl</pre>
+<hr class="calibre6"/>
+<p class="ziti3">如果要下载1.3.0的版本，直接将上面链接中的1.4.0改成1.3.0即可。</p>
+<p class="ziti3">（2）安装安装包。</p>
+<p class="ziti3">下载完TensorFlow二进制文件后，假设使用CPU版本并且安装在D：\tensorflow下。选择“开始”|“运行”命令，在弹出的窗口中输入cmd，打开命令行窗口，然后输入如下命令来安装TensorFlow二进制文件。</p>
+<p class="ziti3">C：\Users\Administrator&gt;D：</p>
+<p class="ziti3">D：\&gt;cd tensorflow</p>
+<p class="ziti3">D：\tensorflow&gt;</p>
+<p class="ziti3">D：\tensorflow&gt;pip install tensorflow-1.1.0-cp35-cp35m-win_amd64.whl</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

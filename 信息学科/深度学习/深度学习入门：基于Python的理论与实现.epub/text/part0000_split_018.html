@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_28" class="calibre8">1.4　Python脚本文件</h2>
+<p class="calibre1">到目前为止，我们看到的都是基于 Python 解释器的例子。Python 解释器能够以对话模式执行程序，非常便于进行简单的实验。但是，想进行一连串的处理时，因为每次都需要输入程序，所以不太方便。这时，可以将 Python 程序保存为文件，然后（集中地）运行这个文件。下面，我们来看一个 Python 脚本文件的例子。</p>
+<h3 id="nav_point_29" class="calibre17">1.4.1　保存为文件</h3>
+<p class="calibre1">打开文本编辑器，新建一个 <code class="calibre15">hungry.py</code> 的文件。<code class="calibre15">hungry.py</code> 只包含下面一行语句。</p>
+<pre class="calibre18"><code class="calibre20">print("I'm hungry!")
+
+</code></pre>
+<p class="calibre1">接着，打开终端（Windows 中的命令行窗口），移至 <code class="calibre15">hungry.py</code> 所在的位置。然后，将 <code class="calibre15">hungry.py</code> 文件名作为参数，运行 <code class="calibre15">python</code> 命令。这里假设 <code class="calibre15">hungry.py</code> 在<code class="calibre15">~/deep-learning-from-scratch/ch01</code> 目录下（在本书提供的源代码中，<code class="calibre15">hungry.py</code> 文件位于 <code class="calibre15">ch01</code> 目录下）。</p>
+<pre class="calibre18">
+$ <b class="calibre19">cd ~/deep-learning-from-scratch/ch01</b> # 移动目录
+$ <b class="calibre19">python hungry.py</b>
+I'm hungry!
+</pre>
+
+<p class="calibre1">这样，使用 <code class="calibre15">python hungry.py</code> 命令就可以执行这个 Python 程序了。</p>
+<h3 id="nav_point_30" class="calibre17">1.4.2　类</h3>
+<p class="calibre1">前面我们了解了 <code class="calibre15">int</code> 和 <code class="calibre15">str</code> 等数据类型（通过 <code class="calibre15">type()</code> 函数可以查看对象的类型）。这些数据类型是“内置”的数据类型，是 Python 中一开始就有的数据类型。现在，我们来定义新的类。如果用户自己定义类的话，就可以自己创建数据类型。此外，也可以定义原创的方法（类的函数）和属性。</p>
+<p class="calibre1">Python 中使用 <code class="calibre15">class</code> 关键字来定义类，类要遵循下述格式（模板）。</p>
+<pre class="calibre18"><code class="calibre20">class 类名：
+    def __init__(self, 参数, …): # 构造函数
+       ...
+    def 方法名1(self, 参数, …):  # 方法1
+       ...
+    def 方法名2(self, 参数, …):  # 方法2
+       ...
+
+</code></pre>
+<p class="calibre1">这里有一个特殊的 <code class="calibre15">init</code> 方法，这是进行初始化的方法，也称为<strong class="calibre2">构造函数</strong>（constructor）,只在生成类的实例时被调用一次。此外，在方法的第一个参数中明确地写入表示自身（自身的实例）的 <code class="calibre15">self</code> 是 Python 的一个特点（学过其他编程语言的人可能会觉得这种写 <code class="calibre15">self</code> 的方式有一点奇怪）。</p>
+<p class="calibre1">下面我们通过一个简单的例子来创建一个类。这里将下面的程序保存为 <code class="calibre15">man.py</code>。</p>
+<pre class="calibre18"><code class="calibre20">class Man:
+    def __init__(self, name):
+        self.name = name
+        print("Initialized!")
+
+    def hello(self):
+        print("Hello " + self.name + "!")
+
+    def goodbye(self):
+        print("Good-bye " + self.name + "!")
+
+    m = Man("David")
+    m.hello()
+    m.goodbye()
+
+</code></pre>
+<p class="calibre1">从终端运行 <code class="calibre15">man.py</code>。</p>
+<pre class="calibre18">
+$ <b class="calibre19">python man.py</b>
+Initialized!
+Hello David!
+Good-bye David!
+</pre>
+
+<p class="calibre1">这里我们定义了一个新类 <code class="calibre15">Man</code>。上面的例子中，类 <code class="calibre15">Man</code> 生成了实例（对象）<code class="calibre15">m</code>。</p>
+<p class="calibre1">类 <code class="calibre15">Man</code> 的构造函数（初始化方法）会接收参数 <code class="calibre15">name</code>，然后用这个参数初始化实例变量 <code class="calibre15">self.name</code>。<strong class="calibre2">实例变量</strong>是存储在各个实例中的变量。Python 中可以像 <code class="calibre15">self.name</code> 这样，通过在 <code class="calibre15">self</code> 后面添加属性名来生成或访问实例变量。</p>
+</body></html>

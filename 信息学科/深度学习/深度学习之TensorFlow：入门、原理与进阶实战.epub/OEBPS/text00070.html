@@ -1,0 +1,603 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">9.7　语言模型的系统学习</h3>
+<p class="ziti3">语言模型包括文法语言模型和统计语言模型。一般我们指的是统计语言模型。</p>
+<h4 class="p3">9.7.1　统计语言模型</h4>
+<p class="ziti3">统计语言模型是指：把语言（词的序列）看作一个随机事件，并赋予相应的概率来描述其属于某种语言集合的可能性。</p>
+<p class="ziti3">统计语言模型的作用是，为一个长度为 m 的字符串确定一个概率分布P（w1； w2； …； wm），表示其存在的可能性。其中，w1～wm 依次表示这段文本中的各个词。用一句话简单地说就是计算一个句子的概率大小。</p>
+<p class="ziti3">用这种模型来衡量一个句子的合理性，概率越高，说明越符合人们说出来的自然句子，另一个用处是通过这些方法均可以保留住一定的词序信息，获得一个词的上下文信息。</p>
+<h4 class="p3">9.7.2　词向量</h4>
+<p class="ziti3">前面9.6节的例子可以看作是一个统计语言模型，所使用的词向量是one_hot编码，由于one_hot编码中所有的字都是独立的，所以该语言模型学到的词与词的上下文信息只能存放在网络节点中。</p>
+<p class="ziti3">而现实生活中，我们人类对字词的理解却并非如此，例如“手”和“脚”，会自然让人联想到人体的器官，而“墙”则与人体器官相差甚远。这表明本身的词与词之间是有远近关系的。如果让机器学习这种关系并能加以利用，那么便可以使机器像人一样理解语言的意义。</p>
+<p class="ziti4">
+<span class="yanse">1．词向量解释</span>
+</p>
+<p class="ziti3">在神经网络中是通过一个描述词分布关系的方法来实现语义的理解，这种方法描述的词与one_hot描述的词都可以叫做词向量，但它还有个另外的名字叫word embedding（词嵌入）。如何理解呢？将one_hot词向量中的每一个元素由整型改为浮点型，变为整个实数范围的表示；然后将原来稀疏的巨大维度压缩嵌入到一个更小维度的空间内，如图9-22所示。</p>
+<div class="pic"><img alt="" src="Image00181.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-22　词嵌入</p>
+<p class="ziti3">图9-22中只举了个例子，将三维的向量映射到二维平面里。实际在语言模型中，常常是将二维的张量[batch，字的index]映射到多维空间[batch，embedding的index]。即，embedding中的元素将不再是一个字，而变成了字所转化的多维向量，所有向量之间是有距离远近关系的。</p>
+<p class="ziti3">其实one_hot的映射也是这种方法，把每个字表示为一个很长的向量。这个向量的维度是词表大小，其中绝大多数元素为0，只有一个维度的值为1，这个维度就代表了当前的字。one_hot映射与词嵌入的唯一区别就是仅仅将字符号化，不包含任何语义信息而已。</p>
+<p class="ziti3">word embedding的映射方法是建立在分布假说（distributional hypothesis）基础上的，即假设词的语义由其上下文决定，上下文相似的词，其语义也相似。</p>
+<p class="ziti3">词向量的核心步骤由两部分组成：</p>
+<p class="ziti3">（1）选择一种方式描述上下文。</p>
+<p class="ziti3">（2）选择一种模型刻画某个词（下文称“目标词”）与其上下文之间的关系。</p>
+<p class="ziti3">一般来讲就是使用前面介绍的语言模型来完成这种任务。这类方法的最大优势在于可以表示复杂的上下文。</p>
+<p class="ziti4">
+<span class="yanse">2．词向量训练</span>
+</p>
+<p class="ziti3">在神经网络训练的词嵌入（word embedding）中，一般会将所有的embedding随机初始化，然后在训练过程中不断更新embedding矩阵的值。对于每一个词与它对应向量的映射值，在TensorFlow中使用了一个叫tf.nn.embedding_lookup的方法来完成。</p>
+<p class="ziti3">举例如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">with tf.device("/cpu:0"):
+    embedding = tf.get_variable("embedding", [vocab_size, size])
+    inputs = tf.nn.embedding_lookup(embedding, input_data)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面的代码先定义的embedding表示有vocab_size个词，每个词的向量个数为size个。最终得到的inputs就是输入向量input_data映射好的词向量了。比如input_data的形状为[batch_size，ndim]，那么inputs就为[batch_size，ndim，size]。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：·</span>
+ 由于该词向量定义好之后是需要在训练中优化的，所以embedding 类型必须是tf.Variable，并且trainable=True（default）。</p>
+<p class="ziti4">·embedding_lookup这个函数目前只支持在CPU上运行。</p>
+<p class="ziti4">
+<span class="yanse">3．候选采样技术</span>
+</p>
+<p class="ziti3">对于语言模型相关问题，本质上还是属于多分类问题。对于多分类问题，一般的做法是在最后一层生成与类别相等维度的节点，然后根据输入样本对应的标签来计算损失值，最终反向传播优化参数。但是由于词汇量的庞大，导致要分类的基数也会非常巨大，这会使得最后一层要有海量的节点来对应词汇的个数（如上亿的词汇量），并且还要对其逐个计算概率值，判断其是该词汇的可能性。这种做法会使训练过程变得非常缓慢，进而无法完成任务。</p>
+<p class="ziti3">为了解决这个问题，可使用一种候选采样的技巧，每次只评估所有类别的一个很小的子集，让网络的最后一层只在这个子集中做每个类别的评估计算。因为是监督学习，所以能够知道对应的正确标签（即正样本），额外挑选的子集（对应标签为0）被称为负样本。这样来训练网络，可在保证效率的同时同样会有很好的效果。</p>
+<p class="ziti4">
+<span class="yanse">4．词向量的应用</span>
+</p>
+<p class="ziti3">在自然语言处理中，一般都会将该任务中涉及的词训练成词向量。然后让每个词以词向量的形式作为神经网络模型的输入，进行一些指定任务的训练。对于一个完整的训练任务，词向量的训练更多的情况是发生在预训练环节。</p>
+<p class="ziti3">词向量也可以理解成为onehot的升级版特征映射。从这个角度来看，只要样本序列彼此间有着某种联系，即使不是词，也可以用这种方法处理。例如，在做恶意域名分析检测任务中，可以把某一个域名字符当作一个词，进行词向量的训练。然后再将每个字符用训练好的一组特定的向量进行映射，作为后面模型真实的输入。这样的输入就会比单纯的onehot编码映射效果好很多。</p>
+<h4 class="p3">9.7.3　word2vec</h4>
+<p class="ziti3">word2vec是谷歌提出的一种词嵌入的工具或者算法集合，采用了两种模型（CBOW与Skip-Gram模型）与两种方法（负采样与层次softmax方法）的组合，比较常见的组合为Skip-Gram和负采样方法。因为其速度快、效果好而广为人知，在任何场合可直接使用。</p>
+<p class="ziti3">CBOW模型（Continous Bag of Words Model，CBOW）和Skip-Gram模型都是可以训练出词向量的方法，在具体代码操作中可以只选择其一，但CBOW要比Skip-Gram更快一些。</p>
+<p class="ziti4">
+<span class="yanse">1．CBOW&amp;Skip-Gram</span>
+</p>
+<p class="ziti3">前文说过统计语言模型就是给出几个词，在这几个词出现的前提下计算某个词出现的概率（事后概率）。</p>
+<p class="ziti3">CBOW也是统计语言模型的一种，顾名思义就是根据某个词前面的n个词或者前后n个连续的词，来计算某个词出现的概率。</p>
+<p class="ziti3">Skip-Gram模型与之相反，是根据某个词，然后分别计算它前后出现某几个词的各个概率。</p>
+<p class="ziti3">如例，“我爱人工智能”对于CBOW模型来讲，首先会将所有的字转成one_hot，然后取出其中的一个字当作输入，将其前面和后面的字分别当作标签，拆分成如下样子：</p>
+<p class="ziti4">“我”“爱”</p>
+<p class="ziti4">“爱”“我”</p>
+<p class="ziti4">“爱”“人”</p>
+<p class="ziti4">“人”“爱”</p>
+<p class="ziti4">“人”“工”</p>
+<p class="ziti3">每一行代表一个样本，第一列代表输入，第二列代表标签。将输入数据送进神经网络（如“我”），同时将输出的预测值与标签（“爱”）计算loss（如输入“我”对应的标签为“爱”，模型的预测输出值为“好”，则计算“爱”和“好”之间的损失偏差，用来优化网络），进行迭代优化，在整个词库中如果字数特别多，会产生很大的矩阵，影响softmax速度。</p>
+<p class="ziti3">word2vec使用基于Huffman编码的Hierarchical softmax筛选掉了一部分不可能的词，然后又用nagetive samping再去掉了一些负样本的词，所以时间复杂度就从O（V）变成了O（logV）。</p>
+<p class="ziti4">
+<span class="yanse">2．TensorFlow的word2vec</span>
+</p>
+<p class="ziti3">在TensorFlow中提供了几个候选采样函数，用来处理loss计算中候选采样的工作，它们按不同的采样规则被封装成了不同的函数，说明如下。</p>
+<p class="ziti4">·tf.nn.uniform_candidate_sampler： 均匀地采样出类别子集。</p>
+<p class="ziti4">·tf.nn.log_uniform_candidate_sampler：按照 log-uniform （Zipfian） 分布采样。zipfian叫齐夫分布，指只有少数词经常被使用，大部分词很少被使用。</p>
+<p class="ziti4">·tf.nn.learned_unigram_candidate_sampler：按照训练数据中出现的类别分布进行采样。</p>
+<p class="ziti4">·tf.nn.fixed_unigram_candidate_sampler：按照用户提供的概率分布进行采样。</p>
+<p class="ziti3">在实际使用中一般先通过统计或者其他渠道知道待处理的类别满足哪些分布，接着就可以指定函数（或是在nn.fixed_unigram_candidate_sampler中指定对应的分布）来进行候选采样。如果实在不知道类别分布，还可以用 tf.nn.learned_unigram_candidate_sampler。learned_unigram_candidate_sampler的做法是先初始化一个 [0，range_max] 的数组，数组元素初始为1，在训练过程中碰到一个类别，就将相应数组元素加 1，每次按照数组归一化得到的概率进行采样来实现的。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 在语言相关的任务中，词按照出现频率从大到小排序之后，服从Zipfian分布。一般会先对类别按照出现频率从大到小排序，然后使用log_uniform_candidate_ sampler函数。</p>
+<p class="ziti3">TensorFlow的word2vec实现里，比对目标样本的损失值、计算softmax、负采样等过程统统封装到了nce_loss函数中，其默认使用的是log_uniform_candidate_sampler采样函数，在不指定特殊的采样器时，在该函数实现中会把词频越大的词，其类别编号也定义得越大，即优先采用词频高的词作为负样本，词频越高越有可能成为负样本。nce_loss函数配合优化器可以对最后一层的权重进行调优，更重要的是其还会以同样的方式调节word embedding（词嵌入）中的向量，让它们具有更合理的空间关系。</p>
+<p class="ziti3">下面先来看看nce_loss函数的定义：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">def nce_loss(weights, biases, inputs, labels, num_sampled, num_classes,
+             num_true=1,
+             sampled_values=None,
+             remove_accidental_hits=False,
+             partition_strategy="mod",
+             name="nce_loss")</pre>
+<hr class="calibre6"/>
+<p class="ziti3">假设输入数据是K维的，一共有N个类，其参数说明如下。</p>
+<p class="ziti4">·weight：shape为（N，K）的权重。</p>
+<p class="ziti4">·biases：shape为（N）的偏执。</p>
+<p class="ziti4">·inputs：输入数据，shape为（batch_size，K）。</p>
+<p class="ziti4">·labels：标签数据，shape为（batch_size，num_true）。</p>
+<p class="ziti4">·num_true：实际的正样本个数。</p>
+<p class="ziti4">·num_sampled：采样出多少个负样本。</p>
+<p class="ziti4">·num_classes：类的个数N。</p>
+<p class="ziti4">·sampled_values：采样出的负样本，如果是None，就会用默认的sampler去采样，优先采用词频高的词作为负样本。</p>
+<p class="ziti4">·remove_accidental_hits：如果采样时采样到的负样本刚好是正样本，是否要去掉。</p>
+<p class="ziti4">·partition_strategy：对weights进行embedding_lookup时并行查表时的策略。TensorFlow的embeding_lookup是在CPU里实现的，这里需要考虑多线程查表时的锁的问题。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 在TensorFlow中还有一个类似于nce_loss的函数sampled_softmax_loss，其用法与nce_loss函数完全一样。不同的是内部实现，nce_loss函数可以进行多标签分类问题，即标签之前不互斥，原因在于其对每一个输出的类都连接一个logistic二分类。而sampled_softmax_loss只能对单个标签分类，即输出的类别是互斥的，原因是其对每个类的输出放在一起统一做了一个多分类操作。</p>
+<h4 class="p3">9.7.4　实例70：用CBOW模型训练自己的word2vec</h4>
+<p class="ziti3">本例将使用CBOW模型来训练word2vec，最终将所学到的词向量分布关系可视化出来，同时通过该例子练习使用nce_loss函数与word embedding技术，实现自己的word2vec。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">准备一段文字作为训练的样本，对其使用CBOW模型计算word2vec，并将各个词的向量关系用图展示出来。</p>
+<p class="ziti4">
+<span class="yanse">1．引入头文件</span>
+</p>
+<p class="ziti3">本例的最后需要将词向量可视化出来。第7～12行代码是可视化相关的引入，即初始化，通过设置mpl的值让plot能够显示中文信息。Scikit-Learn的t-SNE算法模块的作用是非对称降维，是结合了t分布将高维空间的数据点映射到低维空间的距离，主要用于可视化和理解高维数据。</p>
+<p class="ziti3">代码9-26　word2vect</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import numpy as np
+02  import tensorflow as tf
+03 import random
+04 import collections
+05 from collections import Counter
+06 import jieba
+07 
+08 from sklearn.manifold import TSNE
+09 import matplotlib as mpl
+10 import matplotlib.pyplot as plt
+11 mpl.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签  
+12 mpl.rcParams['font.family'] = 'STSong'
+13 mpl.rcParams['font.size'] = 20</pre>
+<hr class="calibre6"/>
+<p class="ziti3">这次重点关注的是词，不再对字进行one_hot处理，所以需要借助分词工具将文本进行分词处理。本例中使用的是jieba分词库，需要使用之前先安装该分词库。</p>
+<p class="ziti3">在“运行”中，输入cmd，进入命令行模式。保证计算机联网状态下在命令行里输入：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Pip install jieba</pre>
+<hr class="calibre6"/>
+<p class="ziti3">安装完毕后可以新建一个py文件，使用如下代码简单测试一下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">import jieba
+seg_list = jieba.cut("我爱人工智能")   # 默认是精确模式 
+print(" ".join(seg_list)) </pre>
+<hr class="calibre6"/>
+<p class="ziti3">如果能够正常运行并且可以分词，就表明jieba分词库安装成功了。</p>
+<p class="ziti4">
+<span class="yanse">2．准备样本创建数据集</span>
+</p>
+<p class="ziti3">这个环节使用一篇笔者在另一个领域发表的比较有深度的文章“阴阳人体与电能.txt” 来做样本，将该文件放到代码的同级目录下。</p>
+<p class="ziti3">代码中使用get_ch_lable函数将所有文字读入training_data，然后在fenci函数里使用jieba分词库对training_data分词生成training_ci，将training_ci放入build_dataset里并生成指定长度（350）的字典。</p>
+<p class="ziti3">代码9-26　word2vect（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">14 training_file = '人体阴阳与电能.txt '
+15 
+16 #中文字
+17 def get_ch_lable(txt_file):  
+18     labels= ""
+19     with open(txt_file, 'rb') as f:
+20         for label in f: 
+21             
+22             labels =labels+label.decode('gb2312')
+23            
+24     return  labels
+25    
+26 #分词
+27 def fenci(training_data):
+28     seg_list = jieba.cut(training_data)   # 默认是精确模式  
+29     training_ci = " ".join(seg_list)
+30     training_ci = training_ci.split()
+31     #用空格将字符串分开
+32     training_ci = np.array(training_ci)
+33     training_ci = np.reshape(training_ci, [-1, ])
+34     return training_ci
+35 
+36 def build_dataset(words, n_words):
+37 
+38   """Process raw inputs into a dataset."""
+39   count = [['UNK', -1]]
+40   count.extend(collections.Counter(words).most_common(n_words - 1))
+41   dictionary = dict()
+42   for word, _ in count:
+43     dictionary[word] = len(dictionary)
+44   data = list()
+45   unk_count = 0
+46   for word in words:
+47     if word in dictionary:
+48       index = dictionary[word]
+49     else:
+50       index = 0   # dictionary['UNK']
+51       unk_count += 1
+52     data.append(index)
+53   count[0][1] = unk_count
+54   reversed_dictionary = dict(zip(dictionary.values(), dictionary.
+  keys()))
+55   return data, count, dictionary, reversed_dictionary
+56 
+57 training_data =get_ch_lable(training_file)
+58 print("总字数",len(training_data))
+59 training_ci =fenci(training_data)
+60 print("总词数",len(training_ci))    
+61 training_label, count, dictionary, words = build_dataset(training_ci, 
+350)
+62 
+63 words_size = len(dictionary)
+64 print("字典词数",words_size) 
+65 
+66 print('Sample data', training_label[:10], [words[i] for i in training_
+label[:10]])</pre>
+<hr class="calibre6"/>
+<p class="ziti3">build_dataset中的实现方式是将统计词频0号位置给unknown（用UNK表示），其余按照频次由高到低排列。unknown的获取按照预设词典大小，比如350，则频次排序靠后于350的都视为unknown。</p>
+<p class="ziti3">运行代码，生成结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">总字数 1567
+总词数 961
+字典词数 350
+Sample data [263, 31, 38, 30, 27, 0, 10, 9, 104, 197] ['阴阳', '人体', '与', '电能', '阴', 'UNK', '是', '身体', '里', '内在']</pre>
+<hr class="calibre6"/>
+<p class="ziti3">程序显示整个文章的总字数为1567个，总词数为961个，建立好的字典词数为350。接下来是将文字里前10个词即对应的索引显示出来。</p>
+<p class="ziti4">
+<span class="yanse">3．获取批次数据</span>
+</p>
+<p class="ziti3">定义generate_batch函数，取一定批次的样本数据。</p>
+<p class="ziti3">代码9-26　word2vect（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">67 data_index = 0
+68 def generate_batch(data,batch_size, num_skips, skip_window):
+69 
+70   global data_index
+71   assert batch_size % num_skips == 0
+72   assert num_skips &lt;= 2 * skip_window
+73 
+74   batch = np.ndarray(shape=(batch_size), dtype=np.int32)
+75   labels = np.ndarray(shape=(batch_size, 1), dtype=np.int32)
+76   span = 2 * skip_window + 1   #每一个样本由前skip_window +当前target +后skip_window组成
+77   buffer = collections.deque(maxlen=span)
+78 
+79   if data_index + span &gt; len(data):
+80     data_index = 0
+81 
+82   buffer.extend(data[data_index:data_index + span])
+83   data_index += span
+84 
+85   for i in range(batch_size // num_skips):
+86     target = skip_window  # target 在buffer中的索引为skip_window
+87     targets_to_avoid = [skip_window]
+88     for j in range(num_skips):
+89       while target in targets_to_avoid:
+90         target = random.randint(0, span - 1)
+91 
+92       targets_to_avoid.append(target)
+93       batch[i * num_skips + j] = buffer[skip_window]
+94       labels[i * num_skips + j, 0] = buffer[target]
+95 
+96     if data_index == len(data):
+97       buffer = data[:span]
+98       data_index = span
+99     else:
+100       buffer.append(data[data_index])
+101       data_index += 1
+102 
+103   # 注意防止越界
+104   data_index = (data_index + len(data) - span) % len(data)
+105   return batch, labels
+106 
+107 batch, labels = generate_batch(training_label,batch_size=8, num_
+skips=2, skip_window=1)
+108 
+109 for i in range(8):# 先循环8次，然后将组合好的样本与标签打印出来
+110   print(batch[i], words[batch[i]], '-&gt;', labels[i, 0], words[labels[i, 
+  0]])</pre>
+<hr class="calibre6"/>
+<p class="ziti3">generate_batch函数中使用CBOW模型来构建样本，是从开始位置的一个一个字作为输入，然后将其前面和后面的字作为标签，再分别组合在一起变成2组数据。运行当前代码，输出如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">31 人体 -&gt; 38 与
+31 人体 -&gt; 263 阴阳
+38 与 -&gt; 31 人体
+38 与 -&gt; 30 电能
+30 电能 -&gt; 27 阴
+30 电能 -&gt; 38 与
+27 阴 -&gt; 0 UNK
+27 阴 -&gt; 30 电能</pre>
+<hr class="calibre6"/>
+<p class="ziti3">如果是Skip-Gram方法，根据字取标签的方法正好相反，输出会变成以下这样：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">263 阴阳 -&gt; 31 人体
+38 与 -&gt; 31 人体
+31 人体 -&gt; 38 与
+31 人体 -&gt; 263 阴阳
+30 电能 -&gt; 38 与
+……</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">4．定义取样参数</span>
+</p>
+<p class="ziti3">下面代码中每批次取128个，每个词向量的维度为128，前后取词窗口为1，num_skips表示一个input生成2个标签，nce中负采样的个数为num_sampled。接下来是验证模型的相关参数，valid_size表示在0- words_size/2中的数取随机不能重复的16个字来验证模型。</p>
+<p class="ziti3">代码9-26　word2vect（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">111 batch_size = 128
+112 embedding_size = 128   # embedding vector的维度
+113 skip_window = 1         # 左右的词数量
+114 num_skips = 2            # 一个input生成2个标签
+115 
+116 valid_size = 16        
+117 valid_window = words_size/2   # 取样数据的分布范围
+118 valid_examples = np.random.choice(valid_window, valid_size, replace=
+False)#0- words_size/2中的数取16个。不能重复
+119 num_sampled = 64        # 负采样个数</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">5．定义模型变量</span>
+</p>
+<p class="ziti3">初始化图，为输入、标签、验证数据定义占位符，定义词嵌入变量embeddings为每个字定义128维的向量，并初始化为-1～1之间的均匀分布随机数。tf.nn.embedding_lookup是将输入的train_inputs转成对应的128维向量embed，定义nce_loss要使用的nce_weights和nce_biases。</p>
+<p class="ziti3">代码9-26　word2vect（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">120 tf.reset_default_graph()
+121 
+122 train_inputs = tf.placeholder(tf.int32, shape=[batch_size])
+123 train_labels = tf.placeholder(tf.int32, shape=[batch_size, 1])
+124 valid_dataset = tf.constant(valid_examples, dtype=tf.int32)
+125 
+126 # CPU上执行
+127 with tf.device('/cpu:0'):
+128     # 查找embeddings
+129     embeddings = tf.Variable(tf.random_uniform([words_size, 
+    embedding_size], -1.0, 1.0)) #94个字，每个128个向量
+130     
+131     embed = tf.nn.embedding_lookup(embeddings, train_inputs)
+132 
+133     # 计算NCE的loss的值
+134     nce_weights = tf.Variable( tf.truncated_normal([words_size, 
+    embedding_size],
+135                             stddev=1.0 / tf.sqrt(np.float32(embedding_
+                            size))))
+136                             
+137     nce_biases = tf.Variable(tf.zeros([words_size]))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在反向传播中，embeddings会与权重一起被nce_loss代表的loss值所优化更新。</p>
+<p class="ziti4">
+<span class="yanse">6．定义损失函数和优化器</span>
+</p>
+<p class="ziti3">使用nce_loss计算loss来保证softmax时的运算速度不被words_size过大问题所影响，在nce中每次会产生num_sampled（64）个负样本来参与概率运算。优化器使用学习率为1的GradientDescentOptimizer。</p>
+<p class="ziti3">代码9-26　word2vect（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">138 loss = tf.reduce_mean(
+139 tf.nn.nce_loss(weights=nce_weights, biases=nce_biases,
+140                  labels=train_labels, inputs=embed,
+141                  num_sampled=num_sampled, num_classes=words_size))
+142 
+143 # 梯度下降优化器
+144 optimizer = tf.train.GradientDescentOptimizer(1.0).minimize(loss)
+145 
+146 # 计算minibatch examples 和所有 embeddings的 cosine 相似度
+147 norm = tf.sqrt(tf.reduce_sum(tf.square(embeddings), 1, keep_dims=
+  True))
+148 normalized_embeddings = embeddings / norm
+149 valid_embeddings = tf.nn.embedding_lookup(normalized_embeddings, 
+valid_dataset)
+150 similarity = tf.matmul(valid_embeddings, normalized_embeddings, 
+transpose_b=True)
+ </pre>
+<hr class="calibre6"/>
+<p class="ziti3">验证数据取值时做了些特殊处理，将embeddings中每个词对应的向量进行平方和再开方得到norm，然后将embeddings与norm相除得到normalized_embeddings。当使用embedding_lookup获得自己对应normalized_embeddings中的向量valid_embeddings时，将该向量与转置后的normalized_embeddings相乘得到每个词的similarity。这个过程实现了一个向量间夹角余弦（Cosine）的计算。</p>
+<p class="ziti4">
+<span class="yanse">7．夹角余弦介绍</span>
+</p>
+<p class="ziti3">为了能够读懂代码，有必要介绍下夹角余弦的概念。</p>
+<p class="ziti3">余弦定理：给定三角形的三条边a、b、c，对应三个角为A、B、C，则角A的余弦见式（9-1）：</p>
+<div class="pic"><img alt="" src="Image00182.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">如果将b和c看成两个向量，则上述式子等价于（见式9-2）：</p>
+<div class="pic"><img alt="" src="Image00183.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">分母表示两个向量的长度，分子表示两个向量的内积。引申到二维空间中，向量A（x1，y1）与向量B（x2，y2）的夹角余弦公式见式（9-3）：</p>
+<div class="pic"><img alt="" src="Image00184.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">再扩展到两个n维样本点，a（x11，x12，…，x1n）和b（x21，x22，…，x2n）的夹角余弦的公式见式（9-4）：</p>
+<div class="pic"><img alt="" src="Image00185.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">这回可以理解前面的代码了，norm代表每一个词对应向量的长度矩阵，见式（9-5）：</p>
+<div class="pic"><img alt="" src="Image00186.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">normalized_embeddings表示的意思是向量除以自己的模，即单位向量，它可以确定向量的方向。</p>
+<p class="ziti3">很显然，similarity就是valid_dataset 中对应的单位向量valid_embeddings与整个词嵌入字典中单位向量的夹角余弦。</p>
+<p class="ziti3">如图9-23所示，算了这么多夹角余弦的目的就是为了衡量两个n维向量间的相似程度。当cosθ为1时，表明夹角为0，即两个向量的方向完全一样。所以当cosθ的值越小，表明两个向量的方向越不一样，相似度越低。</p>
+<div class="pic"><img alt="" src="Image00187.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-23　词嵌入夹角余弦结构</p>
+<p class="ziti4">
+<span class="yanse">8．启动session，训练模型</span>
+</p>
+<p class="ziti3">有了理论基础之后，对代码的模型应该好理解了，接下来启动session将模型训练出来。</p>
+<p class="ziti3">代码9-26　word2vect（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">151 num_steps = 100001
+152 with tf.Session() as sess:
+153     sess.run( tf.global_variables_initializer() )
+154     print('Initialized')
+155     
+156     average_loss = 0
+157     for step in range(num_steps):
+158         batch_inputs, batch_labels = generate_batch(training_label, 
+        batch_size, num_skips, skip_window)
+159         feed_dict = {train_inputs: batch_inputs, train_labels: batch_
+        labels}
+160 
+161         _, loss_val = sess.run([optimizer, loss], feed_dict=feed_dict)
+162         average_loss += loss_val
+163         
+164 #通过打印测试可以看到，embed的值在逐渐被调节      
+165         emv = sess.run(embed,feed_dict = {train_inputs: [37,18]})
+166         print("emv-------------------",emv[0])
+167 
+168         if step % 2000 == 0:
+169           if step &gt; 0:
+170             average_loss /= 2000
+171           # 平均loss
+172           print('Average loss at step ', step, ': ', average_loss)
+173           average_loss = 0</pre>
+<hr class="calibre6"/>
+<p class="ziti3">这里设置的迭代次数为10 0001次，每迭代2000次就输出一次loss值。</p>
+<p class="ziti4">
+<span class="yanse">9．输入验证数据，显示效果</span>
+</p>
+<p class="ziti3">为了能够看到词向量的效果，添加如下代码，将验证数据输入模型中，找出与其相近的词。这里使用了一个argsort函数，是将数组中的值从小到大排列后，返回每个值对应的索引。在使用argsort函数之前，将sim取负，得到的就是从大到小排列的结果了。sim就是当前词与整个词典中每个词的夹角余弦，9.7.4节中讲过夹角余弦值最大则代表相似度越高。</p>
+<p class="ziti3">代码9-26　word2vect（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">174         if step % 10000 == 0:
+175           sim = similarity.eval(session=sess)
+176           
+177           for i in range(valid_size):
+178             valid_word = words[valid_examples[i]]
+179             
+180             top_k = 8   # 取排名最靠前的8个词
+181             nearest = (-sim[i, :]).argsort()[1:top_k + 1]   #argsort函数返回的是数组值从小到大的索引值
+182             
+183             log_str = 'Nearest to %s:' % valid_word
+184 
+185             for k in range(top_k):
+186               close_word = words[nearest[k]]
+187               log_str = '%s,%s' % (log_str, close_word)
+188             print(log_str)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">……
+Average loss at step  92000 :  2.52053320134
+Average loss at step  94000 :  2.51920971239
+Average loss at step  96000 :  2.51831436144
+Average loss at step  98000 :  2.54135515364
+Average loss at step  100000 :  2.51433812357
+Nearest to 或:,与,和,提升,比,大小,觉得,每次,为阳来
+Nearest to ，:,起来,保养,过程,分裂细胞,为什么,新,就是,感到
+Nearest to 相当于:,也,会,寿命,刺激,了,低电量,加速,在
+Nearest to 桩:,训练,来源,修道,糖,马步,睡觉,放空,第一
+Nearest to 衰退:,也,短时间,累,下来,觉得,假如,排量,的
+Nearest to 加速:,快速,跑,病变,也,输出,走,相当于,加大
+……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">由于样本量不大，所以结果并不精确。但是也可以看出，模型基本上按照近义词被归类了一些，如第一个的“或”，与其最近的词有“与”“和”，基本上与人类的理解差不多。</p>
+<p class="ziti4">
+<span class="yanse">10．词向量可视化</span>
+</p>
+<p class="ziti3">接着继续编写代码，将词向量可视化。在可视化之前，将词典中的词嵌入向量转成单位向量（只有方向），然后将它们通过t-SNE降维映射到二维平面中显示。</p>
+<p class="ziti3">代码9-26　word2vect（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">189     final_embeddings = normalized_embeddings.eval()
+190 
+191 def plot_with_labels(low_dim_embs, labels, filename='tsne.png'):
+192     assert low_dim_embs.shape[0] &gt;= len(labels), 'More labels than 
+    embeddings'
+193     plt.figure(figsize=(18, 18))  # in inches
+194     for i, label in enumerate(labels):
+195         x, y = low_dim_embs[i, :]
+196         plt.scatter(x, y)
+197         plt.annotate(label,xy=(x, y),xytext=(5, 2), textcoords='offset 
+        points',
+198                      ha='right',va='bottom')
+199     plt.savefig(filename)
+200 
+201 try:
+202   
+203     tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
+204     plot_only = 80#输出100个词
+205     low_dim_embs = tsne.fit_transform(final_embeddings[:plot_
+    only, :])
+206     labels = [words[i] for i in range(plot_only)]
+207       
+208     plot_with_labels(low_dim_embs, labels)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面代码运行后，输出图片如图9-24所示。</p>
+<p class="ziti3">从输出图片中可以看出模型对词意义的理解。距离越近的词，他们的意义越相似，如图中的“但”与“不同”。</p>
+<div class="pic"><img alt="" src="Image00188.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-24　词向量结果</p>
+<h4 class="p3">9.7.5　实例71：使用指定侯选采样本训练word2vec</h4>
+<p class="ziti3">上面的例子使用了nce_loss中默认的候选采样方法，本例将其扩展成可以手动指定候选样本来计算loss。例子中，通过手动指定词频数据生成样本，然后再根据生成的样本计算loss。这么做虽然只是将前面的步骤换为手动执行，但该方法具有更强的通用性，使模型不仅适用于满足Zipfian分布的样本，对于其他分布的样本，只需要按照本方法配置指定分布的样本即可。具体步骤如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">准备一段文字作为训练的样本，对其使用CBOW模型计算得到word2vec，并将各个词的向量关系用图表示出来。其中，通过使用手动指定词频样本生成候选词的方法，来代替nce_loss中的默认选词方法。</p>
+<p class="ziti4">
+<span class="yanse">1．修改字典处理部分，生成词频数据</span>
+</p>
+<p class="ziti3">词频数据是指，对应于字典里的顺序，每个词所出现的频率统计。该数据作为候选样本采样的依据，在代码里是list类型。修改代码“9-26 word2vect.py”文件，在build_dataset函数中添加生成词频数据vocab_freqs。</p>
+<p class="ziti3">代码9-27　word2vect自定义候选采样</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 ……
+02 def build_dataset(words, n_words):
+03 
+04   """建立数据集."""
+05   count = [['UNK', -1]]
+06   count.extend(collections.Counter(words).most_common(n_words - 1))
+07   
+08   dictionary = dict()
+09   vocab_freqs = [] #定义词频数据list
+10   for word, nvocab in count:
+11     dictionary[word] = len(dictionary)
+12     vocab_freqs.append(nvocab) # 加入字典里的每个词频
+13   data = list()
+14   unk_count = 0
+15   for word in words:
+16     if word in dictionary:
+17       index = dictionary[word]
+18     else:
+19       index = 0  # dictionary['UNK']
+20       unk_count += 1
+21     data.append(index)
+22   count[0][1] = unk_count
+23   reversed_dictionary = dict(zip(dictionary.values(), dictionary.
+  keys()))
+24   
+25   return data, count, dictionary, reversed_dictionary,vocab_freqs
+26 ……
+27 #使用vocab_freqs接收词频数据的返回值
+28 training_label, count, dictionary, words,vocab_freqs = build_dataset
+(training_ci, 350)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．通过词频数据进行候选样本采样</span>
+</p>
+<p class="ziti3">拿到词频数据后，将其放到自定义采样的函数fixed_unigram_candidate_sampler里生成指定数量的采样数据。这里需要注意的是，原有字典中的第一个词并不是词频最高的词，而是手动添加的一个UNK词（见代码05行），并且当时设置的出现次数为-1。由于词频序数需要从大到小排列，所以需要手动将其改为最大值。通过打印vocab_freqs的数据能够看到，最大的值是89，所以设置一个比89大的数即可，这里设置的是90。</p>
+<p class="ziti3">代码9-27　word2vect自定义候选采样（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">29 ……
+30      nce_weights = tf.Variable( tf.truncated_normal([words_size, 
+     embedding_size],
+31      stddev=1.0 / tf.sqrt(np.float32(embedding_size))))
+32                             
+33     nce_biases = tf.Variable(tf.zeros([words_size]))
+34 vocab_freqs[0] = 90 #将手动添加的第一个词UNK的词频改为最大
+35             
+36 sampled = tf.nn.fixed_unigram_candidate_sampler(
+37           true_classes=tf.cast(train_labels,tf.int64),
+38           num_true=1,
+39           num_sampled=num_sampled,
+40           unique=True,
+41           range_max=words_size,
+42           unigrams=vocab_freqs)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 这里有个小技巧，如何知道fixed_unigram_ candidate_sampler的定义？需要为其填写哪些参数？这里有个方法，用鼠标双击该函数，使其为选中状态，然后右击该函数，在弹出的快捷菜单中选择Go to definition命令（如图9-25所示），即可跳转到该函数的定义。</p>
+<div class="pic"><img alt="" src="Image00189.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-25　查找函数定义</p>
+<p class="ziti4">
+<span class="yanse">3．使用自己的采样计算softmax的loss</span>
+</p>
+<p class="ziti3">使用loss生成函数sampled_softmax_loss（当然也可以用nce_loss函数）来计算loss，不同的是，在设置最后一个参数时会传入上一步生成的样本。</p>
+<p class="ziti3">代码9-27　word2vect自定义候选采样（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">43 ……
+44 loss = tf.reduce_mean(
+45 tf.nn.sampled_softmax_loss(weights=nce_weights, biases=nce_biases,
+46                           labels=train_labels, inputs=embed,
+47                 num_sampled=num_sampled, num_classes=words_size,
+                sampled_values=sampled))</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">4．运行生成结果</span>
+</p>
+<p class="ziti3">其他代码都不用改动，直接运行即可，得到的效果与实例70一样，这里不再赘述。</p>
+<h4 class="p3">9.7.6　练习题</h4>
+<p class="ziti3">（1）想一想：9.7.4节的例子，如果将nce_loss改写成sampled_softmax_loss会不会有效？为什么？</p>
+<p class="ziti3">答案：有效，因为对于语言模型的每个结果的输出是唯一的，也就是只会有一个词，所以也符合单标签分类。</p>
+<p class="ziti3">将如下代码替换nce_loss的调用（参考配套代码“9-28 word2vect -2.py”文件）：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">loss = tf.reduce_mean(
+tf.nn.sampled_softmax_loss(weights=nce_weights, biases=nce_biases,
+                          labels=train_labels, inputs=embed,
+                num_sampled=num_sampled, num_classes=words_size))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">（2）试着将9.7.5节中的例子改成按照训练数据中类别出现分布方法（9.7.3节有介绍）进行采样，看看有什么效果。</p>
+<p class="ziti3">答案可参考随书代码“9-29 word2vect学习样本候选采样.py”文件。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

@@ -1,0 +1,283 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">11.6　使用slim中的深度网络模型进行图像的识别与检测</h3>
+<p class="ziti3">前面模型训练的知识点可以覆盖模型方面的大部分情况。如果读者刚好有图片分类的任务，或是想进行图片的识别，用slim中已有的网络结构来训练出自己的模型，比自己重新写一个模型的可行性更高一些。智者必须要学会借力而行。</p>
+<p class="ziti3">有了模型之后就是使用模型了。下面通过几个实例来演示如何使用模型。</p>
+<h4 class="p3">11.6.1　实例85：调用Inception_ResNet_v2模型进行图像识别</h4>
+<p class="ziti3">本例是使用在ImageNet上训练好的Inception_ResNet_v2模型来识别图片内容，练习通过编写代码来调用slim中的inception_resnet_v2函数。具体步骤如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">使用基于ImageNet上训练的Inception_ResNet_v2模型对任意图片进行识别。</p>
+<p class="ziti4">
+<span class="yanse">1．准备工作</span>
+</p>
+<p class="ziti3">需要准备好Inception_ResNet_v2的模型文件（上文有下载方法介绍），以及两张用于识别的图片。</p>
+<p class="ziti4">
+<span class="yanse">2．引入头文件，指定模型</span>
+</p>
+<p class="ziti3">在slim文件夹下创建代码文件。代码中通过导入nets中的Inception模块，即可包含slim中的所有网络结构代码，导入Datasets中的imagenet是为了使用imagenet的label标签，方便识别后的显示。为了让代码简洁一些，令slim = tf.contrib.slim。</p>
+<p class="ziti3">代码11-2　inception_resnet_v2使用</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import tensorflow as tf
+02 
+03 from PIL import Image
+04 from matplotlib import pyplot as plt
+05 from nets import inception
+06 import numpy as np
+07 from datasets import imagenet
+08 
+09 tf.reset_default_graph()
+10 image_size = inception.inception_resnet_v2.default_image_size
+11 names = imagenet.create_readable_names_for_imagenet_labels()
+12 
+13 slim = tf.contrib.slim
+14 
+15 checkpoint_file = 'inception_resnet_v2/inception_resnet_v2_2016_
+08_30.ckpt'
+16 sample_images = ['img.jpg', 'ps.jpg']</pre>
+<hr class="calibre6"/>
+<p class="ziti3">将inception_resnet_v2中的默认尺寸取到，给出模型文件和图片的路径即文件名。</p>
+<p class="ziti4">
+<span class="yanse">3．载入模型</span>
+</p>
+<p class="ziti3">获取模型参数的命名空间arg_scope，定义相同命名空间下的输出节点。Logits是刚从网络结构里运算出来的输出。end_points为一个全集，里面包含logits和将logits经过softmax之后的预测结果及其他信息。具体可以参考nets下Inception_ResNet_v2里的inception_resnet_v2函数。</p>
+<p class="ziti3">代码11-2　inception_resnet_v2使用（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">17 input_imgs = tf.placeholder("float", [None, image_size,image_size,3])
+18 
+19 #载入 model
+20 sess = tf.Session()
+21 arg_scope = inception.inception_resnet_v2_arg_scope()
+22 
+23 with slim.arg_scope(arg_scope):
+24   logits, end_points = inception.inception_resnet_v2(input_imgs, 
+is_training=False)
+25 
+26 saver = tf.train.Saver()
+27 saver.restore(sess, checkpoint_file)
+28 </pre>
+<hr class="calibre6"/>
+<p class="ziti3">在session里通过saver载入模型，这部分内容前面讲过，这里不再赘述。</p>
+<p class="ziti4">
+<span class="yanse">4．输入图片进行识别</span>
+</p>
+<p class="ziti3">通过循环读入sample_images中指定的图片，然后使用resize函数将其重新调整尺寸到指定大小，再使用reshape函数重新将形状调整成[-1，image_size，image_size，3]矩阵，并将其除以255再乘上2，然后减去1，归一化成[-1，1]之间的值，输入模型生成结果。</p>
+<p class="ziti3">代码11-2　inception_resnet_v2使用（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">29 for image in sample_images:
+30     reimg = Image.open(image).resize((image_size,image_size))
+31     reimg = np.array(reimg)
+32     reimg = reimg.reshape(-1,image_size,image_size,3)
+33     
+34     plt.figure()  
+35     p1 = plt.subplot(121)
+36     p2 = plt.subplot(122)
+37     
+38     p1.imshow(reimg[0])# 显示图片
+39     p1.axis('off') 
+40     p1.set_title("organization image")
+41 
+42     reimg_norm = 2 *(reimg / 255.0)-1.0 
+43     
+44     p2.imshow(reimg_norm[0])                  # 显示图片
+45     p2.axis('off') 
+46     p2.set_title("input image")  
+47 
+48     plt.show()
+49  
+50     predict_values, logit_values = sess.run([end_points['Predictions'],
+      logits], feed_dict={input_imgs: reimg_norm})
+51      
+52     print (np.max(predict_values), np.max(logit_values))
+53     print (np.argmax(predict_values), np.argmax(logit_values),names
+      [np.argmax(logit_values)])</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 在数值变换中，本来应该使用slim自带的inception_preprocessing.preprocess_image函数将图片直接处理好，但是该代码似乎有点bug，模型不能识别出处理完的图片。于是改为手动来转化。GitHub中的代码还在不断更新中，或许当读者看这本书的时候已经没有bug了，那么就可以用inception_preprocessing.preprocess_image函数来替代。</p>
+<p class="ziti3">运行代码，得到输出如下，输出图片如图11-13和图11-14所示。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">INFO:tensorflow:Restoring parameters from inception_resnet_v2/inception_
+resnet_v2_2016_08_30.ckpt
+0.61667 9.0568
+621 621 laptop, laptop computer</pre>
+<hr class="calibre6"/>
+<div class="pic"><img alt="" src="Image00239.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图11-13　inception_resnet_v2例子结果1</p>
+<div class="pic"><img alt="" src="Image00240.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图11-14　inception_resnet_v2例子结果2</p>
+<hr class="calibre6"/>
+<pre class="ziti5">0.242343 8.80805
+223 223 kuvasz</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到模型成功地识别了平板电脑。对于第二幅图，本来是只羊，却识别成了库瓦兹犬，这可能是由于训练样本中关于狗的样本比较多的原因，整个ImageNet数据集对狗的分类比较细致。不过看一下库瓦兹犬的图片（如图11-5所示），它跟羊真的有点相像。</p>
+<div class="pic"><img alt="" src="Image00241.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图11-15　库瓦兹犬</p>
+<p class="ziti3">从图11-5中看，库瓦兹犬就像是一只“披着羊皮”的狗，可见Inception_ResNet_v2惊人的识别力。</p>
+<p class="ziti3">slim中的所有的模型的使用方法几乎一样，这里使用的Inception_ResNet_v2模型只是一个例子。若读者想使用其他模型，可以仿照该例子直接将模型名字替换Inception_ ResNet_v2即可。</p>
+<h4 class="p3">11.6.2　实例86：调用VGG模型进行图像检测</h4>
+<p class="ziti3">VGG作为深度学习模型，本来是为了识别图像而产生的，但其在图像检测方面的效果很好，于是就成为图像检测方面的标杆模型。下面通过一个实例来使用VGG19模型对图片进行检测，看看VGG模型能从图片中识别哪些东西。具体步骤如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">使用基于ImageNet上训练的VGG19模型对任意图片进行检测。</p>
+<p class="ziti4">
+<span class="yanse">1．准备工作</span>
+</p>
+<p class="ziti3">准备好解压后的vgg_19.ckpt模型文件，放到当前vgg_19_2016_08_28目录下，这里还使用实例85中的两张图片进行检测。</p>
+<p class="ziti4">
+<span class="yanse">2．引入头文件，指定模型</span>
+</p>
+<p class="ziti3">类似实例85，在slim文件夹下创建代码文件。导入nets中的VGG模块，同时导入像素均值处理函数mean_image_subtraction，导入Datasets中imagenet的label标签，令slim = tf.contrib.slim。</p>
+<p class="ziti3">代码11-3　vgg19图片检测使用</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import numpy as np
+02 import os
+03 import tensorflow as tf
+04 
+05 from PIL import Image
+06 from datasets import imagenet
+07 from nets import vgg
+08 # 加载像素均值及相关函数
+09 from preprocessing.vgg_preprocessing import (_mean_image_subtraction,
+10 _R_MEAN, _G_MEAN, _B_MEAN)
+11 from matplotlib import pyplot as plt
+12 import matplotlib as mpl
+13 mpl.rcParams['font.sans-serif']=['SimHei']    #用来正常显示中文标签
+14 mpl.rcParams['font.family'] = 'STSong'
+15 mpl.rcParams['font.size'] = 12
+16 
+17 tf.reset_default_graph()
+18 
+19 slim = tf.contrib.slim
+20 
+21 # 网络模型的输入图像有默认的尺寸
+22 # 先调整输入图片的尺寸
+23 
+24 names = imagenet.create_readable_names_for_imagenet_labels()
+25 checkpoints_dir = 'vgg_19_2016_08_28'
+26 sample_images = ['hy.jpg', 'ps.jpg']</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">3．定义节点，载入模型</span>
+</p>
+<p class="ziti3">定义输入占位符，在这里不需要使用VGG的默认尺寸，所以使用[None，None，3]的shape对输入节点进行均值处理，并使用reshape函数更新，将形状调整成1，None，None，3]。</p>
+<p class="ziti3">获取模型参数的命名空间arg_scope，定义相同命名空间下的输出节点。Logits是刚从网络结构里运算出来的输出。手动将logits的最大索引放入pred里，即代表分类。</p>
+<p class="ziti3">代码11-3　vgg19图片检测使用（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">27 input_imgs = tf.placeholder("float", [None,None,3])
+28 # 每个像素减去像素的均值
+29 processed_image = _mean_image_subtraction(input_imgs,
+30                                           [_R_MEAN, _G_MEAN, _B_MEAN])
+31 
+32 input_image = tf.expand_dims(processed_image, 0)
+33 with slim.arg_scope(vgg.vgg_arg_scope()): #spatial_squeeze选项用于压缩结果的空间维度，将不必要的空间维度删除
+34 
+35     logits, _ = vgg.vgg_19(input_image,
+36                            num_classes=1000,
+37                            is_training=False,
+38                            spatial_squeeze=False)
+39 
+40 pred = tf.argmax(logits, dimension=3)
+41 
+42 init_fn = slim.assign_from_checkpoint_fn(
+43     os.path.join(checkpoints_dir, 'vgg_19.ckpt'),
+44     slim.get_model_variables('vgg_19'))
+45 
+46 with tf.Session() as sess:
+47     init_fn(sess)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">指定模型文件vgg_19.ckpt，并在session中载入。</p>
+<p class="ziti4">
+<span class="yanse">4．输入图片进行检测</span>
+</p>
+<p class="ziti3">通过循环读入sample_images中指定的图片，传入模型，生成结果obj。VGG的输出与其他模型不一样，它会返回识别出来的所有类别，并且顺序是与像素位置关系相对应的。使用np.unique函数会返回两个值，第一个值为对应的类别，第二个值为该类在obj中的起始位置。</p>
+<p class="ziti3">代码11-3　vgg19图片检测使用（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">48 for image in sample_images:
+49         reimg = Image.open(image)
+50         plt.suptitle("原始图片", fontsize=14, fontweight='bold')
+51         plt.imshow(reimg)               # 显示图片
+52         plt.axis('off')                 # 不显示坐标轴
+53         plt.show()        
+54         
+55         reimg = np.asarray(reimg, dtype='float')
+56         
+57         obj,inpt= sess.run([pred,input_image],feed_dict={input_imgs: 
+        reimg})
+58         
+59         obj = np.squeeze(obj)
+60         
+61         unique_classes, relabeled_image = np.unique(obj,
+62                                                     return_inverse=True)
+63         
+64         obj_size = obj.shape
+65         relabeled_image = relabeled_image.reshape(obj_size)
+66         labels_names = []
+67 
+68         for index, current_class_number in enumerate(unique_classes):
+69             labels_names.append(str(index) + ' ' + names[current_class_
+            number+1])</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">5．输出结果</span>
+</p>
+<p class="ziti3">接着添加如下代码，将结果显示出来。</p>
+<p class="ziti3">代码11-3　vgg19图片检测使用（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">70         showobjlab(img=relabeled_image, labels_str=labels_names, 
+        title="画面识别")
+71         plt.show()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">这里用到了一个显示函数showobjlab，需要先定义一下。它将img位置obj中的类以不同的颜色在图像中显示出来。具体实现如下。</p>
+<p class="ziti3">代码11-3　vgg19图片检测使用（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">72 def showobjlab(img, labels_str=[], title=""):
+73     minval = np.min(img)
+74     maxval = np.max(img)
+75     #获取离散化的色彩表
+76     plt.figure(figsize=(3,3)) 
+77     cmap = plt.get_cmap('Paired', np.max(img)-np.min(img)+1)
+78     mat = plt.matshow(img, cmap=cmap,vmin = minval-0.5,vmax = maxval +0.5)
+79     
+80     #定义colorbar
+81     cax = plt.colorbar(mat,ticks=np.arange(minval,maxval+1),shrink=2)
+82 
+83     # 添加类别名称
+84     if labels_str:
+85         cax.ax.set_yticklabels(labels_str)
+86 
+87     if title:
+88         plt.suptitle(title, fontsize=14, fontweight='bold')</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，得到如下结果，输出图片如图11-16～图11-19所示。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">INFO:tensorflow:Restoring parameters from vgg_19_2016_08_28\vgg_19.ckpt</pre>
+<hr class="calibre6"/>
+<div class="pic"><img alt="" src="Image00242.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图11-16　Vgg例子1的原始图片</p>
+<div class="pic"><img alt="" src="Image00243.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图11-17　Vgg例子1的识别结果</p>
+<div class="pic"><img alt="" src="Image00244.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图11-18　Vgg例子2的原始图片</p>
+<div class="pic"><img alt="" src="Image00245.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图11-19　Vgg例子2的识别结果</p>
+<p class="ziti3">代码中将检测到的物体类别分别用不同的颜色来显示，并在图片上的对应位置做了标记。可以看到，对于元素较多的第一幅图片，VGG会识别出来更多的类型。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

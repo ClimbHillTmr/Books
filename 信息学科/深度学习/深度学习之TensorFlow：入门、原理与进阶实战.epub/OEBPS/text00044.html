@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">6.7　初始化学习参数</h3>
+<p class="ziti3">在定义学习参数时可以通过get_variable和Variable两个方式，对于一个网络模型，参数不同的初始化情况，对网络的影响会很大，所以在TensorFlow提供了很多具有不同特性的初始化函数。在使用get_variable时，get_variable的定义如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">def get_variable(name,
+                 shape=None,
+                 dtype=None,
+                 initializer=None,
+                 regularizer=None,
+                 trainable=True,
+                 collections=None,
+                 caching_device=None,
+                 partitioner=None,
+                 validate_shape=True,
+                 use_resource=None,
+                 custom_getter=None)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">其中，参数initializer就是初始化参数，可以取表6-4中列出的相关函数。</p>
+<p class="middle-img">表6-4　初始化函数</p>
+<div class="pic"><img alt="" src="Image00098.jpg" class="calibre4"/>
+</div>
+<div class="pic"><img alt="" src="Image00099.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">另外，在tf.contrib.layers函数中还有个tf.contrib.layers.xavier_initializer初始化函数，用来在所有层中保持梯度大体相同。尤其在深度神经网络里会经常使用（后面卷积内容的章节中还会提到该函数）。</p>
+<p class="ziti3">对于Variable定义的变量，可以使用表4-7中的相关函数进行初始化。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 一般常用的初始化函数为tf.truncated_normal函数，因为该函数有截断功能，可以生成相对比较温和的初始值。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

@@ -1,0 +1,180 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_105" class="calibre8">4.4　梯度</h2>
+<p class="calibre1">在刚才的例子中，我们按变量分别计算了 <img src="../images/00128.gif" alt="x_0" class="calibre24"/> 和 <img src="../images/00008.gif" alt="x_1" class="calibre24"/> 的偏导数。现在，我们希望一起计算 <img src="../images/00128.gif" alt="x_0" class="calibre24"/> 和 <img src="../images/00008.gif" alt="x_1" class="calibre24"/> 的偏导数。比如，我们来考虑求 <img src="../images/00131.gif" alt="x_0=3,x_1=4" class="calibre24"/> 时 <img src="../images/00132.gif" alt="(x_0,x_1)" class="calibre24"/> 的偏导数 <img src="../images/00133.gif" alt="\Bigl(\frac{\partial f}{\partial x_0},\frac{\partial f}{\partial x_1}\Bigr)" class="calibre24"/>。另外，像 <img src="../images/00133.gif" alt="\Bigl(\frac{\partial f}{\partial x_0},\frac{\partial f}{\partial x_1}\Bigr)" class="calibre24"/> 这样的由全部变量的偏导数汇总而成的向量称为<strong class="calibre2">梯度</strong>（gradient）。梯度可以像下面这样来实现。</p>
+<pre class="calibre18"><code class="calibre20">def numerical_gradient(f, x):
+    h = 1e-4 # 0.0001
+    grad = np.zeros_like(x) # 生成和x形状相同的数组
+
+    for idx in range(x.size):
+        tmp_val = x[idx]
+        # f(x+h)的计算
+        x[idx] = tmp_val + h
+        fxh1 = f(x)
+
+        # f(x-h)的计算
+        x[idx] = tmp_val - h
+        fxh2 = f(x)
+
+        grad[idx] = (fxh1 - fxh2) / (2*h)
+        x[idx] = tmp_val # 还原值
+
+    return grad
+
+</code></pre>
+<p class="calibre1">函数 <code class="calibre15">numerical_gradient(f, x)</code> 的实现看上去有些复杂，但它执行的处理和求单变量的数值微分基本没有区别。需要补充说明一下的是，<code class="calibre15">np.zeros_like(x)</code> 会生成一个形状和 <code class="calibre15">x</code> 相同、所有元素都为 0 的数组。</p>
+<p class="calibre1">函数 <code class="calibre15">numerical_gradient(f, x)</code> 中，参数 <code class="calibre15">f</code> 为函数，<code class="calibre15">x</code> 为 NumPy 数组，该函数对 NumPy 数组 <code class="calibre15">x</code> 的各个元素求数值微分。现在，我们用这个函数实际计算一下梯度。这里我们求点 (3, 4)、(0, 2)、(3, 0) 处的梯度。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">numerical_gradient(function_2, np.array([3.0, 4.0]))</b>
+array([ 6.,  8.])<sup class="calibre34"><b class="calibre2">2</b></sup>
+&gt;&gt;&gt; <b class="calibre19">numerical_gradient(function_2, np.array([0.0, 2.0]))</b>
+array([ 0.,  4.])
+&gt;&gt;&gt; <b class="calibre19">numerical_gradient(function_2, np.array([3.0, 0.0]))</b>
+array([ 6.,  0.])
+</pre>
+
+<blockquote class="calibre10">
+<p class="calibre1"><sup class="calibre16"><b class="calibre2">2</b></sup>实际上，虽然求到的值是 <code class="calibre15">[6.0000000000037801, 7.9999999999991189]</code>，但实际输出的是 <code class="calibre15">[6., 8.]</code>。这是因为在输出 NumPy 数组时，数值会被改成“易读”的形式。</p>
+</blockquote>
+<p class="calibre1">像这样，我们可以计算 <img src="../images/00132.gif" alt="(x_0,x_1)" class="calibre24"/> 在各点处的梯度。上例中，点 (3, 4) 处的梯度是 (6, 8)、点 (0, 2) 处的梯度是 (0, 4)、点 (3, 0) 处的梯度是 (6, 0)。这个梯度意味着什么呢？为了更好地理解，我们把 <img src="../images/00134.gif" alt="f(x_0+x_1)=x^2_0+x^2_1" class="calibre24"/> 的梯度画在图上。不过，这里我们画的是元素值为负梯度 <span class="zhu_shi_bian_hao">3</span> 的向量（源代码在 <code class="calibre15">ch04/gradient_2d.py</code> 中）。</p>
+<p class="zhu_shi_nei_rong"><span class="zhu_shi_bian_hao_xia">3</span>后面我们将会看到，负梯度方向是梯度法中变量的更新方向。——译者注</p>
+<p class="calibre1">如图 4-9 所示，<img src="../images/00134.gif" alt="f(x_0+x_1)=x^2_0+x^2_1" class="calibre24"/> 的梯度呈现为有向向量（箭头）。观察图 4-9，我们发现梯度指向函数 <img src="../images/00135.gif" alt="f(x_0,x_1)" class="calibre24"/> 的“最低处”（最小值），就像指南针一样，所有的箭头都指向同一点。其次，我们发现离“最低处”越远，箭头越大。</p>
+<p class="tu"><img src="../images/00136.jpeg" alt="" width="85%" class="calibre22"/></p>
+<p class="calibre1"><strong class="calibre2">图 4-9　<img src="../images/00137.gif" alt="\boldsymbol{f(x_0+x_1)=x^2_0+x^2_1}" class="calibre24"/> 的梯度</strong></p>
+<p class="calibre1">虽然图 4-9 中的梯度指向了最低处，但并非任何时候都这样。实际上，梯度会指向各点处的函数值降低的方向。更严格地讲，梯度指示的方向是各点处的函数值减小最多的方向 <span class="zhu_shi_bian_hao">4</span>。这是一个非常重要的性质，请一定牢记！</p>
+<p class="zhu_shi_nei_rong"><span class="zhu_shi_bian_hao_xia">4</span>高等数学告诉我们，方向导数 = cos(<em class="calibre35">θ</em>) × 梯度（<em class="calibre35">θ</em> 是方向导数的方向与梯度方向的夹角）。因此，所有的下降方向中，梯度方向下降最多。——译者注</p>
+<h3 id="nav_point_106" class="calibre17">4.4.1　梯度法</h3>
+<p class="calibre1">机器学习的主要任务是在学习时寻找最优参数。同样地，神经网络也必须在学习时找到最优参数（权重和偏置）。这里所说的最优参数是指损失函数取最小值时的参数。但是，一般而言，损失函数很复杂，参数空间庞大，我们不知道它在何处能取得最小值。而通过巧妙地使用梯度来寻找函数最小值（或者尽可能小的值）的方法就是梯度法。</p>
+<p class="calibre1">这里需要注意的是，梯度表示的是各点处的函数值减小最多的方向。因此，无法保证梯度所指的方向就是函数的最小值或者真正应该前进的方向。实际上，在复杂的函数中，梯度指示的方向基本上都不是函数值最小处。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00002.jpeg" alt="" width="7%" class="calibre13"/>　函数的极小值、最小值以及被称为<strong class="calibre2">鞍点</strong>（saddle point）的地方，梯度为 0。极小值是局部最小值，也就是限定在某个范围内的最小值。鞍点是从某个方向上看是极大值，从另一个方向上看则是极小值的点。虽然梯度法是要寻找梯度为 0 的地方，但是那个地方不一定就是最小值（也有可能是极小值或者鞍点）。此外，当函数很复杂且呈扁平状时，学习可能会进入一个（几乎）平坦的地区，陷入被称为“学习高原”的无法前进的停滞期。</p>
+</blockquote>
+<p class="calibre1">虽然梯度的方向并不一定指向最小值，但沿着它的方向能够最大限度地减小函数的值。因此，在寻找函数的最小值（或者尽可能小的值）的位置的任务中，要以梯度的信息为线索，决定前进的方向。</p>
+<p class="calibre1">此时梯度法就派上用场了。在梯度法中，函数的取值从当前位置沿着梯度方向前进一定距离，然后在新的地方重新求梯度，再沿着新梯度方向前进，如此反复，不断地沿梯度方向前进。像这样，通过不断地沿梯度方向前进，逐渐减小函数值的过程就是<strong class="calibre2">梯度法</strong>（gradient method）。梯度法是解决机器学习中最优化问题的常用方法，特别是在神经网络的学习中经常被使用。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00001.jpeg" alt="" width="5%" class="calibre11"/>　根据目的是寻找最小值还是最大值，梯度法的叫法有所不同。严格地讲，寻找最小值的梯度法称为<strong class="calibre2">梯度下降法</strong>（gradient descent method），寻找最大值的梯度法称为<strong class="calibre2">梯度上升法</strong>（gradient ascent method）。但是通过反转损失函数的符号，求最小值的问题和求最大值的问题会变成相同的问题，因此“下降”还是“上升”的差异本质上并不重要。一般来说，神经网络（深度学习）中，梯度法主要是指梯度下降法。</p>
+</blockquote>
+<p class="calibre1">现在，我们尝试用数学式来表示梯度法，如式（4.7）所示。</p>
+<p class="tu"><img src="../images/00138.gif" alt="\begin{aligned}x_0=x_0-\eta\frac{\partial f}{\partial x_0}\\x_1=x_1-\eta\frac{\partial f}{\partial x_1}\end{aligned}\quad\quad\quad\quad\quad(4.7)" class="calibre24"/></p>
+<p class="calibre1">式（4.7）的 <em class="calibre7">η</em> 表示更新量，在神经网络的学习中，称为<strong class="calibre2">学习率</strong>（learning rate）。学习率决定在一次学习中，应该学习多少，以及在多大程度上更新参数。</p>
+<p class="calibre1">式（4.7）是表示更新一次的式子，这个步骤会反复执行。也就是说，每一步都按式（4.7）更新变量的值，通过反复执行此步骤，逐渐减小函数值。虽然这里只展示了有两个变量时的更新过程，但是即便增加变量的数量，也可以通过类似的式子（各个变量的偏导数）进行更新。</p>
+<p class="calibre1">学习率需要事先确定为某个值，比如 0.01 或 0.001。一般而言，这个值过大或过小，都无法抵达一个“好的位置”。在神经网络的学习中，一般会一边改变学习率的值，一边确认学习是否正确进行了。</p>
+<p class="calibre1">下面，我们用 Python 来实现梯度下降法。如下所示，这个实现很简单。</p>
+<pre class="calibre18"><code class="calibre20">def gradient_descent(f, init_x, lr=0.01, step_num=100):
+    x = init_x
+
+    for i in range(step_num):
+        grad = numerical_gradient(f, x)
+        x -= lr * grad
+
+    return x
+
+</code></pre>
+<p class="calibre1">参数 <code class="calibre15">f</code> 是要进行最优化的函数，<code class="calibre15">init_x</code> 是初始值，<code class="calibre15">lr</code> 是学习率 learning rate，<code class="calibre15">step_num</code> 是梯度法的重复次数。<code class="calibre15">numerical_gradient(f,x)</code> 会求函数的梯度，用该梯度乘以学习率得到的值进行更新操作，由 <code class="calibre15">step_num</code> 指定重复的次数。</p>
+<p class="calibre1">使用这个函数可以求函数的极小值，顺利的话，还可以求函数的最小值。下面，我们就来尝试解决下面这个问题。</p>
+<p class="calibre1"><strong class="calibre2">问题</strong>：请用梯度法求 <img src="../images/00134.gif" alt="f(x_0+x_1)=x^2_0+x^2_1" class="calibre24"/> 的最小值。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">def function_2(x):</b>
+...     <b class="calibre19">return x[0]**2 + x[1]**2</b>
+...
+&gt;&gt;&gt; <b class="calibre19">init_x = np.array([-3.0, 4.0])</b>
+&gt;&gt;&gt; <b class="calibre19">gradient_descent(function_2, init_x=init_x, lr=0.1, step_num=100)</b>
+array([ -6.11110793e-10,   8.14814391e-10])
+</pre>
+
+<p class="calibre1">这里，设初始值为 <code class="calibre15">(-3.0, 4.0)</code>，开始使用梯度法寻找最小值。最终的结果是 <code class="calibre15">(-6.1e-10, 8.1e-10)</code>，非常接近 <code class="calibre15">(0, 0)</code>。实际上，真的最小值就是 <code class="calibre15">(0, 0)</code>，所以说通过梯度法我们基本得到了正确结果。如果用图来表示梯度法的更新过程，则如图 4-10 所示。可以发现，原点处是最低的地方，函数的取值一点点在向其靠近。这个图的源代码在 <code class="calibre15">ch04/gradient_method.py</code> 中（但 <code class="calibre15">ch04/gradient_method.py</code> 不显示表示等高线的虚线）。</p>
+<p class="tu"><img src="../images/00139.jpeg" alt="" width="85%" class="calibre22"/></p>
+<p class="calibre1"><strong class="calibre2">图 4-10　<img src="../images/00137.gif" alt="\boldsymbol{f(x_0+x_1)=x^2_0+x^2_1}" class="calibre24"/> 的梯度法的更新过程：虚线是函数的等高线</strong></p>
+<p class="calibre1">前面说过，学习率过大或者过小都无法得到好的结果。我们来做个实验验证一下。</p>
+<pre class="calibre18">
+# 学习率过大的例子：lr=10.0
+&gt;&gt;&gt; <b class="calibre19">init_x = np.array([-3.0, 4.0])</b>
+&gt;&gt;&gt; <b class="calibre19">gradient_descent(function_2, init_x=init_x, lr=10.0, step_num=100)</b>
+array([ -2.58983747e+13,  -1.29524862e+12])
+
+# 学习率过小的例子：lr=1e-10
+&gt;&gt;&gt; <b class="calibre19">init_x = np.array([-3.0, 4.0])</b>
+&gt;&gt;&gt; <b class="calibre19">gradient_descent(function_2, init_x=init_x, lr=1e-10, step_num=100)</b>
+array([-2.99999994,  3.99999992])
+</pre>
+
+<p class="calibre1">实验结果表明，学习率过大的话，会发散成一个很大的值；反过来，学习率过小的话，基本上没怎么更新就结束了。也就是说，设定合适的学习率是一个很重要的问题。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00001.jpeg" alt="" width="5%" class="calibre11"/>　像学习率这样的参数称为<strong class="calibre2">超参数</strong>。这是一种和神经网络的参数（权重和偏置）性质不同的参数。相对于神经网络的权重参数是通过训练数据和学习算法自动获得的，学习率这样的超参数则是人工设定的。一般来说，超参数需要尝试多个值，以便找到一种可以使学习顺利进行的设定。</p>
+</blockquote>
+<h3 id="nav_point_107" class="calibre17">4.4.2　神经网络的梯度</h3>
+<p class="calibre1">神经网络的学习也要求梯度。这里所说的梯度是指损失函数关于权重参数的梯度。比如，有一个只有一个形状为 2 × 3 的权重 <img src="../images/00067.gif" alt="\boldsymbol{W}" class="calibre24"/> 的神经网络，损失函数用 <em class="calibre7">L</em> 表示。此时，梯度可以用 <img src="../images/00140.gif" alt="\frac{\partial L}{\partial \boldsymbol{W}}" class="calibre24"/> 表示。用数学式表示的话，如下所示。</p>
+<p class="tu"><img src="../images/00141.gif" alt="\begin{aligned}\boldsymbol{W}&amp;=\begin{pmatrix}w_{11}&amp;w_{12}&amp;w_{13}\\w_{21}&amp;w_{22}&amp;w_{23}\end{pmatrix}\\\frac{\partial L}{\partial \boldsymbol{W}}&amp;=\begin{pmatrix}\frac{\partial L}{\partial w_{11}}&amp;\frac{\partial L}{\partial w_{12}}&amp;\frac{\partial L}{\partial w_{13}}\\\frac{\partial L}{\partial w_{21}}&amp;\frac{\partial L}{\partial w_{22}}&amp;\frac{\partial L}{\partial w_{23}}\end{pmatrix}\end{aligned}\quad\quad\quad\quad\quad(4.8)" class="calibre24"/></p>
+<p class="calibre1"><img src="../images/00140.gif" alt="\frac{\partial L}{\partial \boldsymbol{W}}" class="calibre24"/> 的元素由各个元素关于 <img src="../images/00067.gif" alt="\boldsymbol{W}" class="calibre24"/> 的偏导数构成。比如，第 1 行第 1 列的元素 <img src="../images/00142.gif" alt="\frac{\partial L}{\partial w_{11}}" class="calibre24"/> 表示当 <img src="../images/00143.gif" alt="w_{11} " class="calibre24"/> 稍微变化时，损失函数 <em class="calibre7">L</em> 会发生多大变化。这里的重点是，<img src="../images/00140.gif" alt="\frac{\partial L}{\partial \boldsymbol{W}}" class="calibre24"/> 的形状和 <img src="../images/00067.gif" alt="\boldsymbol{W}" class="calibre24"/> 相同。实际上，式（4.8）中的 <img src="../images/00067.gif" alt="\boldsymbol{W}" class="calibre24"/> 和 <img src="../images/00140.gif" alt="\frac{\partial L}{\partial \boldsymbol{W}}" class="calibre24"/> 都是 2 × 3 的形状。</p>
+<p class="calibre1">下面，我们以一个简单的神经网络为例，来实现求梯度的代码。为此，我们要实现一个名为 <code class="calibre15">simpleNet</code> 的类（源代码在 <code class="calibre15">ch04/gradient_simplenet.py</code> 中）。</p>
+<pre class="calibre18"><code class="calibre20">import sys, os
+sys.path.append(os.pardir)
+import numpy as np
+from common.functions import softmax, cross_entropy_error
+from common.gradient import numerical_gradient
+
+class simpleNet:
+    def __init__(self):
+        self.W = np.random.randn(2,3) # 用高斯分布进行初始化
+
+    def predict(self, x):
+        return np.dot(x, self.W)
+
+    def loss(self, x, t):
+        z = self.predict(x)
+        y = softmax(z)
+        loss = cross_entropy_error(y, t)
+
+        return loss
+
+</code></pre>
+<p class="calibre1">这里使用了 <code class="calibre15">common/functions.py</code> 中的 <code class="calibre15">softmax</code> 和 <code class="calibre15">cross_entropy_error</code> 方法，以及 <code class="calibre15">common/gradient.py</code> 中的 <code class="calibre15">numerical_gradient</code> 方法。<code class="calibre15">simpleNet</code> 类只有一个实例变量，即形状为 2×3 的权重参数。它有两个方法，一个是用于预测的 <code class="calibre15">predict(x)</code>，另一个是用于求损失函数值的 <code class="calibre15">loss(x,t)</code>。这里参数 <code class="calibre15">x</code> 接收输入数据，<code class="calibre15">t</code> 接收正确解标签。现在我们来试着用一下这个 <code class="calibre15">simpleNet</code>。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">net = simpleNet()</b>
+&gt;&gt;&gt; <b class="calibre19">print(net.W)</b> # 权重参数
+[[ 0.47355232   0.9977393    0.84668094],
+ [ 0.85557411   0.03563661   0.69422093]])
+&gt;&gt;&gt;
+&gt;&gt;&gt; <b class="calibre19">x = np.array([0.6, 0.9])</b>
+&gt;&gt;&gt; <b class="calibre19">p = net.predict(x)</b>
+&gt;&gt;&gt; <b class="calibre19">print(p)</b>
+[ 1.05414809  0.63071653  1.1328074]
+&gt;&gt;&gt; <b class="calibre19">np.argmax(p)</b> # 最大值的索引
+2
+&gt;&gt;&gt;
+&gt;&gt;&gt; <b class="calibre19">t = np.array([0, 0, 1])</b> # 正确解标签
+&gt;&gt;&gt; <b class="calibre19">net.loss(x, t)</b>
+0.92806853663411326
+</pre>
+
+<p class="calibre1">接下来求梯度。和前面一样，我们使用 <code class="calibre15">numerical_gradient(f, x)</code> 求梯度（这里定义的函数 <code class="calibre15">f(W)</code> 的参数 <code class="calibre15">W</code> 是一个伪参数。因为 <code class="calibre15">numerical_gradient(f, x)</code> 会在内部执行 <code class="calibre15">f(x)</code>，为了与之兼容而定义了 <code class="calibre15">f(W)</code>）。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">def f(W):</b>
+...     <b class="calibre19">return net.loss(x, t)</b>
+...
+&gt;&gt;&gt; <b class="calibre19">dW = numerical_gradient(f, net.W)</b>
+&gt;&gt;&gt; <b class="calibre19">print(dW)</b>
+[[ 0.21924763  0.14356247 -0.36281009]
+ [ 0.32887144  0.2153437  -0.54421514]]
+</pre>
+
+<p class="calibre1"><code class="calibre15">numerical_gradient(f, x)</code> 的参数 <code class="calibre15">f</code> 是函数，<code class="calibre15">x</code> 是传给函数 <code class="calibre15">f</code> 的参数。因此，这里参数 <code class="calibre15">x</code> 取 <code class="calibre15">net.W</code>，并定义一个计算损失函数的新函数 <code class="calibre15">f</code>，然后把这个新定义的函数传递给 <code class="calibre15">numerical_gradient(f, x)</code>。</p>
+<p class="calibre1"><code class="calibre15">numerical_gradient(f, net.W)</code> 的结果是 <code class="calibre15">dW</code>，一个形状为 2 × 3 的二维数组。观察一下 <code class="calibre15">dW</code> 的内容，例如，会发现 <img src="../images/00140.gif" alt="\frac{\partial L}{\partial \boldsymbol{W}}" class="calibre24"/> 中的 <img src="../images/00142.gif" alt="\frac{\partial L}{\partial w_{11}}" class="calibre24"/> 的值大约是 0.2，这表示如果将 <img src="../images/00143.gif" alt="w_{11} " class="calibre24"/> 增加 <em class="calibre7">h</em>，那么损失函数的值会增加 0.2<em class="calibre7">h</em>。再如，<img src="../images/00144.gif" alt="\frac{\partial L}{\partial w_{23}}" class="calibre24"/> 对应的值大约是 -0.5，这表示如果将 <img src="../images/00145.gif" alt="w_{23} " class="calibre24"/> 增加 <em class="calibre7">h</em>，损失函数的值将减小 0.5<em class="calibre7">h</em>。因此，从减小损失函数值的观点来看，<img src="../images/00145.gif" alt="w_{23} " class="calibre24"/> 应向正方向更新，<img src="../images/00143.gif" alt="w_{11} " class="calibre24"/> 应向负方向更新。至于更新的程度，<img src="../images/00145.gif" alt="w_{23} " class="calibre24"/> 比 <img src="../images/00143.gif" alt="w_{11} " class="calibre24"/> 的贡献要大。</p>
+<p class="calibre1">另外，在上面的代码中，定义新函数时使用了“<code class="calibre15">def f(x):…</code>”的形式。实际上，Python 中如果定义的是简单的函数，可以使用 <code class="calibre15">lambda</code> 表示法。使用 <code class="calibre15">lambda</code> 的情况下，上述代码可以如下实现。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">f = lambda w: net.loss(x, t)</b>
+&gt;&gt;&gt; <b class="calibre19">dW = numerical_gradient(f, net.W)</b>
+</pre>
+
+<p class="calibre1">求出神经网络的梯度后，接下来只需根据梯度法，更新权重参数即可。在下一节中，我们会以 2 层神经网络为例，实现整个学习过程。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00001.jpeg" alt="" width="5%" class="calibre11"/>　为了对应形状为多维数组的权重参数 <code class="calibre15">W</code>，这里使用的 <code class="calibre15">numerical_gradient()</code> 和之前的实现稍有不同。不过，改动只是为了对应多维数组，所以改动并不大。这里省略了对代码的说明，想知道细节的读者请参考源代码（<code class="calibre15">common/gradient.py</code>）。</p>
+</blockquote>
+</body></html>

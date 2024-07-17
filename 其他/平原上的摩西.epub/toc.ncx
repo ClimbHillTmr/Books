@@ -1,0 +1,189 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" xml:lang="zho">
+  <head>
+    <meta name="dtb:uid" content="60db3218-4193-49ea-b688-b816b4f7d56d"/>
+    <meta name="dtb:depth" content="3"/>
+    <meta name="dtb:generator" content="calibre (5.34.0)"/>
+    <meta name="dtb:totalPageCount" content="0"/>
+    <meta name="dtb:maxPageNumber" content="0"/>
+  </head>
+  <docTitle>
+    <text>平原上的摩西</text>
+  </docTitle>
+  <navMap>
+    <navPoint id="num_1" playOrder="0" class="chapter">
+      <navLabel>
+        <text>版权信息</text>
+      </navLabel>
+      <content src="text/part0000.html#0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+    </navPoint>
+    <navPoint id="num_2" playOrder="1" class="chapter">
+      <navLabel>
+        <text>平原上的摩西</text>
+      </navLabel>
+      <content src="text/part0002.html#1T140-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      <navPoint id="num_3" playOrder="1" class="chapter">
+        <navLabel>
+          <text>庄德增</text>
+        </navLabel>
+        <content src="text/part0002.html#CHP00000"/>
+      </navPoint>
+      <navPoint id="num_4" playOrder="3" class="chapter">
+        <navLabel>
+          <text>蒋不凡</text>
+        </navLabel>
+        <content src="text/part0003.html#2RHM0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      </navPoint>
+      <navPoint id="num_5" playOrder="4" class="chapter">
+        <navLabel>
+          <text>李斐</text>
+        </navLabel>
+        <content src="text/part0004.html#3Q280-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      </navPoint>
+      <navPoint id="num_6" playOrder="5" class="chapter">
+        <navLabel>
+          <text>傅东心</text>
+        </navLabel>
+        <content src="text/part0005.html#4OIQ0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      </navPoint>
+      <navPoint id="num_7" playOrder="6" class="chapter">
+        <navLabel>
+          <text>李斐</text>
+        </navLabel>
+        <content src="text/part0006.html#5N3C0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      </navPoint>
+      <navPoint id="num_8" playOrder="7" class="chapter">
+        <navLabel>
+          <text>庄德增</text>
+        </navLabel>
+        <content src="text/part0007.html#6LJU0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      </navPoint>
+      <navPoint id="num_9" playOrder="8" class="chapter">
+        <navLabel>
+          <text>庄树</text>
+        </navLabel>
+        <content src="text/part0008.html#7K4G0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      </navPoint>
+      <navPoint id="num_10" playOrder="9" class="chapter">
+        <navLabel>
+          <text>孙天博</text>
+        </navLabel>
+        <content src="text/part0009.html#8IL20-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      </navPoint>
+      <navPoint id="num_11" playOrder="10" class="chapter">
+        <navLabel>
+          <text>傅东心</text>
+        </navLabel>
+        <content src="text/part0010.html#9H5K0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      </navPoint>
+      <navPoint id="num_12" playOrder="11" class="chapter">
+        <navLabel>
+          <text>李斐</text>
+        </navLabel>
+        <content src="text/part0011.html#AFM60-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      </navPoint>
+      <navPoint id="num_13" playOrder="12" class="chapter">
+        <navLabel>
+          <text>庄树</text>
+        </navLabel>
+        <content src="text/part0012.html#BE6O0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      </navPoint>
+      <navPoint id="num_14" playOrder="13" class="chapter">
+        <navLabel>
+          <text>赵小东</text>
+        </navLabel>
+        <content src="text/part0013.html#CCNA0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      </navPoint>
+      <navPoint id="num_15" playOrder="14" class="chapter">
+        <navLabel>
+          <text>李斐</text>
+        </navLabel>
+        <content src="text/part0014.html#DB7S0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      </navPoint>
+      <navPoint id="num_16" playOrder="15" class="chapter">
+        <navLabel>
+          <text>庄树</text>
+        </navLabel>
+        <content src="text/part0015.html#E9OE0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      </navPoint>
+    </navPoint>
+    <navPoint id="num_17" playOrder="16" class="chapter">
+      <navLabel>
+        <text>大师</text>
+      </navLabel>
+      <content src="text/part0016.html#F8900-b9b7cbb670014a11a81dd4eb893f96d8"/>
+    </navPoint>
+    <navPoint id="num_18" playOrder="17" class="chapter">
+      <navLabel>
+        <text>我的朋友安德烈</text>
+      </navLabel>
+      <content src="text/part0017.html#G6PI0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      <navPoint id="num_19" playOrder="2" class="chapter">
+        <navLabel>
+          <text>一</text>
+        </navLabel>
+        <content src="text/part0017.html#CHP3-1"/>
+      </navPoint>
+      <navPoint id="num_20" playOrder="19" class="chapter">
+        <navLabel>
+          <text>二</text>
+        </navLabel>
+        <content src="text/part0018.html#H5A40-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      </navPoint>
+      <navPoint id="num_21" playOrder="20" class="chapter">
+        <navLabel>
+          <text>三</text>
+        </navLabel>
+        <content src="text/part0019.html#I3QM0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+      </navPoint>
+    </navPoint>
+    <navPoint id="num_22" playOrder="21" class="chapter">
+      <navLabel>
+        <text>跛人</text>
+      </navLabel>
+      <content src="text/part0020.html#J2B80-b9b7cbb670014a11a81dd4eb893f96d8"/>
+    </navPoint>
+    <navPoint id="num_23" playOrder="22" class="chapter">
+      <navLabel>
+        <text>长眠</text>
+      </navLabel>
+      <content src="text/part0021.html#K0RQ0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+    </navPoint>
+    <navPoint id="num_24" playOrder="23" class="chapter">
+      <navLabel>
+        <text>无赖</text>
+      </navLabel>
+      <content src="text/part0023.html#LTSU0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+    </navPoint>
+    <navPoint id="num_25" playOrder="24" class="chapter">
+      <navLabel>
+        <text>冷枪</text>
+      </navLabel>
+      <content src="text/part0024.html#MSDG0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+    </navPoint>
+    <navPoint id="num_26" playOrder="25" class="chapter">
+      <navLabel>
+        <text>大路</text>
+      </navLabel>
+      <content src="text/part0025.html#NQU20-b9b7cbb670014a11a81dd4eb893f96d8"/>
+    </navPoint>
+    <navPoint id="num_27" playOrder="26" class="chapter">
+      <navLabel>
+        <text>走出格勒</text>
+      </navLabel>
+      <content src="text/part0026.html#OPEK0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+    </navPoint>
+    <navPoint id="num_28" playOrder="27" class="chapter">
+      <navLabel>
+        <text>自由落体</text>
+      </navLabel>
+      <content src="text/part0027.html#PNV60-b9b7cbb670014a11a81dd4eb893f96d8"/>
+    </navPoint>
+    <navPoint id="num_29" playOrder="28" class="chapter">
+      <navLabel>
+        <text>跋：我的师承</text>
+      </navLabel>
+      <content src="text/part0028.html#QMFO0-b9b7cbb670014a11a81dd4eb893f96d8"/>
+    </navPoint>
+  </navMap>
+</ncx>

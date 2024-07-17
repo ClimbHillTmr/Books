@@ -1,0 +1,645 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" xml:lang="zho">
+  <head>
+    <meta content="5b004f74-25bf-40d7-ac90-cd89d1c12aac" name="dtb:uid"/>
+    <meta content="4" name="dtb:depth"/>
+    <meta content="calibre (3.38.0)" name="dtb:generator"/>
+    <meta content="0" name="dtb:totalPageCount"/>
+    <meta content="0" name="dtb:maxPageNumber"/>
+  </head>
+  <docTitle>
+    <text>深度学习之TensorFlow：入门、原理与进阶实战</text>
+  </docTitle>
+  <navMap>
+    <navPoint class="chapter" id="id1" playOrder="1">
+      <navLabel>
+        <text>配套学习资源</text>
+      </navLabel>
+      <content src="OEBPS/text00002.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="id2" playOrder="2">
+      <navLabel>
+        <text>前言</text>
+      </navLabel>
+      <content src="OEBPS/text00003.html"/>
+    </navPoint>
+    <navPoint class="chapter" id="id3" playOrder="3">
+      <navLabel>
+        <text>第1篇 深度学习与TensorFlow基础</text>
+      </navLabel>
+      <content src="OEBPS/text00004.html"/>
+      <navPoint class="chapter" id="id4" playOrder="4">
+        <navLabel>
+          <text>第1章 快速了解人工智能与TensorFlow</text>
+        </navLabel>
+        <content src="OEBPS/text00005.html"/>
+        <navPoint class="chapter" id="id5" playOrder="5">
+          <navLabel>
+            <text>1.1 什么是深度学习</text>
+          </navLabel>
+          <content src="OEBPS/text00006.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id6" playOrder="6">
+          <navLabel>
+            <text>1.2 TensorFlow是做什么的</text>
+          </navLabel>
+          <content src="OEBPS/text00007.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id7" playOrder="7">
+          <navLabel>
+            <text>1.3 TensorFlow的特点</text>
+          </navLabel>
+          <content src="OEBPS/text00008.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id8" playOrder="8">
+          <navLabel>
+            <text>1.4 其他深度学习框架特点及介绍</text>
+          </navLabel>
+          <content src="OEBPS/text00009.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id9" playOrder="9">
+          <navLabel>
+            <text>1.5 如何通过本书学好深度学习</text>
+          </navLabel>
+          <content src="OEBPS/text00010.html"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="id10" playOrder="10">
+        <navLabel>
+          <text>第2章 搭建开发环境</text>
+        </navLabel>
+        <content src="OEBPS/text00011.html"/>
+        <navPoint class="chapter" id="id11" playOrder="11">
+          <navLabel>
+            <text>2.1 下载及安装Anaconda开发工具</text>
+          </navLabel>
+          <content src="OEBPS/text00012.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id12" playOrder="12">
+          <navLabel>
+            <text>2.2 在Windows平台下载及安装TensorFlow</text>
+          </navLabel>
+          <content src="OEBPS/text00013.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id13" playOrder="13">
+          <navLabel>
+            <text>2.3 GPU版本的安装方法</text>
+          </navLabel>
+          <content src="OEBPS/text00014.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id14" playOrder="14">
+          <navLabel>
+            <text>2.4 熟悉Anaconda 3开发工具</text>
+          </navLabel>
+          <content src="OEBPS/text00015.html"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="id15" playOrder="15">
+        <navLabel>
+          <text>第3章 TensorFlow基本开发步骤——以逻辑回归拟合二维数据为例</text>
+        </navLabel>
+        <content src="OEBPS/text00016.html"/>
+        <navPoint class="chapter" id="id16" playOrder="16">
+          <navLabel>
+            <text>3.1 实例1：从一组看似混乱的数据中找出y≈2x的规律</text>
+          </navLabel>
+          <content src="OEBPS/text00017.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id17" playOrder="17">
+          <navLabel>
+            <text>3.2 模型是如何训练出来的</text>
+          </navLabel>
+          <content src="OEBPS/text00018.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id18" playOrder="18">
+          <navLabel>
+            <text>3.3 了解TensorFlow开发的基本步骤</text>
+          </navLabel>
+          <content src="OEBPS/text00019.html"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="id19" playOrder="19">
+        <navLabel>
+          <text>第4章 TensorFlow编程基础</text>
+        </navLabel>
+        <content src="OEBPS/text00020.html"/>
+        <navPoint class="chapter" id="id20" playOrder="20">
+          <navLabel>
+            <text>4.1 编程模型</text>
+          </navLabel>
+          <content src="OEBPS/text00021.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id21" playOrder="21">
+          <navLabel>
+            <text>4.2 TensorFlow基础类型定义及操作函数介绍</text>
+          </navLabel>
+          <content src="OEBPS/text00022.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id22" playOrder="22">
+          <navLabel>
+            <text>4.3 共享变量</text>
+          </navLabel>
+          <content src="OEBPS/text00023.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id23" playOrder="23">
+          <navLabel>
+            <text>4.4 实例19：图的基本操作</text>
+          </navLabel>
+          <content src="OEBPS/text00024.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id24" playOrder="24">
+          <navLabel>
+            <text>4.5 配置分布式TensorFlow</text>
+          </navLabel>
+          <content src="OEBPS/text00025.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id25" playOrder="25">
+          <navLabel>
+            <text>4.6 动态图（Eager）</text>
+          </navLabel>
+          <content src="OEBPS/text00026.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id26" playOrder="26">
+          <navLabel>
+            <text>4.7 数据集（tf.data）</text>
+          </navLabel>
+          <content src="OEBPS/text00027.html"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="id27" playOrder="27">
+        <navLabel>
+          <text>第5章 识别图中模糊的手写数字（实例21）</text>
+        </navLabel>
+        <content src="OEBPS/text00028.html"/>
+        <navPoint class="chapter" id="id28" playOrder="28">
+          <navLabel>
+            <text>5.1 导入图片数据集</text>
+          </navLabel>
+          <content src="OEBPS/text00029.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id29" playOrder="29">
+          <navLabel>
+            <text>5.2 分析图片的特点，定义变量</text>
+          </navLabel>
+          <content src="OEBPS/text00030.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id30" playOrder="30">
+          <navLabel>
+            <text>5.3 构建模型</text>
+          </navLabel>
+          <content src="OEBPS/text00031.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id31" playOrder="31">
+          <navLabel>
+            <text>5.4 训练模型并输出中间状态参数</text>
+          </navLabel>
+          <content src="OEBPS/text00032.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id32" playOrder="32">
+          <navLabel>
+            <text>5.5 测试模型</text>
+          </navLabel>
+          <content src="OEBPS/text00033.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id33" playOrder="33">
+          <navLabel>
+            <text>5.6 保存模型</text>
+          </navLabel>
+          <content src="OEBPS/text00034.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id34" playOrder="34">
+          <navLabel>
+            <text>5.7 读取模型</text>
+          </navLabel>
+          <content src="OEBPS/text00035.html"/>
+        </navPoint>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="id35" playOrder="35">
+      <navLabel>
+        <text>第2篇 深度学习基础——神经网络</text>
+      </navLabel>
+      <content src="OEBPS/text00036.html"/>
+      <navPoint class="chapter" id="id36" playOrder="36">
+        <navLabel>
+          <text>第6章 单个神经元</text>
+        </navLabel>
+        <content src="OEBPS/text00037.html"/>
+        <navPoint class="chapter" id="id37" playOrder="37">
+          <navLabel>
+            <text>6.1 神经元的拟合原理</text>
+          </navLabel>
+          <content src="OEBPS/text00038.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id38" playOrder="38">
+          <navLabel>
+            <text>6.2 激活函数——加入非线性因素，解决线性模型缺陷</text>
+          </navLabel>
+          <content src="OEBPS/text00039.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id39" playOrder="39">
+          <navLabel>
+            <text>6.3 softmax算法——处理分类问题</text>
+          </navLabel>
+          <content src="OEBPS/text00040.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id40" playOrder="40">
+          <navLabel>
+            <text>6.4 损失函数——用真实值与预测值的距离来指导模型的收敛方向</text>
+          </navLabel>
+          <content src="OEBPS/text00041.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id41" playOrder="41">
+          <navLabel>
+            <text>6.5 softmax算法与损失函数的综合应用</text>
+          </navLabel>
+          <content src="OEBPS/text00042.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id42" playOrder="42">
+          <navLabel>
+            <text>6.6 梯度下降——让模型逼近最小偏差</text>
+          </navLabel>
+          <content src="OEBPS/text00043.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id43" playOrder="43">
+          <navLabel>
+            <text>6.7 初始化学习参数</text>
+          </navLabel>
+          <content src="OEBPS/text00044.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id44" playOrder="44">
+          <navLabel>
+            <text>6.8 单个神经元的扩展——Maxout网络</text>
+          </navLabel>
+          <content src="OEBPS/text00045.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id45" playOrder="45">
+          <navLabel>
+            <text>6.9 练习题</text>
+          </navLabel>
+          <content src="OEBPS/text00046.html"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="id46" playOrder="46">
+        <navLabel>
+          <text>第7章 多层神经网络——解决非线性问题</text>
+        </navLabel>
+        <content src="OEBPS/text00047.html"/>
+        <navPoint class="chapter" id="id47" playOrder="47">
+          <navLabel>
+            <text>7.1 线性问题与非线性问题</text>
+          </navLabel>
+          <content src="OEBPS/text00048.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id48" playOrder="48">
+          <navLabel>
+            <text>7.2 使用隐藏层解决非线性问题</text>
+          </navLabel>
+          <content src="OEBPS/text00049.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id49" playOrder="49">
+          <navLabel>
+            <text>7.3 实例31：利用全连接网络将图片进行分类</text>
+          </navLabel>
+          <content src="OEBPS/text00050.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id50" playOrder="50">
+          <navLabel>
+            <text>7.4 全连接网络训练中的优化技巧</text>
+          </navLabel>
+          <content src="OEBPS/text00051.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id51" playOrder="51">
+          <navLabel>
+            <text>7.5 练习题</text>
+          </navLabel>
+          <content src="OEBPS/text00053.html"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="id52" playOrder="51">
+        <navLabel>
+          <text>第8章 卷积神经网络——解决参数太多问题</text>
+        </navLabel>
+        <content src="OEBPS/text00053.html"/>
+        <navPoint class="chapter" id="id53" playOrder="52">
+          <navLabel>
+            <text>8.1 全连接网络的局限性</text>
+          </navLabel>
+          <content src="OEBPS/text00054.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id54" playOrder="53">
+          <navLabel>
+            <text>8.2 理解卷积神经网络</text>
+          </navLabel>
+          <content src="OEBPS/text00055.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id55" playOrder="54">
+          <navLabel>
+            <text>8.3 网络结构</text>
+          </navLabel>
+          <content src="OEBPS/text00056.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id56" playOrder="55">
+          <navLabel>
+            <text>8.4 卷积神经网络的相关函数</text>
+          </navLabel>
+          <content src="OEBPS/text00057.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id57" playOrder="56">
+          <navLabel>
+            <text>8.5 使用卷积神经网络对图片分类</text>
+          </navLabel>
+          <content src="OEBPS/text00058.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id58" playOrder="57">
+          <navLabel>
+            <text>8.6 反卷积神经网络</text>
+          </navLabel>
+          <content src="OEBPS/text00059.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id59" playOrder="58">
+          <navLabel>
+            <text>8.7 实例50：用反卷积技术复原卷积网络各层图像</text>
+          </navLabel>
+          <content src="OEBPS/text00060.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id60" playOrder="59">
+          <navLabel>
+            <text>8.8 善用函数封装库</text>
+          </navLabel>
+          <content src="OEBPS/text00061.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id61" playOrder="60">
+          <navLabel>
+            <text>8.9 深度学习的模型训练技巧</text>
+          </navLabel>
+          <content src="OEBPS/text00062.html"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="id62" playOrder="61">
+        <navLabel>
+          <text>第9章 循环神经网络——具有记忆功能的网络</text>
+        </navLabel>
+        <content src="OEBPS/text00063.html"/>
+        <navPoint class="chapter" id="id63" playOrder="62">
+          <navLabel>
+            <text>9.1 了解RNN的工作原理</text>
+          </navLabel>
+          <content src="OEBPS/text00064.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id64" playOrder="63">
+          <navLabel>
+            <text>9.2 简单RNN</text>
+          </navLabel>
+          <content src="OEBPS/text00065.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id65" playOrder="64">
+          <navLabel>
+            <text>9.3 循环神经网络（RNN）的改进</text>
+          </navLabel>
+          <content src="OEBPS/text00066.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id66" playOrder="65">
+          <navLabel>
+            <text>9.4 TensorFlow实战RNN</text>
+          </navLabel>
+          <content src="OEBPS/text00067.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id67" playOrder="66">
+          <navLabel>
+            <text>9.5 实例68：利用BiRNN实现语音识别</text>
+          </navLabel>
+          <content src="OEBPS/text00068.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id68" playOrder="67">
+          <navLabel>
+            <text>9.6 实例69：利用RNN训练语言模型</text>
+          </navLabel>
+          <content src="OEBPS/text00069.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id69" playOrder="68">
+          <navLabel>
+            <text>9.7 语言模型的系统学习</text>
+          </navLabel>
+          <content src="OEBPS/text00070.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id70" playOrder="69">
+          <navLabel>
+            <text>9.8 处理Seq2Seq任务</text>
+          </navLabel>
+          <content src="OEBPS/text00071.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id71" playOrder="70">
+          <navLabel>
+            <text>9.9 实例75：制作一个简单的聊天机器人</text>
+          </navLabel>
+          <content src="OEBPS/text00072.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id72" playOrder="71">
+          <navLabel>
+            <text>9.10 时间序列的高级接口TFTS</text>
+          </navLabel>
+          <content src="OEBPS/text00073.html"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="id73" playOrder="72">
+        <navLabel>
+          <text>第10章 自编码网络——能够自学习样本特征的网络</text>
+        </navLabel>
+        <content src="OEBPS/text00074.html"/>
+        <navPoint class="chapter" id="id74" playOrder="73">
+          <navLabel>
+            <text>10.1 自编码网络介绍及应用</text>
+          </navLabel>
+          <content src="OEBPS/text00075.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id75" playOrder="74">
+          <navLabel>
+            <text>10.2 最简单的自编码网络</text>
+          </navLabel>
+          <content src="OEBPS/text00076.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id76" playOrder="75">
+          <navLabel>
+            <text>10.3 自编码网络的代码实现</text>
+          </navLabel>
+          <content src="OEBPS/text00077.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id77" playOrder="76">
+          <navLabel>
+            <text>10.4 去噪自编码</text>
+          </navLabel>
+          <content src="OEBPS/text00078.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id78" playOrder="77">
+          <navLabel>
+            <text>10.5 去噪自编码网络的代码实现</text>
+          </navLabel>
+          <content src="OEBPS/text00079.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id79" playOrder="78">
+          <navLabel>
+            <text>10.6 栈式自编码</text>
+          </navLabel>
+          <content src="OEBPS/text00080.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id80" playOrder="79">
+          <navLabel>
+            <text>10.7 深度学习中自编码的常用方法</text>
+          </navLabel>
+          <content src="OEBPS/text00081.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id81" playOrder="80">
+          <navLabel>
+            <text>10.8 去噪自编码与栈式自编码的综合实现</text>
+          </navLabel>
+          <content src="OEBPS/text00082.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id82" playOrder="81">
+          <navLabel>
+            <text>10.9 变分自编码</text>
+          </navLabel>
+          <content src="OEBPS/text00083.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id83" playOrder="82">
+          <navLabel>
+            <text>10.10 条件变分自编码</text>
+          </navLabel>
+          <content src="OEBPS/text00084.html"/>
+        </navPoint>
+      </navPoint>
+    </navPoint>
+    <navPoint class="chapter" id="id84" playOrder="83">
+      <navLabel>
+        <text>第3篇 深度学习进阶</text>
+      </navLabel>
+      <content src="OEBPS/text00085.html"/>
+      <navPoint class="chapter" id="id85" playOrder="84">
+        <navLabel>
+          <text>第11章 深度神经网络</text>
+        </navLabel>
+        <content src="OEBPS/text00086.html"/>
+        <navPoint class="chapter" id="id86" playOrder="85">
+          <navLabel>
+            <text>11.1 深度神经网络介绍</text>
+          </navLabel>
+          <content src="OEBPS/text00087.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id87" playOrder="86">
+          <navLabel>
+            <text>11.2 GoogLeNet模型介绍</text>
+          </navLabel>
+          <content src="OEBPS/text00088.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id88" playOrder="87">
+          <navLabel>
+            <text>11.3 残差网络（ResNet）</text>
+          </navLabel>
+          <content src="OEBPS/text00089.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id89" playOrder="88">
+          <navLabel>
+            <text>11.4 Inception-ResNet-v2结构</text>
+          </navLabel>
+          <content src="OEBPS/text00090.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id90" playOrder="89">
+          <navLabel>
+            <text>11.5 TensorFlow中的图片分类模型库——slim</text>
+          </navLabel>
+          <content src="OEBPS/text00091.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id91" playOrder="90">
+          <navLabel>
+            <text>11.6 使用slim中的深度网络模型进行图像的识别与检测</text>
+          </navLabel>
+          <content src="OEBPS/text00092.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id92" playOrder="91">
+          <navLabel>
+            <text>11.7 实物检测模型库——Object Detection API</text>
+          </navLabel>
+          <content src="OEBPS/text00093.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id93" playOrder="92">
+          <navLabel>
+            <text>11.8 实物检测领域的相关模型</text>
+          </navLabel>
+          <content src="OEBPS/text00094.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id94" playOrder="93">
+          <navLabel>
+            <text>11.9 机器自己设计的模型（NASNet）</text>
+          </navLabel>
+          <content src="OEBPS/text00095.html"/>
+        </navPoint>
+      </navPoint>
+      <navPoint class="chapter" id="id95" playOrder="94">
+        <navLabel>
+          <text>第12章 对抗神经网络（GAN）</text>
+        </navLabel>
+        <content src="OEBPS/text00096.html"/>
+        <navPoint class="chapter" id="id96" playOrder="95">
+          <navLabel>
+            <text>12.1 GAN的理论知识</text>
+          </navLabel>
+          <content src="OEBPS/text00097.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id97" playOrder="96">
+          <navLabel>
+            <text>12.2 DCGAN——基于深度卷积的GAN</text>
+          </navLabel>
+          <content src="OEBPS/text00098.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id98" playOrder="97">
+          <navLabel>
+            <text>12.3 InfoGAN和ACGAN：指定类别生成模拟样本的GAN</text>
+          </navLabel>
+          <content src="OEBPS/text00099.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id99" playOrder="98">
+          <navLabel>
+            <text>12.4 AEGAN：基于自编码器的GAN</text>
+          </navLabel>
+          <content src="OEBPS/text00100.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id100" playOrder="99">
+          <navLabel>
+            <text>12.5 WGAN-GP：更容易训练的GAN</text>
+          </navLabel>
+          <content src="OEBPS/text00101.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id101" playOrder="100">
+          <navLabel>
+            <text>12.6 LSGAN（最小乘二GAN）：具有WGAN同样效果的GAN</text>
+          </navLabel>
+          <content src="OEBPS/text00102.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id102" playOrder="101">
+          <navLabel>
+            <text>12.7 GAN-cls：具有匹配感知的判别器</text>
+          </navLabel>
+          <content src="OEBPS/text00103.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id103" playOrder="102">
+          <navLabel>
+            <text>12.8 SRGAN——适用于超分辨率重建的GAN</text>
+          </navLabel>
+          <content src="OEBPS/text00104.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id104" playOrder="103">
+          <navLabel>
+            <text>12.9 GAN网络的高级接口TFGAN</text>
+          </navLabel>
+          <content src="OEBPS/text00105.html"/>
+        </navPoint>
+        <navPoint class="chapter" id="id105" playOrder="104">
+          <navLabel>
+            <text>12.10 总结</text>
+          </navLabel>
+          <content src="OEBPS/text00106.html"/>
+        </navPoint>
+      </navPoint>
+    </navPoint>
+  </navMap>
+</ncx>

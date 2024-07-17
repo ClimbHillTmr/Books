@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_61" class="calibre8">3.1　从感知机到神经网络</h2>
+<p class="calibre1">神经网络和上一章介绍的感知机有很多共同点。这里，我们主要以两者的差异为中心，来介绍神经网络的结构。</p>
+<h3 id="nav_point_62" class="calibre17">3.1.1　神经网络的例子</h3>
+<p class="calibre1">用图来表示神经网络的话，如图 3-1 所示。我们把最左边的一列称为<strong class="calibre2">输入层</strong>，最右边的一列称为<strong class="calibre2">输出层</strong>，中间的一列称为<strong class="calibre2">中间层</strong>。中间层有时也称为<strong class="calibre2">隐藏层</strong>。“隐藏”一词的意思是，隐藏层的神经元（和输入层、输出层不同）肉眼看不见。另外，本书中把输入层到输出层依次称为第 0 层、第 1 层、第 2 层（层号之所以从 0 开始，是为了方便后面基于 Python 进行实现）。图 3-1 中，第 0 层对应输入层，第 1 层对应中间层，第 2 层对应输出层。</p>
+<p class="tu"><img src="../images/00040.jpeg" alt="" width="80%" class="calibre27"/></p>
+<p class="calibre1"><strong class="calibre2">图 3-1　神经网络的例子</strong></p>
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00002.jpeg" alt="" width="7%" class="calibre13"/>　图 3-1 中的网络一共由 3 层神经元构成，但实质上只有 2 层神经元有权重，因此将其称为“2 层网络”。请注意，有的书也会根据构成网络的层数，把图 3-1 的网络称为“3 层网络”。本书将根据实质上拥有权重的层数（输入层、隐藏层、输出层的总数减去 1 后的数量）来表示网络的名称。</p>
+</blockquote>
+<p class="calibre1">只看图 3-1 的话，神经网络的形状类似上一章的感知机。实际上，就神经元的连接方式而言，与上一章的感知机并没有任何差异。那么，神经网络中信号是如何传递的呢？</p>
+<h3 id="nav_point_63" class="calibre17">3.1.2　复习感知机</h3>
+<p class="calibre1">在观察神经网络中信号的传递方法之前，我们先复习一下感知机。现在来思考一下图 3-2 中的网络结构。</p>
+<p class="tu"><img src="../images/00041.jpeg" alt="" width="60%" class="calibre29"/></p>
+<p class="calibre1"><strong class="calibre2">图 3-2　复习感知机</strong></p>
+<p class="calibre1">图 3-2 中的感知机接收 <img src="../images/00008.gif" alt="x_1" class="calibre24"/> 和 <img src="../images/00009.gif" alt="x_2" class="calibre24"/> 两个输入信号，输出 <em class="calibre7">y</em>。如果用数学式来表示图 3-2 中的感知机，则如式（3.1）所示。</p>
+<p class="tu"><img src="../images/00042.jpeg" alt="" width="70%" class="calibre25"/></p>
+<p class="calibre1"><em class="calibre7">b</em> 是被称为偏置的参数，用于控制神经元被激活的容易程度；而 <img src="../images/00010.gif" alt="w_1" class="calibre24"/> 和 <img src="../images/00011.gif" alt="w_2" class="calibre24"/> 是表示各个信号的权重的参数，用于控制各个信号的重要性。</p>
+<p class="calibre1">顺便提一下，在图 3-2 的网络中，偏置 <em class="calibre7">b</em> 并没有被画出来。如果要明确地表示出 <em class="calibre7">b</em>，可以像图 3-3 那样做。图 3-3 中添加了权重为 <em class="calibre7">b</em> 的输入信号 1。这个感知机将 <img src="../images/00008.gif" alt="x_1" class="calibre24"/>、<img src="../images/00009.gif" alt="x_2" class="calibre24"/>、1 三个信号作为神经元的输入，将其和各自的权重相乘后，传送至下一个神经元。在下一个神经元中，计算这些加权信号的总和。如果这个总和超过 0，则输出 1，否则输出 0。另外，由于偏置的输入信号一直是 1，所以为了区别于其他神经元，我们在图中把这个神经元整个涂成灰色。</p>
+<p class="calibre1">现在将式（3.1）改写成更加简洁的形式。为了简化式（3.1），我们用一个函数来表示这种分情况的动作（超过 0 则输出 1，否则输出 0）。引入新函数 <em class="calibre7">h</em>(<em class="calibre7">x</em>)，将式（3.1）改写成下面的式（3.2）和式（3.3）。</p>
+<p class="tu"><img src="../images/00043.gif" alt="y=h(b+w_1x_1+w_2x_2)\quad\quad\quad\quad\quad(3.2)" class="calibre24"/></p>
+<p class="tu"><img src="../images/00044.jpeg" alt="" width="50%" class="calibre30"/></p>
+<p class="calibre1"><strong class="calibre2">图 3-3　明确表示出偏置</strong></p>
+<p class="tu"><img src="../images/00045.jpeg" alt="" width="60%" class="calibre29"/></p>
+<p class="calibre1">式（3.2）中，输入信号的总和会被函数 <em class="calibre7">h</em>(<em class="calibre7">x</em>) 转换，转换后的值就是输出 <em class="calibre7">y</em>。然后，式（3.3）所表示的函数 <em class="calibre7">h</em>(<em class="calibre7">x</em>)，在输入超过 0 时返回 1，否则返回 0。因此，式（3.1）和式（3.2）、式（3.3）做的是相同的事情。</p>
+<h3 id="nav_point_64" class="calibre17">3.1.3　激活函数登场</h3>
+<p class="calibre1">刚才登场的 <em class="calibre7">h</em>（<em class="calibre7">x</em>）函数会将输入信号的总和转换为输出信号，这种函数一般称为<strong class="calibre2">激活函数</strong>（activation function）。如“激活”一词所示，激活函数的作用在于决定如何来激活输入信号的总和。</p>
+<p class="calibre1">现在来进一步改写式（3.2）。式（3.2）分两个阶段进行处理，先计算输入信号的加权总和，然后用激活函数转换这一总和。因此，如果将式（3.2）写得详细一点，则可以分成下面两个式子。</p>
+<p class="tu"><img src="../images/00046.gif" alt="a=b+w_1x_1+w_2x_2\quad\quad\quad\quad\quad(3.4)" class="calibre24"/></p>
+<p class="tu"><img src="../images/00047.gif" alt="y=h(a)\quad\quad\quad\quad\quad(3.5)" class="calibre24"/></p>
+<p class="calibre1">首先，式（3.4）计算加权输入信号和偏置的总和，记为 <em class="calibre7">a</em>。然后，式（3.5）用 <em class="calibre7">h</em>() 函数将 <em class="calibre7">a</em> 转换为输出 <em class="calibre7">y</em>。</p>
+<p class="calibre1">之前的神经元都是用一个○表示的，如果要在图中明确表示出式（3.4）和式（3.5），则可以像图 3-4 这样做。</p>
+<p class="tu"><img src="../images/00048.jpeg" alt="" width="65%" class="calibre26"/></p>
+<p class="calibre1"><strong class="calibre2">图 3-4　明确显示激活函数的计算过程</strong></p>
+<p class="calibre1">如图 3-4 所示，表示神经元的○中明确显示了激活函数的计算过程，即信号的加权总和为节点 <em class="calibre7">a</em>，然后节点 <em class="calibre7">a</em> 被激活函数 <em class="calibre7">h</em>() 转换成节点 <em class="calibre7">y</em>。本书中，“神经元”和“节点”两个术语的含义相同。这里，我们称 <em class="calibre7">a</em> 和 <em class="calibre7">y</em> 为“节点”，其实它和之前所说的“神经元”含义相同。</p>
+<p class="calibre1">通常如图 3-5 的左图所示，神经元用一个○表示。本书中，在可以明确神经网络的动作的情况下，将在图中明确显示激活函数的计算过程，如图 3-5 的右图所示。</p>
+<p class="tu"><img src="../images/00049.jpeg" alt="" width="98%" class="calibre31"/></p>
+<p class="calibre1"><strong class="calibre2">图 3-5　左图是一般的神经元的图，右图是在神经元内部明确显示激活函数的计算过程的图（<em class="calibre7">a</em> 表示输入信号的总和，<em class="calibre7">h</em>() 表示激活函数，<em class="calibre7">y</em> 表示输出）</strong></p>
+<p class="calibre1">下面，我们将仔细介绍激活函数。激活函数是连接感知机和神经网络的桥梁。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00002.jpeg" alt="" width="7%" class="calibre13"/>　本书在使用“感知机”一词时，没有严格统一它所指的算法。一般而言，“朴素感知机”是指单层网络，指的是激活函数使用了阶跃函数 <span class="zhu_shi_bian_hao">1</span> 的模型。“多层感知机”是指神经网络，即使用 sigmoid 函数（后述）等平滑的激活函数的多层网络。</p>
+</blockquote>
+<p class="zhu_shi_nei_rong"><span class="zhu_shi_bian_hao_xia">1</span>阶跃函数是指一旦输入超过阈值，就切换输出的函数。</p>
+</body></html>

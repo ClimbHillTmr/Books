@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">8.2　理解卷积神经网络</h3>
+<p class="ziti3">卷积神经网络避免了对参数的过度依赖，相比全连接神经网络，能更好地识别高维数据（即超大图片）。它是什么样的一个东西呢？ 先来理解一下sobel算子吧。如图8-1这就是sobel算子对图片处理后的效果，它可以把图片的轮廓显示出来。</p>
+<div class="pic"><img alt="" src="Image00127.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图8-1　sobel算子示例</p>
+<p class="ziti3">不要被它的名字吓到，它其实是个很简单的矩阵计算，其方法见图8-2所示的卷积过程。</p>
+<p class="ziti3">图8-2a的5×5矩阵可以理解为图8-1a（即原始图片），经过卷积操作后，变为图8-2b对应图8-1b（即轮廓图）。</p>
+<p class="ziti3">整个过程如图8-2所示，具体步骤如下。</p>
+<p class="ziti3">（1）在外面补了一圈0，这个过程叫做pading，目的是为了变换后生成同样大小的矩阵。</p>
+<p class="ziti3">（2）将图8-2a左上角的3×3矩阵中的每个元素分别与中间的3×3矩阵对应位置上的元素相乘，然后再相加，这样得到的值作为图8-2b的第一个元素。</p>
+<p class="ziti3">（3）中间的3×3矩阵就是sobel算子。</p>
+<p class="ziti3">（4）把图8-2a中左上角的3×3矩阵向右移动一个格，这可以理解为步长为1。</p>
+<p class="ziti3">（5）将图8-2a矩阵中的每个元素分别与中间的3×3矩阵对应位置上的元素相乘然后进行加和运算，算出的值填到图8-2b的第二个元素里。</p>
+<p class="ziti3">（6）一直重复上述操作，直到将图8-2b中的值都填满，整个这个过程就叫做卷积。</p>
+<p class="ziti3">sobel矩阵可以理解为卷积神经网络里的卷积核（也可以叫“滤波器”，filter），它里面的值也可以理解为权重w。在sobel中，这些w是固定的，就相当于一个训练好的模型，只要通过里面的值变换后的图片，就会产生具有轮廓的效果。这个变换后的图片，在卷积神经网络里称为feature map。</p>
+<div class="pic"><img alt="" src="Image00128.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图8-2　卷积过程</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 新生成的图片里面的每个像素值并不能保证在0～256之间。对于在区间外的像素点会导致灰度图无法显示，所以还需要做一次归一化，然后每个值都乘以256，再将所有的值映射到这个区间内。</p>
+<p class="ziti4">归一化算法：x=（x-Min）/（Max-Min）。</p>
+<p class="ziti4">其中，Max与Min为整体数据里的最大值和最小值，x是当前要转换的像素值。归一化之后可以保证每个x都在[0，1]的区间内。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

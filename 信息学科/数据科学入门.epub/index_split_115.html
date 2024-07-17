@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>数据科学入门</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<p id="filepos498880" class="calibre_"><span class="calibre6"><span class="bold"> 16.4　拟合优度 </span></span></p><p class="calibre_">目前为止，我们还没有使用留出来的测试数据。下面来看看，如果我们预测成为<span class="bold">付费用户</span> 的概率大于 0.5 的话会发生什么：</p><blockquote class="calibre_14"><span class="calibre11"><tt class="calibre7"><br class="calibre12"/>true_positives = false_positives = true_negatives = false_negatives = 0<br class="calibre12"/><br class="calibre12"/>for x_i, y_i in zip(x_test, y_test):<br class="calibre12"/>    predict = logistic(dot(beta_hat, x_i))<br class="calibre12"/><br class="calibre12"/>    if y_i == 1 and predict &gt;= 0.5:    # TP: 是付费用户，且我们预测为是<br class="calibre12"/>        true_positives += 1<br class="calibre12"/>    elif y_i == 1:                     # FN: 是付费用户，且我们预测为否<br class="calibre12"/>        false_negatives += 1<br class="calibre12"/>    elif predict &gt;= 0.5:               # FP: 非付费用户，且我们预测为是<br class="calibre12"/>        false_positives += 1<br class="calibre12"/>    else:                              # TN: 非付费用户，且我们预测为否<br class="calibre12"/>        true_negatives += 1<br class="calibre12"/><br class="calibre12"/>precision = true_positives / (true_positives + false_positives)<br class="calibre12"/>recall = true_positives / (true_positives + false_negatives)<br class="calibre12"/><br class="calibre12"/><br class="calibre12"/><br class="calibre12"/></tt></span></blockquote><p class="calibre_15">这里的查准率为 93%（即每预测 100 次有 93 次是正确的），查全率为 82%（即每 100 个付费用户中，我们能够预测出 82 个人），这两项指标都相当不错。</p><p class="calibre_">在图 16-4 中，我们给出了系统的预测值与实际值的比较情况，图中表明该模型的表现非常好：</p><blockquote class="calibre_14"><span class="calibre11"><tt class="calibre7"><br class="calibre12"/>predictions = [logistic(dot(beta_hat, x_i)) for x_i in x_test]<br class="calibre12"/>plt.scatter(predictions, y_test)<br class="calibre12"/>plt.xlabel("predicted probability")<br class="calibre12"/>plt.ylabel("actual outcome")<br class="calibre12"/>plt.title("Logistic Regression Predicted vs. Actual")<br class="calibre12"/>plt.show()<br class="calibre12"/><br class="calibre12"/><br class="calibre12"/><br class="calibre12"/></tt></span></blockquote><p class="calibre_19"><img src="images/00066.jpg" class="calibre_125"/>
+</p><p class="calibre_">
+<span class="bold">图 16-4：逻辑回归的预测值与实际值</span>
+</p><div class="mbp_pagebreak" id="calibre_pb_115"></div>
+<div class="calibre5">本书由「<a href="https://epubw.com" class="calibre3">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="calibre3">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body></html>

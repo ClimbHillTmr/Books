@@ -1,0 +1,112 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">6.6　梯度下降——让模型逼近最小偏差</h3>
+<p class="ziti3">前面的例子中都提到了梯度下降，但不系统。本节将更详细地介绍梯度下降的作用及常用技巧。</p>
+<h4 class="p3">6.6.1　梯度下降的作用及分类</h4>
+<p class="ziti3">梯度下降法是一个最优化算法，通常也称为最速下降法，常用于机器学习和人工智能中递归性地逼近最小偏差模型，梯度下降的方向也就是用负梯度方向为搜索方向，沿着梯度下降的方向求解极小值。</p>
+<p class="ziti3">在训练过程中，每次的正向传播后都会得到输出值与真实值的损失值，这个损失值越小，代表模型越好，于是梯度下降的算法就用在这里，帮助寻找最小的那个损失值，从而可以反推出对应的学习参数b和w，达到优化模型的效果。</p>
+<p class="ziti3">常用的梯度下降方法可以分为：批量梯度下降、随机梯度下降和小批量梯度下降。</p>
+<p class="ziti4">·批量梯度下降：遍历全部数据集算一次损失函数，然后算函数对各个参数的梯度和更新梯度。这种方法每更新一次参数，都要把数据集里的所有样本看一遍，计算量大，计算速度慢，不支持在线学习，称为Batch gradient descent，批梯度下降。</p>
+<p class="ziti4">·随机梯度下降：每看一个数据就算一下损失函数，然后求梯度更新参数，这称为stochastic gradient descent，随机梯度下降。这个方法速度比较快，但是收敛性能不太好，可能在最优点附近晃来晃去，命中不到最优点。两次参数的更新也有可能互相抵消，造成目标函数震荡比较剧烈。</p>
+<p class="ziti4">·小批量梯度下降：为了克服上面两种方法的缺点，一般采用一种折中手段——小批的梯度下降。这种方法把数据分为若干个批，按批来更新参数，这样一批中的一组数据共同决定了本次梯度的方向，下降起来就不容易跑偏，减少了随机性。另一方面因为批的样本数与整个数据集相比小了很多，计算量也不是很大。</p>
+<h4 class="p3">6.6.2　TensorFlow中的梯度下降函数</h4>
+<p class="ziti3">下面重点介绍在TensorFlow中进行随机梯度下降优化的函数。</p>
+<p class="ziti3">在TensorFlow中是通过一个叫做Optimizer的优化器类进行训练优化的。对于不同算法的优化器，在TensorFlow中会有不同的类，如表6-3所示。</p>
+<p class="middle-img">表6-3　梯度下降优化器</p>
+<div class="pic"><img alt="" src="Image00097.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">在训练过程中，先实例化一个优化函数如 tf.train.GradientDescentOptimizer，并基于一定的学习率进行梯度优化训练：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">optimizer = tf.train.GradientDescentOptimizer(learning_rate)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">接着使用一个minimize（）的操作，里面传入损失值节点loss，再启动一个外层的循环，优化器就会按照循环的次数一次次沿着loss最小值的方向优化参数了。</p>
+<p class="ziti3">整个过程中的求导和反向传播操作，都是在优化器里自动完成的。目前比较常用的优化器为Adam优化器。关于Adam的算法不在本书的介绍范围之内，有兴趣的读者可以参考相关资料扩充知识。</p>
+<h4 class="p3">6.6.3　退化学习率——在训练的速度与精度之间找到平衡</h4>
+<p class="ziti3">前面介绍的每个优化器的第一个参数learning_rate就是代表学习率。</p>
+<p class="ziti3">设置学习率的大小，是在精度和速度之间找到一个平衡：</p>
+<p class="ziti4">·如果学习率的值比较大，则训练速度会提升，但结果的精度不够；</p>
+<p class="ziti4">·如果学习率的值比较小，精度虽然提升了，但训练会耗费太多的时间。</p>
+<p class="ziti3">下面就来介绍设置学习率的方法——退化学习率。</p>
+<p class="ziti3">退化学习率又叫学习率衰减，它的本意是希望在训练过程中对于学习率大和小的优点都能够为我们所用，也就是当训练刚开始时使用大的学习率加快速度，训练到一定程度后使用小的学习率来提高精度，这时可以使用学习率衰减的方法：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">def exponential_decay(learning_rate,global_step, decay_steps, decay_rate,
+                               staircase=False, name=None):</pre>
+<hr class="calibre6"/>
+<p class="ziti3">学习率的衰减速度是由global_step和decay_steps来决定的。具体的计算公式如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">decayed_learning_rate = learning_rate *decay_rate ^ (global_step / decay_steps)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">staircase值默认为False。当为True时，将没有衰减功能，只是使用上面的公式初始化一个学习率的值而已。</p>
+<p class="ziti3">例如下面的代码：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">learning_rate = tf.train.exponential_decay(starter_learning_rate, global_ 
+step,100000, 0.96)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">这种方式定义的学习率就是退化学习率，它的意思是当前迭代到global_step步，学习率每一步都按照每10万步缩小到0.96%的速度衰退。</p>
+<p class="ziti3">有时还需要对已经训练好的模型进行微调，可以指定不同层使用不同的学习率，这个在后面章节中会详细介绍。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 通过增大批次处理样本的数量也可以起到退化学习率的效果。但是这种方法要求训练时的最小批次要与实际应用中的最小批次一致。一旦满足该条件时，建议优先选择增大批次数量的方法，因为这样会省去一些开发量和训练中的计算量。</p>
+<h4 class="p3">6.6.4　实例26：退化学习率的用法举例</h4>
+<p class="ziti3">本例主要是演示学习率衰减的使用方法。</p>
+<p class="ziti3">本例中使用迭代循环计数变量global_step来标记循环次数，初始学习率为0.1，令其以每10次衰减0.9的速度来进行退化。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">定义一个学习率变量，将其衰减系数设置好，并设置好迭代循环的次数，将每次迭代运算的次数与学习率打印出来，观察学习率按照次数退化的现象。</p>
+<p class="ziti3">代码6-3　退化学习率</p>
+<hr class="calibre6"/>
+<pre class="ziti5">import tensorflow as tf
+global_step = tf.Variable(0, trainable=False)
+initial_learning_rate = 0.1             #初始学习率
+learning_rate = tf.train.exponential_decay(initial_learning_rate,
+                                           global_step=global_step,
+                                           decay_steps=10,decay_rate=0.9)
+opt = tf.train.GradientDescentOptimizer(learning_rate)
+add_global = global_step.assign_add(1) #定义一个op，令global_step加1完成记步
+with tf.Session() as sess:
+    tf.global_variables_initializer().run()
+    print(sess.run(learning_rate))
+    for i in range(20):
+        g, rate = sess.run([add_global, learning_rate])     #循环20步，将每步的学习率打印出来
+        print(g,rate)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面代码运行如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">0.1
+1 0.1
+2 0.0989519
+3 0.0979148
+4 0.0968886
+5 0.0958732
+6 0.0948683
+7 0.093874
+8 0.0928902
+9 0.0919166
+10 0.0909533
+11 0.09
+12 0.0890567
+13 0.0881234
+14 0.0871998
+15 0.0862858
+16 0.0853815
+17 0.0844866
+18 0.0836011
+19 0.082725
+20 0.0818579</pre>
+<hr class="calibre6"/>
+<p class="ziti3">第1个数是迭代的次数，第2个输出是学习率。可以看到学习率在逐渐变小，在第11次由原来的0.1变为了0.09。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 这是一种常用的训练策略，在训练神经网络时，通常在训练刚开始时使用较大的learning rate，随着训练的进行，会慢慢减小learning rate。在使用时，一定要把当前迭代次数global_step传进去，否则不会有退化的功能。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

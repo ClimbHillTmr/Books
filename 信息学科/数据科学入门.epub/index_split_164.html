@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>数据科学入门</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<p id="filepos720890" class="calibre_15"><span class="calibre6"><span class="bold"> 23.6　</span></span><span class="calibre6"><tt class="calibre7"><span class="bold">ORDER BY</span></tt></span><span class="calibre6"><span class="bold">  </span></span></p><p class="calibre_">你会经常需要对结果排序。比如，你也许想知道你前两个用户的名字（按字母顺序排序的）：</p><blockquote class="calibre_14"><span class="calibre11"><tt class="calibre7"><br class="calibre12"/>SELECT * FROM users<br class="calibre12"/>ORDER BY name<br class="calibre12"/>LIMIT 2;<br class="calibre12"/><br class="calibre12"/><br class="calibre12"/><br class="calibre12"/></tt></span></blockquote><p class="calibre_15">可以通过给表提供一个具有排序（<tt class="calibre7">order</tt> ）功能的 <tt class="calibre7">order_by()</tt> 方法来轻易实现：</p><blockquote class="calibre_14"><span class="calibre11"><tt class="calibre7"><br class="calibre12"/>def order_by(self, order):<br class="calibre12"/>    new_table = self.select()      # 进行一次复制<br class="calibre12"/>    new_table.rows.sort(key=order)<br class="calibre12"/>    return new_table<br class="calibre12"/><br class="calibre12"/><br class="calibre12"/><br class="calibre12"/></tt></span></blockquote><p class="calibre_15">然后我们可以这样做：</p><blockquote class="calibre_14"><span class="calibre11"><tt class="calibre7"><br class="calibre12"/>friendliest_letters = avg_friends_by_letter \<br class="calibre12"/>    .order_by(lambda row: -row["avg_num_friends"]) \<br class="calibre12"/>    .limit(4)<br class="calibre12"/><br class="calibre12"/><br class="calibre12"/><br class="calibre12"/></tt></span></blockquote><p class="calibre_15">SQL 中的 <tt class="calibre7">ORDER BY</tt> 可以让你为每个字段设定 <tt class="calibre7">ASC</tt> （升序排列）或 <tt class="calibre7">DESC</tt> （降序排列）；这里我们不得不把它并入到 <tt class="calibre7">order</tt> 函数中。</p><div class="mbp_pagebreak" id="calibre_pb_164"></div>
+<div class="calibre5">本书由「<a href="https://epubw.com" class="calibre3">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="calibre3">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body></html>

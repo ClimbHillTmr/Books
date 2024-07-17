@@ -1,0 +1,261 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">12.5　WGAN-GP：更容易训练的GAN</h3>
+<p class="ziti3">WGAN-GP又称为具有梯度惩罚（Gradient Penalty）的WGAN（Wasserstein GAN），是WGAN的升级版，一般可以全面代替WGAN。但是为了让读者了解WGAN-GP，还是先来介绍WGAN。</p>
+<h4 class="p3">12.5.1　WGAN：基于推土机距离原理的GAN</h4>
+<p class="ziti4">
+<span class="yanse">1．原始GAN的问题即原因</span>
+</p>
+<p class="ziti3">实际训练中，GAN存在着训练困难、生成器和判别器的loss无法指示训练进程、生成样本缺乏多样性等问题。这与GAN的机制有关。</p>
+<p class="ziti3">GAN最终达到对抗的纳什均衡只是一个理想状态，而现实情况中得到的结果都是中间状态（伪平衡）。大部分的情况是，随着训练的次数越多判别器D的效果越好，会导致一直可以将生成器G的输出与真实样本区分开。</p>
+<p class="ziti3">这是因为生成器G是从低维空间向高维空间（复杂的样本空间）映射，其生成的样本分布空间Pg难以充满整个真实样本的分布空间Pr。即两个分布完全没有重叠的部分，或者它们重叠的部分可以忽略，这样就使得判别器D总会将它们分开。</p>
+<p class="ziti3">为什么可以忽略呢？放在二维空间中会更好理解一些。在二维平面中随机取两条曲线，两条曲线上的点可以代表二者的分布，要想判别器无法分辨它们，需要两个分布融合在一起，即它们之间需要存在重叠线段，然而这样的概率为0；另一方面，即使它们很可能会存在交叉点，但是相比于两条曲线而言，交叉点比曲线低一个维度，长度（测度）为0代表它只是一个点，代表不了分布情况，所以可以忽略。</p>
+<p class="ziti3">这样会带来什么后果呢？假设先将D训练得足够好，然后固定D，再来训练G，通过实验会发现G的loss无论怎么更新也无法收敛到最小值，而是无限接近log2。这个log2可以理解为Pg与Pr两个样本分布的距离。loss值恒定即表明G的梯度为0，无法再通过训练来优化自己。</p>
+<p class="ziti3">所以在原始GAN的训练中，判别器训练得太好，会使生成器梯度消失，生成器loss降不下去；判别器训练得不好，会使生成器梯度不准，四处乱跑。只有判别器训练到中间状态最佳，但是这个尺度很难把握，甚至在同一轮训练的前后不同阶段，这个状态出现的时段都不一样，是个完全不可控的情况。</p>
+<p class="ziti4">
+<span class="yanse">2．WGan介绍</span>
+</p>
+<p class="ziti3">WGan（Wasserstein Gan），Wasserstein是指Wasserstein距离，又叫Earth-Mover（EM）推土机距离。</p>
+<p class="ziti3">WGan的思想是将生成的模拟样本分布Pg与原始样本分布Pr组合起来，当成所有可能的联合分布的集合。然后可以从中采样得到真实样本与模拟样本，并能够计算二者的距离，还可以算出距离的期望值。这样就可以通过训练，让网络在所有可能的联合分布中对这个期望值取下界的方向优化，也就是将两个分布的集合拉到一起。这样原来的判别式就不再是判别真伪的功能了，而是计算两个分布集合距离的功能。所以将其称为评论器更加合适，同样，最后一层的sigmoid也需要去掉了。</p>
+<p class="ziti3">为了实现计算Wasserstein距离的功能，我们将这部分交给神经网络去拟合。为了简化公式，现在就让神经网络拟合如下函数，见式（12-1）：</p>
+<div class="pic"><img alt="" src="Image00261.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">f（x）可以理解成神经网络的计算，让判别器来实现将f（x<sub class="calibre7">1</sub>
+ ）与f（x<sub class="calibre7">2</sub>
+ ）的距离变换成x<sub class="calibre7">1</sub>
+ -x<sub class="calibre7">2</sub>
+ 的绝对值×k（K≥0）。K代表函数f（x）的Lipschitz常数，这样两个分布集合的距离就可以表示成D（real）-D（G（x））的绝对值×k了，这个k可以理解成梯度，即在神经网络f（x）中x的梯度绝对值会小于K。</p>
+<p class="ziti3">将k忽略整理后可以得到二者分布的式子，见式（12-2）：</p>
+<div class="pic"><img alt="" src="Image00262.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">现在要做的就是将L当成目标来计算loss，G将希望生成的结果Pg越来越接近Pr，所以需要通过训练让距离L最小化。因为生成器G与第一项无关，所以G的loss可以简化为式（12-3）。</p>
+<div class="pic"><img alt="" src="Image00263.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">而D的任务是区分它们，所以希望二者距离变大，所以loss需要取反，得到式（12-4）。</p>
+<div class="pic"><img alt="" src="Image00264.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">同样，通过D的loss值也可以看出G的生成质量，即loss越小代表距离越近，则生成的质量越高。</p>
+<p class="ziti3">而对于前面的梯度限制，WGAN直接使用了截断（clipping）的方式。这个方式在实际应用中有问题，所以后来又产生了其升级版WGAN-GP。</p>
+<h4 class="p3">12.5.2　WGAN-GP：带梯度惩罚项的WGAN</h4>
+<p class="ziti4">
+<span class="yanse">1．WGAN问题即原因</span>
+</p>
+<p class="ziti3">前面介绍了原始WGAN的Lipschitz限制的施加方式不对，使用Weight clipping方式太过生硬。每当更新完一次判别器的参数之后，就检查判别器的所有参数的绝对值有没有超过一个阈值，比如0.01，如果有的话就把这些参数截断（clip）回[-0.01，0.01]的范围内。</p>
+<p class="ziti3">Lipschitz限制本意是当输入的样本稍微变化后，判别器给出的分数不能发生太剧烈的变化。通过在训练过程中保证判别器的所有参数有界，就保证了判别器不能对两个略微不同的样本给出天差地别的分数值，从而间接实现了Lipschitz限制。</p>
+<p class="ziti3">然而，这种渴望与判别器本身的目的相矛盾。在判别器中，是希望loss尽可能地大，才能拉大真假样本的区别，这种情况会导致在判别器中通过loss算出的梯度会沿着loss越来越大的方向变化，然而经过Weight clipping后每一个网络参数又被独立地限制了取值范围（如[-0.01，0.01]），这种结果只能是所有的参数走向极端，要么取最大值（如0.01）要么取最小值（如-0.01），判别器没能充分利用自身的模型能力，经过它回传给生成器的梯度也会跟着变差。</p>
+<p class="ziti3">如果判别器是一个多层网络，Weight clipping还会导致梯度消失或者梯度爆炸。原因是，如果我们把Clipping threshold设得稍微小了一点，每经过一层网络，梯度就变小一点，多层之后就会指数衰减；反之，如果设得稍微大了一点，每经过一层网络，梯度就会变大一点，多层之后就会指数爆炸。然而在实际应用中很难做到设置适宜，让生成器获得恰到好处的回传梯度。</p>
+<p class="ziti4">
+<span class="yanse">2．WGAN-GP介绍</span>
+</p>
+<p class="ziti3">WGAN-GP中的GP是梯度惩罚（Gradient penalty）的意思。它是替换Weight clipping的一种方法。通过直接设置一个额外的梯度惩罚项，来实现判别器的梯度不超过K。</p>
+<p class="ziti3">例如式（12-5）和式（12-6）中：</p>
+<div class="pic"><img alt="" src="Image00265.jpg" class="calibre4"/>
+</div>
+<div class="pic"><img alt="" src="Image00266.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">MSE为平方差公式，X_inter为整个联合分布空间的x取样，即梯度惩罚项grad_pen为求整个联合分布空间的x对应D的梯度与k的平方差。</p>
+<p class="ziti3">判别器尽可能拉大真假样本的分数差距，希望梯度越大越好，变化幅度越大越好，所以判别器在充分训练之后，其梯度Norm其实就会在k附近。因此可以把上面的loss改成要求梯度Norm离k越近越好，k可以是任何数，我们就简单地把k定为1，再跟WGAN原来的判别器loss加权合并，就得到新的判别器loss，见式（12-7）：</p>
+<div class="pic"><img alt="" src="Image00267.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">即式（12-8）：<br class="calibre3"/>
+</p>
+<div class="pic"><img alt="" src="Image00268.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">λ为梯度惩罚参数，可以用来调节梯度惩罚的力度。</p>
+<p class="ziti3">grad_pen是需要从Pg与Pr的联合空间里采样。对于整个样本空间而言，需要抓住生成样本集中区域、真实样本集中区域及夹在它们中间的区域，即先随机取一个0～1的随机数，令一对真假样本分别按随机数的比例加和来生成X_inter的采样，见式（12-9）和式（12-10）：</p>
+<div class="pic"><img alt="" src="Image00269.jpg" class="calibre4"/>
+</div>
+<div class="pic"><img alt="" src="Image00270.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">这样把X_inter代入到式（12-5）中，就得到最终版本的判别器loss。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">eps = tf.random_uniform([shape], minval=0., maxval=1.)
+X_inter = eps*real + (1. - eps)* G（x）
+L= D（real）-D（G（x））+λMSE（tf.gradients(D(X_inter), [X_inter])-1）</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在WGAN-GP相关论文的实验中，Gradient penalty能够显著提高训练速度，解决了原始WGAN生成器梯度二值化问题（如图12-8a）与梯度消失爆炸问题（如图12-8b）。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 由于我们是对每个样本独立地施加梯度惩罚，所以判别器的模型架构中不能使用Batch Normalization，因为它会引入同一个batch中不同样本的相互依赖关系。如果需要，可以选择其他的normalization方法，如Layer Normalization、Weight Normalization和Instance Normalization，这些方法就不会引入样本之间的依赖。WGAN-GP的作者推荐的是Layer Normalization。</p>
+<div class="pic"><img alt="" src="Image00271.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图12-8　WGAN-GP优势（该图片来源于WGAN-GP相关论文）</p>
+<h4 class="p3">12.5.3　实例90：构建WGAN-GP生成MNIST数据集</h4>
+<p class="ziti3">在掌握了理论之后，下面通过一个例子对WGAN-GP有个更深刻的了解。</p>
+<p class="ziti3">本例演示在MNIST数据集上使用WGAN-GP网络模型生成模拟数据。这次的D和G用最简单的全连接网络来实现。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">通过使用WGAN-GP网络学习MNIST数据特征，并生成以假乱真的MNIST模拟样本。</p>
+<p class="ziti3">具体实现可以分为如下几个步骤。</p>
+<p class="ziti4">
+<span class="yanse">1．引入头文件并加载MNIST数据</span>
+</p>
+<p class="ziti3">假设MNIST数据放在本地磁盘跟目录的data下，同样使用slim库建立网络模型。代码如下：</p>
+<p class="ziti3">代码12-3　wgan-gp</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import tensorflow as tf
+02 from tensorflow.examples.tutorials.mnist import input_data
+03 import os
+04 import numpy as np
+05 from scipy import misc,ndimage
+06 import tensorflow.contrib.slim as slim
+07 #from tensorflow.python.ops import init_ops
+08 
+09 mnist = input_data.read_data_sets("/data/", one_hot=True)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．定义生成器与判别器</span>
+</p>
+<p class="ziti3">由于复杂部分都放在loss方面了，所以生成器G和判别器D就会简单一些，各自有3个全连接层。生成器最终输出与MNIST图片相同维度的数据作为模拟样本。判别器的输出不需要再有激活函数，输出维度为1的数值用来表示其结果。</p>
+<p class="ziti3">代码12-3　wgan-gp（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">10 def G(x):#生成器
+11     reuse = len([t for t in tf.global_variables() if t.name.
+    startswith('generator')]) &gt; 0
+12     with tf.variable_scope('generator', reuse = reuse):
+13         x = slim.fully_connected(x, 32,activation_fn = tf.nn.relu)
+14         x = slim.fully_connected(x, 128,activation_fn = tf.nn.relu)
+15         x = slim.fully_connected(x, mnist_dim,activation_fn = 
+        tf.nn.sigmoid)
+16     return x
+17 
+18 def D(X):#判别器
+19     reuse = len([t for t in tf.global_variables() if t.name.
+    startswith('discriminator')]) &gt; 0
+20     with tf.variable_scope('discriminator', reuse=reuse): 
+21         X = slim.fully_connected(X, 128,activation_fn = tf.nn.relu)
+22         X = slim.fully_connected(X, 32,activation_fn = tf.nn.relu)
+23         X = slim.fully_connected(X, 1,activation_fn = None)
+24     return X</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">3．定义网络模型与loss</span>
+</p>
+<p class="ziti3">生成的模拟数据为random_Y，与前面所描述的一致；生成器的Loss为-D（random_Y）；而判别器的loss为D（random_Y）- D（real_X）再加上一个联合分布样本梯度的惩罚项grad_pen；惩罚项的采样X_inter由一部分Pg分布和一部分Pr分布组成。同时对D（X_inter）求梯度得到grad_pen。具体代码如下：</p>
+<p class="ziti3">代码12-3　wgan-gp（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">25 real_X = tf.placeholder(tf.float32, shape=[batch_size, mnist_dim])
+26 random_X = tf.placeholder(tf.float32, shape=[batch_size, random_dim])
+27 random_Y = G(random_X)
+28 
+29 eps = tf.random_uniform([batch_size, 1], minval=0., maxval=1.)
+30 X_inter = eps*real_X + (1. - eps)*random_Y #按照eps比例生成真假样本采样X_inter
+31 grad = tf.gradients(D(X_inter), [X_inter])[0]
+32 grad_norm = tf.sqrt(tf.reduce_sum((grad)**2, axis=1))
+33 grad_pen = 10 * tf.reduce_mean(tf.nn.relu(grad_norm - 1.))#梯度惩罚项
+34 
+35 D_loss = tf.reduce_mean(D(random_Y)) -tf.reduce_mean(D(real_X)) + 
+grad_pen
+36 G_loss = -tf.reduce_mean(D(random_Y))</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">4．定义优化器并开始训练</span>
+</p>
+<p class="ziti3">通过前面定义的命名空间，找到生成器和判别器的训练参数，通过AdamOptimizer进行优化训练。</p>
+<p class="ziti3">代码12-3　wgan-gp（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">37 # 获得各个网络中各自的训练参数
+38 t_vars = tf.trainable_variables()
+39 d_vars = [var for var in t_vars if 'discriminator' in var.name]
+40 g_vars = [var for var in t_vars if 'generator' in var.name]
+41 print(len(t_vars),len(d_vars))
+42 #定义D和G的优化器
+43 D_solver = tf.train.AdamOptimizer(1e-4, 0.5).minimize(D_loss, var_
+list=d_vars)
+44 G_solver = tf.train.AdamOptimizer(1e-4, 0.5).minimize(G_loss, var_
+list=g_vars)
+45 
+46 training_epochs =100
+47 
+48 with tf.Session() as sess:
+49     sess.run(tf.global_variables_initializer())    
+50     if not os.path.exists('out/'):
+51         os.makedirs('out/')
+52         
+53     for epoch in range(training_epochs):
+54         total_batch = int(mnist.train.num_examples/batch_size)
+55 
+56         # 遍历全部数据集
+57         for e in range(total_batch):
+58             for i in range(5):
+59                 real_batch_X,_ = mnist.train.next_batch(batch_size)
+60                 random_batch_X = np.random.uniform(-1, 1, (batch_size, 
+                random_dim))
+61                 _,D_loss_ = sess.run([D_solver,D_loss], feed_dict=
+                {real_X:real_batch_X, random_X:random_batch_X})
+62             random_batch_X = np.random.uniform(-1, 1, (batch_size, 
+            random_dim))
+63             _,G_loss_ = sess.run([G_solver,G_loss], feed_dict={random_
+            X:random_batch_X})
+ </pre>
+<hr class="calibre6"/>
+<p class="ziti3">在session中优先让判别器学习次数多一些，让判别器每训练5次，生成器优化一次。WGAN_GP不会因为判别器准确度太高而引起生成器梯度消失的问题，好的判别器只会让生成器有更好的模拟效果。</p>
+<p class="ziti4">
+<span class="yanse">5．可视化结果</span>
+</p>
+<p class="ziti3">这次我们把生成的结果用图片的方式保存起来，并生成到硬盘上。每10次的全样本迭代会生成一次图片，图片的位置为本地代码文件所在目录下的out文件夹内。代码如下：</p>
+<p class="ziti3">代码12-3　wgan-gp（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">64 if epoch % 10 == 0:
+65             print ('epoch %s, D_loss: %s, G_loss: %s'%(epoch, D_loss_, 
+            G_loss_))
+66             n_rows = 6
+67             check_imgs = sess.run(random_Y, feed_dict={random_X:random_
+             batch_X}).reshape((batch_size, width, height))[:n_rows*n_
+             rows]
+68             imgs = np.ones((width*n_rows+5*n_rows+5, height*n_rows+5*n_
+            rows+5))
+69             for i in range(n_rows*n_rows):
+70                num1 = (i%n_rows)
+71                num2 = np.int32(i/n_rows)
+72                imgs[5+5*num1+width*num1:5+5*num1+width+width*num1,5+5*
+                num2+height*num2:5+5*num2+height+height*num2] = check_
+                imgs[i]
+73     
+74             misc.imsave('out/%s.png'%(epoch/10), imgs)
+75 
+76     print("完成!")</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码后，生成如下结果：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">epoch 0, D_loss: -4.15614, G_loss: 0.35294
+epoch 10, D_loss: -2.5528, G_loss: 1.48789
+epoch 20, D_loss: -2.21916, G_loss: 1.0337
+epoch 30, D_loss: -1.87463, G_loss: 0.875138
+epoch 40, D_loss: -1.65764, G_loss: 0.752094
+epoch 50, D_loss: -1.40312, G_loss: 0.967182
+epoch 60, D_loss: -1.16828, G_loss: 0.772282
+epoch 70, D_loss: -1.20912, G_loss: 1.03305
+epoch 80, D_loss: -1.02528, G_loss: 1.05023
+epoch 90, D_loss: -0.922399, G_loss: 1.31767
+完成!</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到D_loss的值在逐渐变小，表明生成的模拟样本质量越来越高。来到本地的out文件夹下，找到10张图片，如图12-9所示（这里举例出3张）。</p>
+<div class="pic"><img alt="" src="Image00272.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图12-9　WGAN-GP结果</p>
+<p class="ziti3">图12-9a为第一次迭代时的输出，图12-9c为第10次的输出。可以看到，在WGAN-PG的判别器严格要求下，生成器的模拟数据越来越逼真。</p>
+<h4 class="p3">12.5.4　练习题</h4>
+<p class="ziti3">把前面的例子代码loss部分分别改成如下两种情况。</p>
+<p class="ziti3">（1）第一种情况：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">D_loss = tf.reduce_mean(D(random_Y))-tf.reduce_mean(D(real_X)) + grad_pen
+G_loss = tf.reduce_mean(D(random_Y))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">（2）第二种情况：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">D_loss = tf.reduce_mean(D(real_X)) -tf.reduce_mean(D(random_Y)) + grad_pen
+G_loss = tf.reduce_mean(D(random_Y))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">猜想一下会产生什么样的效果？为什么会这样？通过运行实际代码验证你的假设。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

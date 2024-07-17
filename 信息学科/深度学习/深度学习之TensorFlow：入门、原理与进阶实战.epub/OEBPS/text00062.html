@@ -1,0 +1,317 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">8.9　深度学习的模型训练技巧</h3>
+<p class="ziti3">下面看看卷积神经网络的训练有哪些技巧。</p>
+<h4 class="p3">8.9.1　实例52：优化卷积核技术的演示</h4>
+<p class="ziti3">在实际的卷积训练中，为了加快速度，常常把卷积核裁开。比如一个3×3的过滤器，可以裁成3×1和1×3两个过滤器，分别对原有输入做卷积操作，这样可以大大提升运算的速度。</p>
+<p class="ziti3">原理：在浮点运算中乘法消耗的资源比较多，我们目的就是尽量减小乘法运算。</p>
+<p class="ziti4">·比如对一个5×2的原始图片进行一次3×3的同卷积，相当于生成的5×2像素中每一个都要经历3×3次乘法，那么一共是90次。</p>
+<p class="ziti4">·同样是这个图片，如果先进行一次3×1的同卷积需要30次运算，再进行一次1×3的同卷积还是30次，一共才60次。</p>
+<p class="ziti3">这仅仅是一个很小的数据张量，而且随着张量维度的增大，层数的增多，减少的运算会更多。那么运算量减少了，运算效果会等价吗？答案是肯定的。因为有公式来做保证3×1的矩阵乘上1×3的矩阵会正好生成3×3的矩阵。所以这个技巧在卷积网络中很常见。</p>
+<p class="ziti3">下面我们把这个技巧用在实例中，改写代码“代码8-9　cifar卷积.py”如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">使用优化卷积核技术将代码“8-9 cifar卷积.py”中的代码重构，并观察效果。</p>
+<p class="ziti3">代码8-19　cifar卷积核优化（片段）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">……
+x_image = tf.reshape(x, [-1,24,24,3])
+ 
+h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
+h_pool1 = max_pool_2x2(h_conv1)
+W_conv21 = weight_variable([5, 1, 64, 64])
+b_conv21 = bias_variable([64])
+h_conv21 = tf.nn.relu(conv2d(h_pool1, W_conv21) + b_conv21)
+ 
+W_conv2 = weight_variable([1, 5, 64, 64])
+b_conv2 = bias_variable([64])
+h_conv2 = tf.nn.relu(conv2d(h_conv21, W_conv2) + b_conv2)
+ 
+h_pool2 = max_pool_2x2(h_conv2)
+……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面代码中，将原来的第二层5×5的卷积操作conv2注释掉，换成两个5×1和1×5的卷积操作，代码运行后可以看到准确率没有变化，但是速度快了一些。</p>
+<h4 class="p3">8.9.2　实例53：多通道卷积技术的演示</h4>
+<p class="ziti3">这里介绍的多通道卷积，可以理解为一种新型的CNN网络模型，在原有的卷积模型基础上的扩展。</p>
+<p class="ziti4">·原有的卷积层中是使用单个尺寸的卷积核对输入数据卷积操作（如图8-25中的上半部分），生成若干个feature map。</p>
+<p class="ziti4">·而多通道卷积的变化就是，在单个卷积层中加入若干个不同尺寸的过滤器（如图8-25中的下半部分），这样会使生成的feature map特征更加多样性。</p>
+<div class="pic"><img alt="" src="Image00151.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图8-25　多通道卷积</p>
+<p class="ziti3">同样还是在代码“8-9　cifar卷积.py”中修改，为网络的卷积层增加不同尺寸的卷积核。这里将原有的5×5卷积，扩展到7×7卷积、1×1卷积、3×3卷积，并将它们的输出通过concat函数并在一起。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">使用多通道技术将代码“8-9　cifar卷积.py”中的代码重构，并观察效果。</p>
+<p class="ziti3">代码8-20　cifar多通道卷积</p>
+<hr class="calibre6"/>
+<pre class="ziti5">……
+x_image = tf.reshape(x, [-1,24,24,3])
+ 
+h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
+h_pool1 = max_pool_2x2(h_conv1)
+#######################################################多卷积核
+W_conv2_5x5 = weight_variable([5, 5, 64, 64]) 
+b_conv2_5x5 = bias_variable([64]) 
+W_conv2_7x7 = weight_variable([7, 7, 64, 64]) 
+b_conv2_7x7 = bias_variable([64]) 
+ 
+W_conv2_3x3 = weight_variable([3, 3, 64, 64]) 
+b_conv2_3x3 = bias_variable([64]) 
+ 
+W_conv2_1x1 = weight_variable([3, 3, 64, 64]) 
+b_conv2_1x1 = bias_variable([64]) 
+ 
+h_conv2_1x1 = tf.nn.relu(conv2d(h_pool1, W_conv2_1x1) + b_conv2_1x1)
+h_conv2_3x3 = tf.nn.relu(conv2d(h_pool1, W_conv2_3x3) + b_conv2_3x3)
+h_conv2_5x5 = tf.nn.relu(conv2d(h_pool1, W_conv2_5x5) + b_conv2_5x5)
+h_conv2_7x7 = tf.nn.relu(conv2d(h_pool1, W_conv2_7x7) + b_conv2_7x7)
+h_conv2 = tf.concat([h_conv2_5x5,h_conv2_7x7,h_conv2_3x3,h_conv2_1x1],3)
+ 
+h_pool2 = max_pool_2x2(h_conv2)
+#######################################################
+W_conv3 = weight_variable([5, 5, 256, 10])
+b_conv3 = bias_variable([10])
+h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
+ 
+nt_hpool3=avg_pool_6x6(h_conv3)#10
+nt_hpool3_flat = tf.reshape(nt_hpool3, [-1, 10])
+y_conv=tf.nn.softmax(nt_hpool3_flat)
+……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面代码中，1×1、3×3、5×5、7×7的卷积操作输入都是h_pool1，每个卷积操作后都生成了64个feature map，再用concat函数将它们合在一起变成一个[batch、12，12，256]大小的数据（4个64channels=256个channels）。</p>
+<p class="ziti3">代码运行后输出如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">step 0, training accuracy 0.0859375
+step 200, training accuracy 0.296875
+step 400, training accuracy 0.445312
+step 600, training accuracy 0.414062
+step 800, training accuracy 0.4375
+step 1000, training accuracy 0.484375
+step 1200, training accuracy 0.5
+……
+step 14000, training accuracy 0.671875
+step 14200, training accuracy 0.671875
+step 14400, training accuracy 0.59375
+step 14600, training accuracy 0.695312
+step 14800, training accuracy 0.609375
+finished！ test accuracy 0.664062</pre>
+<hr class="calibre6"/>
+<p class="ziti3">如果上面的concat函数会让你迷惑的话，可以参考第4章中关于concat的说明。</p>
+<h4 class="p3">8.9.3　批量归一化</h4>
+<p class="ziti3">还有一种应用十分广泛的优化方法——批量归一化（简称BN算法）。一般用在全连接或卷积神经网络中。这个里程碑式技术的问世，使得整个神经网络的识别准确度上升了一个台阶，下面就来介绍下其具体内容。</p>
+<p class="ziti4">
+<span class="yanse">1．批量归一化介绍</span>
+</p>
+<p class="ziti3">先来看下面的例子：</p>
+<p class="ziti3">假如有一个极简的网络模型，每一层只有一个节点，没有偏置。那么如果这个网络有三层的话，可以用如下式子表示其输出值：</p>
+<div class="pic"><img alt="" src="Image00152.jpg" class="calibre4"/>
+</div>
+<p class="ziti3">假设有两个神经网络，学习出了两套权重（w1：1，w2：1，w3：1）和（w1：0.01，w2：10000，w3：0.01），它们对应的输出z都是相同的。现在让它们训练一次，看看会发生什么。</p>
+<p class="ziti3">（1）反向传播：假设反向传播时计算出的损失值Δy为1，那么对于这两套权重的修正值将变为（Δw1：1，Δw2：1，Δw3：1）和（Δw1：100，Δw2：0.0001，Δw3：100）。</p>
+<p class="ziti3">（2）更新权重：这时更新过后的两套权重就变成了（w1：2，w2：2，w3：2）和（w1：100.01，w2：10000.0001，w3：100.01）。</p>
+<p class="ziti3">（3）第二次正向传播：假设输入样本是1，第一个神经网络的值为：</p>
+<p class="ziti4">Z=1×2×2×2 = 8</p>
+<p class="ziti3">第二个神经网络的值为：</p>
+<p class="ziti4">Z=1×100.01×10000.0001×100.01=100000000</p>
+<p class="ziti3">看到这里，读者是不是已经感觉到两个网络的输出值差别巨大？如果再往下进行，这时计算出的loss值会变得更大，使得网络无法计算，这种现象也叫做梯度爆炸。产生梯度爆炸的原因就是因为网络的内部协变量转移（Internal Covariate Shift），即正向传播时的不同层的参数会将反向训练计算时所参照的数据样本分布改变。</p>
+<p class="ziti3">这就是引入批量正则化的目的。它的作用是要最大限度地保证每次的正向传播输出在同一分布上，这样反向计算时参照的数据样本分布就会与正向计算时的数据分布一样了。保证了分布统一，对权重的调整才会更有意义。</p>
+<p class="ziti3">了解了原理之后，再来看批量正则化的做法就会变得很简单，即将每一层运算出来的数据都归一化成均值为0方差为1的标准高斯分布。这样就会在保留样本分布特征的同时，又消除了层与层间的分布差异。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 提示：</span>
+ 在实际应用中，批量归一化的收敛非常快，并且具有很强的泛化能力，某种情况下可以完全代替前面讲过的正则化、Dropout。</p>
+<p class="ziti4">
+<span class="yanse">2．批量归一化定义</span>
+</p>
+<p class="ziti3">先来看看TensorFlow中自带的BN函数定义：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">tf.nn.batch_normalization(x,mean,variance,offset,scale,variance_epsilon,
+name=None)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">它的参数很简单，各参数说明如下。</p>
+<p class="ziti4">·x：代表输入。</p>
+<p class="ziti4">·mean：代表样本的均值。</p>
+<p class="ziti4">·variance：代表方差。</p>
+<p class="ziti4">·offset：代表偏移，即相加一个转化值，后面我们会用激活函数来转换，所以这里不需要再转化，直接使用0。</p>
+<p class="ziti4">·scale：代表缩放，即乘以一个转化值，同理，一般都用1。</p>
+<p class="ziti4">·variance_epsilon： 是为了避免分母为0的情况，给分母加一个极小值。默认即可。</p>
+<p class="ziti3">要想使用这个函数，必须由另一个函数配合——tf.nn.moments，由它来计算均值和方差，然后就可以使用BN了。tf.nn.moments 定义如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">tf.nn.moments(x, axes, name=None, keep_dims=False)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">axes主要是指定哪个轴来求均值与方差。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ axes在使用过程中经常容易犯错。这里提供一个小技巧，为了求样本的均值和方差，一般都会设为保留最后一个维度，对于x来讲可以直接使用公式axis = list（range（len（x.get_shape（）） - 1））即可。例如，[128，3，3，12]　axes就为[0，1，2]，输出的均值方差维度为[12]</p>
+<p class="ziti3">有了上面的两个函数还不够，为了有更好的效果，我们希望使用平滑指数衰减的方法来优化每次的均值与方差，于是就用到了tf.train.ExponentialMovingAverage函数。它的作用是让上一次的值对本次的值有个衰减后的影响，从而使每次的值连起来后会相对平滑一些。展开后可以用下面的代码来表示：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">shadow_variable = decay * shadow_variable + (1 - decay) * variable</pre>
+<hr class="calibre6"/>
+<p class="ziti3">各参数说明如下。</p>
+<p class="ziti4">·decay：代表衰减指数，是在ExponentialMovingAverage中指定的，比如0.9。</p>
+<p class="ziti4">·variable：代表本批次样本中的值。</p>
+<p class="ziti4">·等式右边的shadow_variable：代表上次总样本的值。</p>
+<p class="ziti4">·等式左边shadow_variable：代表计算出来的本次总样本的值。</p>
+<p class="ziti4">
+<span class="yanse">3．批量归一化的简单用法</span>
+</p>
+<p class="ziti3">上面的函数虽然参数不多，但需要几个函数联合起来使用，于是TensorFlow中的layers模块里又实现了一次BN函数，相当于把几个函数合并到了一起，使用起来更加简单。下面来介绍一下，在使用时需要引入头文件：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">from tensorflow.contrib.layers.python.layers import batch_norm</pre>
+<hr class="calibre6"/>
+<p class="ziti3">函数的定义如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">def batch_norm(inputs,
+               decay=0.999,
+               center=True,
+               scale=False,
+               epsilon=0.001,
+               activation_fn=None,
+               param_initializers=None,
+               param_regularizers=None,
+               updates_collections=ops.GraphKeys.UPDATE_OPS,
+               is_training=True,
+               reuse=None,
+               variables_collections=None,
+               outputs_collections=None,
+               trainable=True,
+               batch_weights=None,
+               fused=False,
+               data_format=DATA_FORMAT_NHWC,
+               zero_debias_moving_mean=False,
+               scope=None,
+               renorm=False,
+               renorm_clipping=None,
+               renorm_decay=0.99):</pre>
+<hr class="calibre6"/>
+<p class="ziti3">虽然使用简单，但由于其中的参数较多，也增大了学习难度，因此这里列出一些常用的参数及使用习惯。</p>
+<p class="ziti4">·inputs：代表输入。</p>
+<p class="ziti4">·decay：代表移动平均值的衰败速度，是使用了一种叫做平滑指数衰减的方法更新均值方差，一般会设为0.9；值太小会导致均值和方差更新太快，而值太大又会导致几乎没有衰减，容易出现过拟合，这种情况一般需要把值调小点。</p>
+<p class="ziti4">·scale：是否进行变化（通过乘一个gamma值进行缩放），我们常习惯在BN后面接着一个线性的变化，如Relu。所以scale一般都会设为False。因为后面有对数据的转化处理，因此这里就不用再处理了。</p>
+<p class="ziti4">·epsilon：是为了避免分母为0的情况，给分母加一个极小值。一般默认即可。</p>
+<p class="ziti4">·is_training：当它为True时，代表是训练过程，这时会不断更新样本集的均值与方差。当测试时，要设成False，这样就会使用训练样本集的均值与方差。</p>
+<p class="ziti4">·updates_collections：其变量默认是tf.GraphKeys.UPDATE_OPS，在训练时提供了一种内置的均值方差更新机制，即通过图（一个计算任务）中的tf.GraphKeys. UPDATE_OPS变量来更新。但它是在每次当前批次训练完成后才更新均值和方差，这样导致当前数据总是使用前一次的均值和方差，没有得到最新的更新。所以一般都会将其设成None，让均值和方差即时更新。这样做虽然相比默认值在性能上稍慢点，但是对模型的训练还是有很大帮助的。</p>
+<p class="ziti4">·reuse：支持共享变量，与下面的scope参数联合使用</p>
+<p class="ziti4">·scope：指定变量的作用域variable_scope。</p>
+<h4 class="p3">8.9.4　实例54：为CIFAR图片分类模型添加BN</h4>
+<p class="ziti3">本例将演示BN函数的使用方法，同样是在原有的代码“8-9 cifar卷积.py”例子中修改，具体步骤如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">使用BN算法将代码“8-9　cifar卷积.py”中的代码重构，并观察其效果。</p>
+<p class="ziti4">
+<span class="yanse">1．添加BN函数</span>
+</p>
+<p class="ziti3">改写代码“8-9　cifar卷积.py”，在池化函数后面加入BN函数。</p>
+<p class="ziti3">代码8-21　cifarBN</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 ……
+02 def avg_pool_6x6(x):
+03   return tf.nn.avg_pool(x, ksize=[1, 6, 6, 1],
+04                         strides=[1, 6, 6, 1], padding='SAME')
+05 def batch_norm_layer(value,train = None, name = 'batch_norm'): 
+06   if train is not None:       
+07       return batch_norm(value, decay = 0.9,updates_collections=None, 
+      is_training = True)
+08   else:
+09       return batch_norm(value, decay = 0.9,updates_collections=None, 
+      is_training = False)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．为BN函数添加占位符参数</span>
+</p>
+<p class="ziti3">由于BN里面需要设置是否为训练状态，所以这里定义一个train将训练状态当成一个占位符来传入。</p>
+<p class="ziti3">代码8-21　cifarBN（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">10 x = tf.placeholder(tf.float32, [None, 24,24,3]) #CIFAR数据集的shape
+ 为24×24×3
+11 y = tf.placeholder(tf.float32, [None, 10]) #  10 类
+12 train = tf.placeholder(tf.float32)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">3．修改网络结构添加BN层</span>
+</p>
+<p class="ziti3">在第一层h_conv1与第二层h_conv2的输出之前卷积之后加入BN层。</p>
+<p class="ziti3">代码8-21　cifarBN（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">13 ……
+14 h_conv1 = tf.nn.relu(batch_norm_layer((conv2d(x_image, W_conv1) + 
+b_conv1),train))
+15 h_pool1 = max_pool_2x2(h_conv1)
+16 
+17 W_conv2 = weight_variable([5, 5, 64, 64])
+18 b_conv2 = bias_variable([64])
+19 
+20 h_conv2 = tf.nn.relu(batch_norm_layer((conv2d(h_pool1, W_conv2) + 
+b_conv2),train))
+21 h_pool2 = max_pool_2x2(h_conv2)
+22 ……</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">4．加入退化学习率</span>
+</p>
+<p class="ziti3">将原来的学习率改成退化学习率，使用0.04的初始值，让其每1000次退化0.9。</p>
+<p class="ziti3">代码8-21　cifarBN（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">23 ……
+24 cross_entropy = -tf.reduce_sum(y*tf.log(y_conv))
+25 global_step = tf.Variable(0, trainable=False)
+26 decaylearning_rate = tf.train.exponential_decay(0.04, global_step,
+1000, 0.9)
+27 
+28 train_step = tf.train.AdamOptimizer(decaylearning_rate).minimize
+(cross_entropy,global_step=global_step)
+29 correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y,1))
+30 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+31 ……</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">5．在运行session中添加训练标志</span>
+</p>
+<p class="ziti3">在session中找到循环的部分，为占位符train添加数值1，表明当前是训练状态。其他的地方都不用动，因为在第一步的BN函数里设定好train为None时，已经认为是测试状态。</p>
+<p class="ziti3">代码8-21　cifarBN（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">32 ……
+33 for i in range(20000):
+34   image_batch, label_batch = sess.run([images_train, labels_train])
+35   label_b = np.eye(10,dtype=float)[label_batch] #one hot编码
+36   
+37   train_step.run(feed_dict={x:image_batch, y: label_b,train:1},
+  session=sess)
+38 ……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，得到如下输出：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">begin
+begin data
+step 0, training accuracy 0.210938
+step 200, training accuracy 0.484375
+step 400, training accuracy 0.601562
+step 600, training accuracy 0.617188
+……
+step 18400, training accuracy 0.921875
+step 18600, training accuracy 0.921875
+step 18800, training accuracy 0.921875
+step 19000, training accuracy 0.953125
+step 19200, training accuracy 0.9375
+step 19400, training accuracy 0.914062
+step 19600, training accuracy 0.96875
+step 19800, training accuracy 0.9375
+finished！ test accuracy 0.71875</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到，准确率有了明显提升，训练时达到了90%以上，测试时模型的准确率下降了不少。有兴趣的读者可以通过对原样本变形的方式来增大数据集（使用cifar10_input中的distorted_inputs来获取数据），或采用前面讲的一些过拟合的方法继续优化。</p>
+<h4 class="p3">8.9.5　练习题</h4>
+<p class="ziti3">（1）搭建神经网络，使用多通道卷积，将MNIST数据集进行分类（代码见“8-23多通道mnist.py”。）</p>
+<p class="ziti3">（2）再接着练习（1）将多通道卷积加入批量正则化处理（代码见“8-22带BN的多通道mnist.py”，可将准确率提高到99%）。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

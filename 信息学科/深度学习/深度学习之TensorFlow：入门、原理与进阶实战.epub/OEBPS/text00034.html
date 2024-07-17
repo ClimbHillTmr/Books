@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">5.6　保存模型</h3>
+<p class="ziti3">下面开始讲解如何保存模型。</p>
+<p class="ziti3">首先要建立一个saver和一个路径，然后通过调用save，自动将session中的参数保存起来，见如下代码。</p>
+<p class="ziti3">代码5-2　MNIST分类（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">50     # 保存模型
+51     save_path = saver.save(sess, model_path)
+52     print("Model saved in file: %s" % save_path)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面代码的作用是保存模型，并将模型保存的路径打印出来。当然，在这段代码运行之前，需要添加saver和model_path的定义。来到前面代码段的第30行（也就是session创建之前）添加如下代码：</p>
+<p class="ziti3">代码5-2　MNIST分类（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">53 saver = tf.train.Saver()
+54 model_path = "log/521model.ckpt"</pre>
+<hr class="calibre6"/>
+<p class="ziti3">执行上述的全部代码后，会在代码文件的同级目录下找到log文件夹，其中有4个文件，如图5-4所示。</p>
+<div class="pic"><img alt="" src="Image00073.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图5-4　模型文件位置</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

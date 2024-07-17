@@ -1,0 +1,103 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">12.6　LSGAN（最小乘二GAN）：具有WGAN同样效果的GAN</h3>
+<p class="ziti3">前文已经介绍过GAN是以对抗的方式逼近概率分布。但是直接使用该方法，会随着判别器越来越好而生成器无法与其对抗，进而形成梯度消失的问题。所以不论是WGAN，还是本节中的LSGAN，都是试图使用不同的距离度量，从而构建一个不仅稳定，同时还收敛迅速的生成对抗网络。</p>
+<p class="ziti3">下面就来一起学习一下LSGAN。</p>
+<h4 class="p3">12.6.1　LSGAN介绍</h4>
+<p class="ziti3">WGAN使用的是Wasserstein理论来构建度量距离。而LSGAN使用了另一个方法，即使用了更加平滑和非饱和梯度的损失函数——最小乘二来代替原来的Sigmoid交叉熵。这是由于L2正则独有的特性，在数据偏离目标时会有一个与其偏离距离成比例的惩罚，再将其拉回来，从而使数据的偏离不会越来越远。</p>
+<p class="ziti3">相对于WGAN而言，LSGAN的loss简单很多。直接将传统的GAN中的softmax变为平方差即可。</p>
+<p class="ziti3">判别器的loss：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">D_loss=tf.reduce_sum(tf.square(D(real_X)-1) + tf.square(D(random_Y)))/2</pre>
+<hr class="calibre6"/>
+<p class="ziti3">生成器的loss：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">G_loss = tf.reduce_sum(tf.square(D(random_Y)-1))/2</pre>
+<hr class="calibre6"/>
+<p class="ziti3">为什么要除以2？和以前的原理一样，在对平方求导时会得到一个系数2，与事先的1/2运算正好等于1，使公式更加完整。</p>
+<h4 class="p3">12.6.2　实例91：构建LSGAN生成MNIST模拟数据</h4>
+<p class="ziti3">本例中直接修改“12-1 Mnistinfogan.py”代码中的loss函数，将其改成LSGAN网络。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">通过使用LSGAN网络学习MNIST数据特征，并生成以假乱真的MNIST模拟样本。</p>
+<p class="ziti3">下面给出具体步骤。</p>
+<p class="ziti4">
+<span class="yanse">1．修改判别器</span>
+</p>
+<p class="ziti3">将判别器的最后一层输出disc改成使用Sigmoid的激活函数。代码如下：</p>
+<p class="ziti3">代码12-4　mnistLSgan</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 def discriminator(x, num_classes=10, num_cont=2):
+02    
+03 ……
+04         disc = slim.fully_connected(shared_tensor, num_outputs=1, 
+        activation_fn=tf.nn.sigmoid)
+05         disc = tf.squeeze(disc, -1)
+06         recog_cat = slim.fully_connected(recog_shared, num_
+        outputs=num_classes, activation_fn=None)
+07         recog_cont = slim.fully_connected(recog_shared, num_
+        outputs=num_cont, activation_fn=tf.nn.sigmoid)
+08     return disc, recog_cat, recog_cont</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．修改loss值</span>
+</p>
+<p class="ziti3">将原有的loss_d与loss_g改成平方差形式，原有的y_real与y_fake不再需要了，可以删掉，其他代码不用变动。</p>
+<p class="ziti3">代码12-4　MnistLSgan（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">09 ……
+10 # 判别器discriminator
+11 disc_real, class_real, _ = discriminator(x)
+12 disc_fake, class_fake, con_fake = discriminator(gen)
+13 pred_class = tf.argmax(class_fake, dimension=1)
+14 
+15 # 判别器loss
+16 #loss_d_r = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits
+(logits=disc_real, labels=y_real))
+17 #loss_d_f = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits
+(logits=disc_fake, labels=y_fake))
+18 #最小乘二loss
+19 loss_d = tf.reduce_sum(tf.square(disc_real-1) + tf.square(disc_
+fake))/2
+20 loss_g = tf.reduce_sum(tf.square(disc_fake-1))/2
+21 ……</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">3．运行代码生成结果</span>
+</p>
+<p class="ziti3">运行代码，生成结果如下，输出图片如图12-10所示。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Epoch: 0001 cost= 2.074717045  0.93645
+Epoch: 0002 cost= 2.024495363  1.88027
+Epoch: 0003 cost= 2.158437967  2.78284
+完成!
+Result: 1.71483 3.07138
+d_class 7 inputy 7 con_out [ 0.16134234  0.03605343]
+d_class 2 inputy 2 con_out [ 0.30764639  0.98185432]
+d_class 1 inputy 1 con_out [ 0.11353409  0.02166406]
+d_class 0 inputy 0 con_out [  2.32195278e-04   2.08523397e-06]
+d_class 4 inputy 4 con_out [ 0.355297    0.94447494]
+d_class 1 inputy 1 con_out [  1.33050963e-01   1.69226732e-05]
+d_class 4 inputy 4 con_out [ 0.17757109  0.78396767]
+d_class 9 inputy 9 con_out [  6.99081238e-06   2.24134132e-01]
+d_class 5 inputy 5 con_out [ 0.87434149  0.98944479]
+d_class 9 inputy 9 con_out [ 0.00770722  0.00958756]</pre>
+<hr class="calibre6"/>
+<div class="pic"><img alt="" src="Image00273.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图12-10　LSGAN例子结果</p>
+<p class="ziti3">可见LSGAN也可以产生与WGAN一样的效果。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ WGAN与LSGAN谁更好呢？答案是很难一概而论，只能具体问题具体分析。在实际实现中还会有更多细节决定最终的结果，不同的技术使用都会对结果造成相应的影响。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

@@ -1,0 +1,193 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_18" class="calibre8">1.3　Python解释器</h2>
+<p class="calibre1">完成 Python 的安装后，要先确认一下 Python 的版本。打开终端（Windows 中的命令行窗口），输入 <code class="calibre15">python --version</code> 命令，该命令会输出已经安装的 Python 的版本信息。</p>
+<pre class="calibre18">
+$ <b class="calibre19">python --version</b>
+Python 3.4.1 :: Anaconda 2.1.0 (x86_64)
+</pre>
+
+<p class="calibre1">如上所示，显示了 Python 3.4.1（根据实际安装的版本，版本号可能不同），说明已正确安装了 Python 3.<em class="calibre7">x</em>。接着输入 <code class="calibre15">python</code>，启动 Python 解释器。</p>
+<pre class="calibre18">
+$ <b class="calibre19">python</b>
+Python 3.4.1 |Anaconda 2.1.0 (x86_64)| (default, Sep 10 2014, 17:24:09)
+[GCC 4.2.1 (Apple Inc. build 5577)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+&gt;&gt;&gt;
+</pre>
+
+<p class="calibre1">Python 解释器也被称为“对话模式”，用户能够以和 Python 对话的方式进行编程。比如，当用户询问“1 + 2 等于几？”的时候，Python 解释器会回答“3”，所谓对话模式，就是指这样的交互。现在，我们实际输入一下看看。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">1 + 2</b>
+3
+</pre>
+
+<p class="calibre1">Python 解释器可以像这样进行对话式（交互式）的编程。下面，我们使用这个对话模式，来看几个简单的 Python 编程的例子。</p>
+<h3 id="nav_point_19" class="calibre17">1.3.1　算术计算</h3>
+<p class="calibre1">加法或乘法等算术计算，可按如下方式进行。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">1 - 2</b>
+-1
+&gt;&gt;&gt; <b class="calibre19">4 * 5</b>
+20
+&gt;&gt;&gt; <b class="calibre19">7 / 5</b>
+1.4
+&gt;&gt;&gt; <b class="calibre19">3 ** 2</b>
+9
+</pre>
+
+<p class="calibre1"><code class="calibre15">*</code> 表示乘法，<code class="calibre15">/</code> 表示除法，<code class="calibre15">**</code> 表示乘方（<code class="calibre15">3**2</code> 是 3 的 2 次方）。另外，在 Python 2.<em class="calibre7">x</em> 中，整数除以整数的结果是整数，比如，7 ÷ 5 的结果是 1。但在 Python 3.<em class="calibre7">x</em> 中，整数除以整数的结果是小数（浮点数）。</p>
+<h3 id="nav_point_20" class="calibre17">1.3.2　数据类型</h3>
+<p class="calibre1">编程中有<strong class="calibre2">数据类型</strong>（data type）这一概念。数据类型表示数据的性质，有整数、小数、字符串等类型。Python 中的 <code class="calibre15">type()</code> 函数可以用来查看数据类型。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">type(10)</b>
+&lt;class 'int'&gt;
+&gt;&gt;&gt; <b class="calibre19">type(2.718)</b>
+&lt;class 'float'&gt;
+&gt;&gt;&gt; <b class="calibre19">type("hello")</b>
+&lt;class 'str'&gt;
+</pre>
+
+<p class="calibre1">根据上面的结果可知，<code class="calibre15">10</code> 是 <code class="calibre15">int</code> 类型（整型），<code class="calibre15">2.718</code> 是 <code class="calibre15">float</code> 类型（浮点型），<code class="calibre15">"hello"</code> 是 <code class="calibre15">str</code>（字符串）类型。另外，“类型”和“类”这两个词有时用作相同的意思。这里，对于输出结果 <code class="calibre15">&lt;class 'int'&gt;</code>，可以将其解释成“<code class="calibre15">10</code> 是 <code class="calibre15">int</code> 类（类型）”。</p>
+<h3 id="nav_point_21" class="calibre17">1.3.3　变量</h3>
+<p class="calibre1">可以使用 <code class="calibre15">x</code> 或 <code class="calibre15">y</code> 等字母定义<strong class="calibre2">变量</strong>（variable）。此外，可以使用变量进行计算，也可以对变量赋值。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">x = 10</b>   # 初始化
+&gt;&gt;&gt; <b class="calibre19">print(x)</b> # 输出x
+10
+&gt;&gt;&gt; <b class="calibre19">x = 100</b> # 赋值
+&gt;&gt;&gt; <b class="calibre19">print(x)</b>
+100
+&gt;&gt;&gt; <b class="calibre19">y = 3.14</b>
+&gt;&gt;&gt; <b class="calibre19">x * y</b>
+314.0
+&gt;&gt;&gt; <b class="calibre19">type(x * y)</b>
+&lt;class 'float'&gt;
+</pre>
+
+<p class="calibre1">Python 是属于“动态类型语言”的编程语言，所谓动态，是指变量的类型是根据情况自动决定的。在上面的例子中，用户并没有明确指出“<code class="calibre15">x</code> 的类型是 <code class="calibre15">int</code>（整型）”，是 Python 根据 <code class="calibre15">x</code> 被初始化为 10，从而判断出 <code class="calibre15">x</code> 的类型为 <code class="calibre15">int</code> 的。此外，我们也可以看到，整数和小数相乘的结果是小数（数据类型的自动转换）。另外，“<code class="calibre15">#</code>”是注释的意思，它后面的文字会被 Python 忽略。</p>
+<h3 id="nav_point_22" class="calibre17">1.3.4　列表</h3>
+<p class="calibre1">除了单一的数值，还可以用列表（数组）汇总数据。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">a = [1, 2, 3, 4, 5]</b> # 生成列表
+&gt;&gt;&gt; <b class="calibre19">print(a)</b> # 输出列表的内容
+[1, 2, 3, 4, 5]
+&gt;&gt;&gt; <b class="calibre19">len(a)</b>   # 获取列表的长度
+5
+&gt;&gt;&gt; <b class="calibre19">a[0]</b>     # 访问第一个元素的值
+1
+&gt;&gt;&gt; <b class="calibre19">a[4]</b>
+5
+&gt;&gt;&gt; <b class="calibre19">a[4] = 99</b> # 赋值
+&gt;&gt;&gt; <b class="calibre19">print(a)</b>
+[1, 2, 3, 4, 99]
+</pre>
+
+<p class="calibre1">元素的访问是通过 <code class="calibre15">a[0]</code> 这样的方式进行的。<code class="calibre15">[]</code> 中的数字称为索引（下标），索引从 0 开始（索引 0 对应第一个元素）。此外，Python 的列表提供了<strong class="calibre2">切片</strong>（slicing）这一便捷的标记法。使用切片不仅可以访问某个值，还可以访问列表的子列表（部分列表）。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">print(a)</b>
+[1, 2, 3, 4, 99]
+&gt;&gt;&gt; <b class="calibre19">a[0:2]</b> # 获取索引为0到2（不包括2！）的元素
+[1, 2]
+&gt;&gt;&gt; <b class="calibre19">a[1:]</b>  # 获取从索引为1的元素到最后一个元素
+[2, 3, 4, 99]
+&gt;&gt;&gt; <b class="calibre19">a[:3]</b>  # 获取从第一个元素到索引为3（不包括3！）的元素
+[1, 2, 3]
+&gt;&gt;&gt; <b class="calibre19">a[:-1]</b> # 获取从第一个元素到最后一个元素的前一个元素之间的元素
+[1, 2, 3, 4]
+&gt;&gt;&gt; <b class="calibre19">a[:-2]</b> # 获取从第一个元素到最后一个元素的前二个元素之间的元素
+[1, 2, 3]
+</pre>
+
+<p class="calibre1">进行列表的切片时，需要写成 <code class="calibre15">a[0:2]</code> 这样的形式。<code class="calibre15">a[0:2]</code> 用于取出从索引为 0 的元素到索引为 2 的元素的前一个元素之间的元素。另外，索引 -1 对应最后一个元素，-2 对应最后一个元素的前一个元素。</p>
+<h3 id="nav_point_23" class="calibre17">1.3.5　字典</h3>
+<p class="calibre1">列表根据索引，按照 0, 1, 2, ... 的顺序存储值，而字典则以键值对的形式存储数据。字典就像《新华字典》那样，将单词和它的含义对应着存储起来。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">me = {'height':180}</b> # 生成字典
+&gt;&gt;&gt; <b class="calibre19">me['height']</b>        # 访问元素
+180
+&gt;&gt;&gt; <b class="calibre19">me['weight'] = 70</b>   # 添加新元素
+&gt;&gt;&gt; <b class="calibre19">print(me)</b>
+{'height': 180, 'weight': 70}
+</pre>
+
+<h3 id="nav_point_24" class="calibre17">1.3.6　布尔型</h3>
+<p class="calibre1">Python 中有 <code class="calibre15">bool</code> 型。<code class="calibre15">bool</code> 型取 <code class="calibre15">True</code> 或 <code class="calibre15">False</code> 中的一个值。针对 <code class="calibre15">bool</code> 型的运算符包括 <code class="calibre15">and</code>、<code class="calibre15">or</code> 和 <code class="calibre15">not</code>（针对数值的运算符有 <code class="calibre15">+</code>、<code class="calibre15">-</code>、<code class="calibre15">*</code>、<code class="calibre15">/</code> 等，根据不同的数据类型使用不同的运算符）。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">hungry = True</b>     # 饿了？
+&gt;&gt;&gt; <b class="calibre19">sleepy = False</b>    # 困了？
+&gt;&gt;&gt; <b class="calibre19">type(hungry)</b>
+&lt;class 'bool'&gt;
+&gt;&gt;&gt; <b class="calibre19">not hungry</b>
+False
+&gt;&gt;&gt; <b class="calibre19">hungry and sleepy</b> # 饿并且困
+False
+&gt;&gt;&gt; <b class="calibre19">hungry or sleepy</b>  # 饿或者困
+True
+</pre>
+
+<h3 id="nav_point_25" class="calibre17">1.3.7　if 语句</h3>
+<p class="calibre1">根据不同的条件选择不同的处理分支时可以使用 <code class="calibre15">if/else</code> 语句。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">hungry = True</b>
+&gt;&gt;&gt; <b class="calibre19">if hungry:</b>
+...     <b class="calibre19">print("I'm hungry")</b>
+...
+I'm hungry
+&gt;&gt;&gt; <b class="calibre19">hungry = False</b>
+&gt;&gt;&gt; <b class="calibre19">if hungry:</b>
+...     <b class="calibre19">print("I'm hungry")</b> # 使用空白字符进行缩进
+... <b class="calibre19">else:</b>
+...     <b class="calibre19">print("I'm not hungry")</b>
+...     <b class="calibre19">print("I'm sleepy")</b>
+...
+I'm not hungry
+I'm sleepy
+</pre>
+
+<p class="calibre1">Python 中的空白字符具有重要的意义。上面的 <code class="calibre15">if</code> 语句中，<code class="calibre15">if hungry:</code> 下面的语句开头有 4 个空白字符。它是缩进的意思，表示当前面的条件（<code class="calibre15">if hungry</code>）成立时，此处的代码会被执行。这个缩进也可以用 tab 表示，Python 中推荐使用空白字符。</p>
+<blockquote class="calibre10">
+<p class="calibre1"><img src="../images/00002.jpeg" alt="" width="7%" class="calibre13"/>　Python 使用空白字符表示缩进。一般而言，每缩进一次，使用 4 个空白字符。</p>
+</blockquote>
+<h3 id="nav_point_26" class="calibre17">1.3.8　for 语句</h3>
+<p class="calibre1">进行循环处理时可以使用 <code class="calibre15">for</code> 语句。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">for i in [1, 2, 3]:</b>
+...     <b class="calibre19">print(i)</b>
+...
+1
+2
+3
+</pre>
+
+<p class="calibre1">这是输出列表 <code class="calibre15">[1, 2, 3]</code> 中的元素的例子。使用 <code class="calibre15">for … in … :</code> 语句结构，</p>
+<p class="calibre1">可以按顺序访问列表等数据集合中的各个元素。</p>
+<h3 id="nav_point_27" class="calibre17">1.3.9　函数</h3>
+<p class="calibre1">可以将一连串的处理定义成<strong class="calibre2">函数</strong>（function）。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">def hello():</b>
+...     <b class="calibre19">print("Hello World!")</b>
+...
+&gt;&gt;&gt; <b class="calibre19">hello()</b>
+Hello World!
+</pre>
+
+<p class="calibre1">此外，函数可以取参数。</p>
+<pre class="calibre18">
+&gt;&gt;&gt; <b class="calibre19">def hello(object):</b>
+...     <b class="calibre19">print("Hello " + object + "!")</b>
+...
+&gt;&gt;&gt; <b class="calibre19">hello("cat")</b>
+Hello cat!
+</pre>
+
+<p class="calibre1">另外，字符串的拼接可以使用 <code class="calibre15">+</code>。</p>
+<p class="calibre1">关闭 Python 解释器时，Linux 或 Mac OS X 的情况下输入 Ctrl-D（按住 Ctrl，再按 D 键）；Windows 的情况下输入 Ctrl-Z，然后按 Enter 键。</p>
+</body></html>

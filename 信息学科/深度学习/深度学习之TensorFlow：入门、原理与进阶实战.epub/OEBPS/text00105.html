@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">12.9　GAN网络的高级接口TFGAN</h3>
+<p class="ziti3">TFGAN是一个训练和评估生成式对抗网络（GAN）的轻量级库。它的初衷是为了让基于GAN的实验更加容易。</p>
+<p class="ziti3">TFGAN也是基于估算器开发的一种应用接口，使用GANEstimator类来进行模型训练的。在TFGAN中，会使用很多已经集成的技巧（tricks）来稳定和提升GAN网络的训练效果。同时也集成了对GAN训练步骤的监视和可视化操作，以及训练后的模型评估操作，为开发者节省了大量的编码和调参时间。</p>
+<p class="ziti3">TFGAN接口为开发者规范了开发GAN网络模型的标准步骤，每一个步骤都提供了全面的组建封装，使得开发者在开发GAN网络时，就像拼积木一样，按步骤选择不同的组建拼接起来即可。</p>
+<p class="ziti3">TFGAN接口中规范的GAN网络开发步骤如下：</p>
+<p class="ziti3">（1）指定网络的输入。</p>
+<p class="ziti3">（2）使用GANModel函数来设置生成器和判别器模型。</p>
+<p class="ziti3">（3）使用GANLoss函数来指定loss值。</p>
+<p class="ziti3">（4）使用GANTrainOps函数来创建训练操作。</p>
+<p class="ziti3">（5）运行训练操作。</p>
+<p class="ziti3">当然开发者也可以将TFGAN中已经实现了的损失值和惩罚处理（包括推土机距离损失、梯度惩罚、互信息惩罚等），集成到原生的GAN网络或是其他框架中。</p>
+<p class="ziti3">更多关于TFGAN的信息见如下链接：</p>
+<p class="ziti3">
+<a href="https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/gan" class="pcalibre calibre2">https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/gan</a>
+ 。</p>
+<p class="ziti3">该链接中包含的不仅仅是TFGAN的介绍，更多的是关于TFGAN实现各种GAN网络的例子代码。</p>
+<p class="ziti3">在本书中，给出的均属于原生的GAN网络实例。目的是让读者掌握更底层的原理，以便于能够驾驭更有挑战性的任务。在实际应用中，使用TFGAN高级接口，可以起到事半功倍的效果，因此强烈推荐读者使用TFGAN高级接口。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

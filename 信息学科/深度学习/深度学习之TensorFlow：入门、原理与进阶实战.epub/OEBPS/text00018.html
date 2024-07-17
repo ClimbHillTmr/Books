@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">3.2　模型是如何训练出来的</h3>
+<p class="ziti3">在上面的例子中仅仅迭代了20次就得到了一个可以拟合y≈2x的模型。下面来具体了解一下模型是如何得来的。</p>
+<h4 class="p3">3.2.1　模型里的内容及意义</h4>
+<p class="ziti3">一个标准的模型结构分为输入、中间节点、输出三大部分，而如何让这三个部分连通起来学习规则并可以进行计算，则是框架TensorFlow所做的事情。</p>
+<p class="ziti3">TensorFlow将中间节点及节点间的运算关系（OPS）定义在自己内部的一个“图”上，全通过一个“会话（session）”进行图中OPS的具体运算。</p>
+<p class="ziti3">可以这样理解：</p>
+<p class="ziti4">·“图”是静态的，无论做任何加、减、乘、除，它们只是将关系搭建在一起，不会有任何运算。</p>
+<p class="ziti4">·“会话”是动态的，只有启动会话后才会将数据流向图中，并按照图中的关系运算，并将最终的结果从图中流出。</p>
+<p class="ziti3">TensorFlow用这种方式分离了计算的定义和执行，“图”类似于施工图（blueprint），而“会话”更像施工地点。</p>
+<p class="ziti3">构建一个完整的图一般需要定义3种变量，如图3-5所示。</p>
+<p class="ziti4">·输入节点：即网络的入口。</p>
+<p class="ziti4">·用于训练的模型参数（也叫学习参数）：是连接各个节点的路径。</p>
+<p class="ziti4">·模型中的节点（OP）：最复杂的就是OP。OP可以用来代表模型中的中间节点，也可以代表最终的输出节点，是网络中的真正结构。</p>
+<p class="ziti3">如图3-5所示为这3种变量放在图中所组成的网络静态模型。在实际训练中，通过动态的会话将图中的各个节点按照静态的规则运算起来，每一次的迭代都会对图中的学习参数进行更新调整，通过一定次数的迭代运算之后最终所形成的图便是所要的“模型”。而在会话中，任何一个节点都可以通过会话的run函数进行计算，得到该节点的真实数值。</p>
+<div class="pic"><img alt="" src="Image00033.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图3-5　模型中的图</p>
+<h4 class="p3">3.2.2　模型内部的数据流向</h4>
+<p class="ziti3">模型内部的数据流向分为正向和反向。</p>
+<p class="ziti4">
+<span class="yanse">1．正向</span>
+</p>
+<p class="ziti3">正向，是数据从输入开始，依次进行各节点定义的运算，一直运算到输出，是模型最基本的数据流向。它直观地表现了网络模型的结构，在模型的训练、测试、使用的场景中都会用到。这部分是必须要掌握的。</p>
+<p class="ziti4">
+<span class="yanse">2．反向</span>
+</p>
+<p class="ziti3">反向，只有在训练场景下才会用到。这里使用了一个叫做反向链式求导的方法，即先从正向的最后一个节点开始，计算此时结果值与真实值的误差，这样会形成一个用学习参数表示误差的方程，然后对方程中的每个参数求导，得到其梯度修正值，同时反推出上一层的误差，这样就将该层节点的误差按照正向的相反方向传到上一层，并接着计算上一层的修正值，如此反复下去一步一步地进行转播，直到传到正向的第一个节点。</p>
+<p class="ziti3">这部分原理TensorFlow已经实现好了，读者简单理解即可，应该把重点放在使用什么方法来计算误差，使用哪些梯度下降的优化方法，如何调节梯度下降中的参数（如学习率）问题上。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

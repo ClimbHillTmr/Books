@@ -1,0 +1,99 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">8.8　善用函数封装库</h3>
+<p class="ziti3">本节讲一下TensorFlow中的一个封装好的高级库，里面有前面讲过的很多函数的高级封装，使用这个高级库来开发程序将会提高效率。那么这个高级库具体好在哪里？请看下面的例子。</p>
+<h4 class="p3">8.8.1　实例51：使用函数封装库重写CIFAR卷积网络</h4>
+<p class="ziti3">改写代码代码“8-9 cifar卷积.py”，将网络结构中的全连接、卷积和池化全部用tensorflow.contrib.layers改写。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">将“代码8-9：cifar卷积.py”中的代码使用tf.contrib.layers重构。</p>
+<p class="ziti4">
+<span class="yanse">1．改写代码</span>
+</p>
+<p class="ziti3">卷积函数使用tf.contrib.layers.conv2d，池化使用tf.contrib.layers.max_pool2d和tf.contrib.layers.avg_pool2d，这次使用全连接来作为输出层，并演示全连接函数tf.contrib. layers.fully_connected的使用。</p>
+<p class="ziti3">代码8-18　cifar简洁代码</p>
+<hr class="calibre6"/>
+<pre class="ziti5">……
+#定义占位符
+x = tf.placeholder(tf.float32,[None, 24,24,3]) #CIFAR数据集的shape 24*24*3
+y = tf.placeholder(tf.float32,[None, 10]) # 0-9 数字分类=&gt; 10 类
+ 
+x_image = tf.reshape(x, [-1,24,24,3])
+ 
+h_conv1 =tf.contrib.layers.conv2d(x_image,64,5,1,'SAME',activation_fn=tf. nn.relu)
+h_pool1 = tf.contrib.layers.max_pool2d(h_conv1,[2,2],stride=2, padding=
+'SAME')
+ 
+h_conv2=tf.contrib.layers.conv2d(h_pool1,64,[5,5],1,'SAME',activation_
+fn=tf.nn.relu)
+h_pool2 = tf.contrib.layers.max_pool2d(h_conv2,[2,2],stride=2,padding= 
+'SAME')
+ 
+nt_hpool2 = tf.contrib.layers.avg_pool2d(h_pool2,[6,6],stride=6,padding= 
+'SAME')
+ 
+nt_hpool2_flat = tf.reshape(nt_hpool2, [-1, 64])
+ 
+y_conv = tf.contrib.layers.fully_connected(nt_hpool2_flat,10,activation_
+fn=tf.nn.softmax)
+ 
+cross_entropy = -tf.reduce_sum(y*tf.log(y_conv))
+train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+ 
+correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y,1))
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+ 
+sess = tf.Session()
+……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">这里只修改“8-9cifar卷积.py”中间的代码，代码的运行不会受到影响。可以看到整个代码段变得简洁了，这就是使用tf.contrib.layers的好处。尤其在深层网络结构中，大量的重复代码会使代码可读性越来越差，所以使用tf.contrib.layers不失为一个好办法。</p>
+<p class="ziti4">
+<span class="yanse">2．tf.contrib.layers中的具体函数介绍</span>
+</p>
+<p class="ziti3">看似简单的函数，幕后却做了很多事情，在上面的代码中，没有定义权重，没有初始化，没有过多的参数，这些都是tf.contrib.layers帮我们封装好的。</p>
+<p class="ziti3">下面以最复杂的卷积为例进行介绍，其他函数与之相似，不再展开介绍。</p>
+<p class="ziti3">tf.contrib.layers.conv2d的函数定义如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">def convolution(inputs,
+                num_outputs,
+                kernel_size,
+                stride=1,
+                padding='SAME',
+                data_format=None,
+                rate=1,
+                activation_fn=nn.relu,
+                normalizer_fn=None,
+                normalizer_params=None,
+                weights_initializer=initializers.xavier_initializer(),
+                weights_regularizer=None,
+                biases_initializer=init_ops.zeros_initializer(),
+                biases_regularizer=None,
+                reuse=None,
+                variables_collections=None,
+                outputs_collections=None,
+                trainable=True,
+                scope=None):</pre>
+<hr class="calibre6"/>
+<p class="ziti3">常用的参数说明如下。</p>
+<p class="ziti4">·inputs：代表输入。</p>
+<p class="ziti4">·num_outputs：代表输出几个channel。这里不需要再指定输入的channel了，因为函数会自动根据inputs的shape去判断。</p>
+<p class="ziti4">·kernel_size：卷积核大小，不需要带上batch和channel，只需输入尺寸即可。[5，5]就代表5×5大小的卷积核。如果长、宽都一样，也可以直接写一个数5。</p>
+<p class="ziti4">·stride：步长，默认是长、宽都相等的步长。卷积时，一般都用1，所以默认值也是1，如果长、宽的步长都不同，也可以用一个数组[1，2]。</p>
+<p class="ziti4">·padding：与前面的padding规则一样。</p>
+<p class="ziti4">·activation_fn：输出后的激活函数。</p>
+<p class="ziti4">·weights_initializer：权重的初始化，默认为initializers.xavier_initializer函数，参见第6章的说明。biases_initializer同理，不再赘述。</p>
+<p class="ziti4">·weights_regularizer：正则化项。可以加入正则函数，biases_regularizer同理，不再赘述。</p>
+<p class="ziti4">·trainable：是否可训练，如作为训练节点，必须设为True。默认即可。</p>
+<p class="ziti3">对于全连接层等其他函数的使用，会在后续代码中找到相应的演示例子，这里就不在一一介绍了。</p>
+<h4 class="p3">8.8.2　练习题</h4>
+<p class="ziti3">任选一个前面章节的例子，将其该成使用tf.contrib.layers库来实现。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

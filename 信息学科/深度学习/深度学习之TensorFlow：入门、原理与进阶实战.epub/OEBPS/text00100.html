@@ -1,0 +1,254 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">12.4　AEGAN：基于自编码器的GAN</h3>
+<p class="ziti3">在前面我们学习了自编码AE，而AEGAN就是GAN与AE的结合。AE的基本原理是特征的映射，即将高维特征压缩到低维特征，而在特征重建过程中只能模拟输入的单个体样本来输出结果（变分自解码除外），而AEGAN的优势在于在重建过程中可以生成与自己类似的样本，其功效等同于变分自解码器。</p>
+<h4 class="p3">12.4.1　AEGAN原理及用途介绍</h4>
+<p class="ziti3">AEGAN的理论比变分自解码简单得多，单纯在GAN之后加个自解码网络即可。通过GAN可以利用噪声生成模拟数据的特点，使用自解码完成特征到图像的反向映射，从而实现一个即可将数据映射到低维空间，又可以将低维还原模拟分布数据的网络。具体结构如图12-5所示。</p>
+<div class="pic"><img alt="" src="Image00258.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图12-5　AEGAN结构</p>
+<p class="ziti3">图12-5所示为一个在InfoGAN上面嫁接一个自编码网络，原本自编码的编码器在这里叫做反向生成网络，它的解码器就是GAN的编码器网络。AEGAN网络训练分为两步。</p>
+<p class="ziti3">（1）用传统方式训练一个GAN，图12-5中训练的GAN为InfoGAN。</p>
+<p class="ziti3">（2）固定GAN网络，利用自编码网络来训练反向生成网络。这样得到的反向生成网络就具有高维到低维映射的能力了。</p>
+<p class="ziti3">AEGAN的原理是先固定复杂样本分布作为网络输入，再慢慢调整网络输出去匹配标准高斯分布。对抗自编码器，严格来说应该不算GAN的变种，因为它的思路方向与GAN相反（GAN的思路是将低维数据确定，向高维数据去匹配），所以对抗自编码器应该属于自编码器的变种会更为合适。回忆下前面学过的变分自编码器，其中编码器得出均值和方差是通过公式计算，然后用比较与标准高斯分布KL散度来拟合高斯分布的。在这里判别器就起到公式计算的等同作用，目的都是辅助解码器生成标准高斯分布的数据，即拉近编码器分布与标准高斯分布间的距离，只不过这部分的公式用神经网络来代替，通过多次迭代来完成，大大降低了模型依赖公式的复杂度。此外，对于扩展性也有极好的提升，只需要改变判别式中真实样本的输入分布，就可以得到不同分布的编码器，而不需要再为具体分布单独设计算法及公式了。</p>
+<h4 class="p3">12.4.2　实例89：使用AEGAN对MNIST数据集压缩特征及重建</h4>
+<p class="ziti3">本例演示在MNIST数据集上使用AEGAN模型进行特征压缩及重建，并且加入标签信息的loss函数同时实现了AC-GAN网络。其中的D和G都是用卷积网络来实现的。具体实现可以分为如下几个步骤。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">通过使用前面的InfoGAN网络例子，在其基础上添加自编码网络，将InfoGAN的参数固定，训练反向生成器（自编码网络中的编码器），并将生成的模型用于MNIST数据集样本重建，得到相似样本。</p>
+<p class="ziti3">本实例在代码“12-1 Mnistinfogan.py”的基础上添加自编码网络功能，具体步骤如下。</p>
+<p class="ziti4">
+<span class="yanse">1．添加反向生成器</span>
+</p>
+<p class="ziti3">在代码“12-1 Mnistinfogan.py”中添加反向生成器inversegenerator函数。该函数的功能是将图片生成特征码，其结构与判别器类似，均为生成器的反向操作，即使用两个卷积层，再接两个全连接层。代码如下。</p>
+<p class="ziti3">代码12-2　aegan</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 #生成器函数
+02 def generator(x):
+03 ……
+04 
+05 #反向生成器定义，结构与判别器类似
+06 def inversegenerator(x):
+07     reuse = len([t for t in tf.global_variables() if t.name.startswith
+    ('inversegenerator')]) &gt; 0
+08     with tf.variable_scope('inversegenerator', reuse=reuse):
+09         #使用了两个卷积层
+10         x = tf.reshape(x, shape=[-1, 28, 28, 1])
+11         x = slim.conv2d(x, num_outputs = 64, kernel_size=[4,4], 
+        stride=2, activation_fn=leaky_relu)
+12         x = slim.conv2d(x, num_outputs=128, kernel_size=[4,4], 
+        stride=2, activation_fn=leaky_relu)
+13         #两个全连接
+14         x = slim.flatten(x)        
+15         shared_tensor = slim.fully_connected(x, num_outputs=1024, 
+        activation_fn = leaky_relu)
+16         z = slim.fully_connected(shared_tensor, num_outputs=50, 
+        activation_fn = leaky_relu)
+17     return z   </pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．添加自编码网络代码</span>
+</p>
+<p class="ziti3">自编码网络的输入并不是真实图片，而是生成器生成的图片generator（z），通过inversegenerator来压缩特征，生成与生成器输入噪声一样的维度，然后再将生成器generator当成自编码中的解码器重建出原始生成的图片。</p>
+<p class="ziti3">将自编码还原的图片与GAN中生成器生成的输入图片进行平方差的计算，得到自编码的损失值loss_ae。</p>
+<p class="ziti3">代码12-2　aegan（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">18 ……
+19 gen = generator(z)
+20 genout= tf.squeeze(gen, -1)
+21 
+22 #自编码网络
+23 aelearning_rate =0.01
+24 igen = generator(inversegenerator(generator(z)))
+25 loss_ae = tf.reduce_mean(tf.pow(gen - igen, 2))
+26 
+27 #输出
+28 igenout = generator(inversegenerator(x))
+29 
+30 # 判别器结果标签
+31 y_real = tf.ones(batch_size)           #真
+32 y_fake = tf.zeros(batch_size)          #假
+33 ……</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">3．添加自编码网络的训练参数列表，定义优化器</span>
+</p>
+<p class="ziti3">自编码网络的训练参数与前面的GAN几乎一样，直接复制然后改个名字即可，本例中将使用MonitoredTrainingSession（对于MonitoredTrainingSession不熟悉的读者，可以看本书第4章的检查点保存部分）来管理检查点文件，所以定义了global_step。定义train_ae优化器，并将global_step放入优化器中。</p>
+<p class="ziti3">代码12-2　aegan（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">34 # 获得训练时需要更新的学习参数列表
+35 t_vars = tf.trainable_variables()
+36 d_vars = [var for var in t_vars if 'discriminator' in var.name]
+37 g_vars = [var for var in t_vars if 'generator' in var.name]
+38 ae_vars =  [var for var in t_vars if 'inversegenerator' in var.name]
+39 
+40 gen_global_step = tf.Variable(0, trainable=False)
+41 global_step = tf.contrib.framework.get_or_create_global_step() #使用MonitoredTrainingSession，必须有
+42 
+43 train_disc = tf.train.AdamOptimizer(0.0001).minimize(loss_d + loss_c 
++ loss_con, var_list = d_vars, global_step = global_step)
+44 train_gen = tf.train.AdamOptimizer(0.001).minimize(loss_g + loss_c + 
+loss_con, var_list = g_vars, global_step = gen_global_step)
+45 train_ae = tf.train.AdamOptimizer(aelearning_rate).minimize(loss_ae, 
+var_list = ae_vars, global_step = global_step)
+46 training_GANepochs = 3    #训练GAN迭代3次数据集
+47 training_aeepochs = 6     #训练AE迭代3次数据集(从3到6)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">本例中需要一下训练GAN和AE两个网络，使用MonitoredTrainingSession管理后就只能有一个global_step，于是将global_step分段来管理两个网络的训练。每一次迭代训练都会遍历整个MNIST数据集，先让第一个网络GAN迭代3次，然后再让第二个网络AE迭代3次。</p>
+<p class="ziti4">
+<span class="yanse">4．启动session依次训练GAN与AE网络</span>
+</p>
+<p class="ziti3">使用MonitoredTrainingSession创建sesson。令程序2分钟保存一次检查点文件，先训练GAN然后训练AE，最终将结果打印出来。</p>
+<p class="ziti3">代码12-2　aegan（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">48 with tf.train.MonitoredTrainingSession(checkpoint_dir='log/
+aecheckpoints',save_checkpoint_secs  =120) as sess:
+49     
+50     total_batch = int(mnist.train.num_examples/batch_size)
+51     print("ae_global_step.eval(session=sess)",global_step.eval
+    (session=sess),int(global_step.eval(session=sess)/total_batch))
+52     
+53     for epoch in range( int(global_step.eval(session=sess)/total_
+    batch),training_GANepochs):
+54         avg_cost = 0.
+55 
+56         # 遍历全部数据集
+57         for i in range(total_batch):
+58 
+59             batch_xs, batch_ys = mnist.train.next_batch(batch_size) #取数据
+60             feeds = {x: batch_xs, y: batch_ys}
+61 
+62             # 输入数据，运行优化器
+63             l_disc, _, l_d_step = sess.run([loss_d, train_disc, global_
+            step],feeds)
+64             l_gen, _, l_g_step = sess.run([loss_g, train_gen, gen_
+            global_step],feeds)
+65 
+66         # 显示训练中的详细信息
+67         if epoch % display_step == 0:
+68             print("Epoch:", '%04d' % (epoch + 1), "cost=", "{:.9f} 
+            ".format(l_disc),l_gen)
+69 
+70     print("GAN完成!")
+71     # 测试
+72     print ("Result:", loss_d.eval({x: mnist.test.images[:batch_size], 
+    y:mnist.test.labels[:batch_size]},session = sess),loss_g.eval({x: 
+    mnist.test.images[:batch_size],y:mnist.test. labels[:batch_
+    size]},session = sess))
+73 
+74     # 根据图片模拟生成图片
+75     show_num = 10
+76     gensimple,inputx = sess.run(
+77         [genout,x], feed_dict={x: mnist.test.images[:batch_size],y: 
+        mnist.test.labels[:batch_size]})
+78 
+79     f, a = plt.subplots(2, 10, figsize=(10, 2))
+80     for i in range(show_num):
+81         a[0][i].imshow(np.reshape(inputx[i], (28, 28)))
+82         a[1][i].imshow(np.reshape(gensimple[i], (28, 28)))
+83         
+84     plt.draw()
+85     plt.show()                          
+86                         
+87     #开始ae
+88 print("ae_global_step.eval(session=sess)",global_step.eval
+(session=sess),int(global_step.eval(session=sess)/total_batch))
+89     for epoch in range(int(global_step.eval(session=sess)/total_
+    batch),training_aeepochs):
+90         avg_cost = 0.
+91 
+92         # 遍历全部数据集
+93         for i in range(total_batch):
+94 
+95             batch_xs, batch_ys = mnist.train.next_batch(batch_size) #取数据
+96             feeds = {x: batch_xs, y: batch_ys}
+97 
+98             # 输入数据，运行优化器
+99             l_ae, _, ae_step = sess.run([loss_ae, train_ae, global_
+            step],feeds)
+100 
+101         # 显示训练中的详细信息
+102         if epoch % display_step == 0:
+103             print("Epoch:", '%04d' % (epoch + 1), "cost=", "{:.9f} 
+            ".format(l_ae))
+104     
+105     # 测试
+106     print ("Result:", loss_ae.eval({x: mnist.test.images[:batch_
+    size],y:mnist.test.labels[:batch_size]},session = sess)  )
+107     
+108     # 根据图片模拟生成图片
+109     show_num = 10
+110     gensimple,inputx = sess.run(
+111         [igenout,x], feed_dict={x: mnist.test.images[:batch_size],y: 
+        mnist.test.labels[:batch_size]})
+112 
+113     f, a = plt.subplots(2, 10, figsize=(10, 2))
+114     for i in range(show_num):
+115         a[0][i].imshow(np.reshape(inputx[i], (28, 28)))
+116         a[1][i].imshow(np.reshape(gensimple[i], (28, 28)))
+117         
+118     plt.draw()
+119     plt.show()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">由于global_step是整个的迭代次数，而自定义的training_aeepochs是代表整个数据集迭代的次数，所以需要在循环之前将global_step转化一下，换算成迭代次数，见代码第90行中for里面的内容。运行代码，结果如下，输出图片如图12-6和图12-7所示。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Extracting /data/train-images-idx3-ubyte.gz
+Extracting /data/train-labels-idx1-ubyte.gz
+Extracting /data/t10k-images-idx3-ubyte.gz
+Extracting /data/t10k-labels-idx1-ubyte.gz
+INFO:tensorflow:Create CheckpointSaverHook.
+INFO:tensorflow:Saving checkpoints for 0 into log/aecheckpoints\model.ckpt.
+ae_global_step.eval(session=sess) 0 0
+……
+INFO:tensorflow:global_step/sec: 66.8421
+Epoch: 0001 cost= 0.725493670  1.14361
+……
+INFO:tensorflow:global_step/sec: 67.0216
+INFO:tensorflow:Saving checkpoints for 7429 into log/aecheckpoints\model.ckpt.
+INFO:tensorflow:global_step/sec: 17.1345
+……
+Epoch: 0002 cost= 0.590400815  0.877365
+INFO:tensorflow:global_step/sec: 63.1296
+INFO:tensorflow:global_step/sec: 67.9339
+INFO:tensorflow:Saving checkpoints for 15170 into log/aecheckpoints\model.ckpt.
+INFO:tensorflow:global_step/sec: 16.9023
+INFO:tensorflow:global_step/sec: 67.2034
+……
+Epoch: 0003 cost= 0.527337492  1.45355
+GAN完成!
+Result: 0.523087 1.48371
+……
+ae_global_step.eval(session=sess) 16500 3
+INFO:tensorflow:global_step/sec: 43.4022
+……
+Epoch: 0004 cost= 0.026241459 
+……
+INFO:tensorflow:global_step/sec: 138.887
+Epoch: 0005 cost= 0.027687110 
+……
+INFO:tensorflow:global_step/sec: 142.044
+INFO:tensorflow:Saving checkpoints for 29870 into log/aecheckpoints\model.ckpt.
+……
+INFO:tensorflow:global_step/sec: 141.241
+Epoch: 0006 cost= 0.024392122 
+Result: 0.0210641
+</pre>
+<hr class="calibre6"/>
+<div class="pic"><img alt="" src="Image00259.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图12-6　GAN结果</p>
+<div class="pic"><img alt="" src="Image00260.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图12-7　AEGAN结果</p>
+<p class="ziti3">从图12-6中可以看出，InfoGan只会生成属于原始数据分布的图片。从图12-7中可以看出，AEGAN会生成与原始图片更相近的图片。</p>
+<p class="ziti3">这种网络有压缩特征与重建两部分用途，重建样本常用来处理图像的恢复与重建，还可以将重建的模拟数据保存起来以扩充数据集，甚至可以应用在超分辨率重建部分；对于压缩特征部分，可以应用在搜索相似图片的领域。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

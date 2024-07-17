@@ -1,0 +1,457 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">10.8　去噪自编码与栈式自编码的综合实现</h3>
+<p class="ziti3">本节将前面的知识综合一下，实现一个把去噪自编码加入栈式自编码网络中的例子。</p>
+<h4 class="p3">10.8.1　实例80：实现去噪自编码</h4>
+<p class="ziti3">这次我们把前面所学的知识全部用上一起做一个综合的实例。首先建立一个去噪自编码，然后再对第一层的输出做一次简单的自编码压缩，然后再将第二层的输出做一个softmax的分类，最后，把这3个网络里的中间层拿出来，组成一个新的网络进行微调。下面就来一一操作。</p>
+<p class="ziti4">
+<span class="yanse">1．引入头文件，创建网络模型及定义学习参数变量</span>
+</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">对MNIST集中的原始输入图片加入噪声，在自编码网络中进行训练，得到抗干扰更强的特征提取模型。</p>
+<p class="ziti3">引入头文件，创建MINST数据集。</p>
+<p class="ziti3">代码10-6　自编码综合</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import numpy as np
+02 import tensorflow as tf
+03 import matplotlib.pyplot as plt
+04 from tensorflow.examples.tutorials.mnist import input_data
+05 mnist = input_data.read_data_sets("/data/", one_hot=True)
+06 
+07 train_X   = mnist.train.images
+08 train_Y = mnist.train.labels
+09 test_X    = mnist.test.images
+10 test_Y  = mnist.test.labels</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．定义占位符</span>
+</p>
+<p class="ziti3">最终训练的网络为一个输入、一个输出和两个隐藏层，结构如图10-14所示。</p>
+<div class="pic"><img alt="" src="Image00214.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-14　自编码综合实例结构</p>
+<p class="ziti3">在这个例子中要建立4个网络：每一层都用一个网络来训练，于是我们需要训练3个网络，最后再把训练好的各个层组合到一起，形成第4个网络。</p>
+<p class="ziti3">代码10-6　自编码综合（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">11 # NETOWRK PARAMETERS
+12 n_input    = 784 
+13 n_hidden_1 = 256             #第一层自编码
+14 n_hidden_2 = 128             #第二层自编码
+15 n_classes = 10
+16 
+17 # 占位符
+18 # 第一层输入
+19 x = tf.placeholder("float", [None, n_input])
+20 y = tf.placeholder("float", [None, n_input])
+21 dropout_keep_prob = tf.placeholder("float")
+22 #第二层输入
+23 l2x = tf.placeholder("float", [None, n_hidden_1])
+24 l2y = tf.placeholder("float", [None, n_hidden_1]) 
+25 #第三层输入
+26 l3x = tf.placeholder("float", [None, n_hidden_2])
+27 l3y = tf.placeholder("float", [None, n_classes])</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">3．定义学习参数</span>
+</p>
+<p class="ziti3">除了输入层，后面的其他三层（256、128、10）每一层都需要单独使用一个自编码网络来训练，所以要为这3个网络创建3套学习参数。</p>
+<p class="ziti3">代码10-6　自编码综合（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">28 # WEIGHTS
+29 weights = {
+30     #网络1  784-256-784
+31     'h1': tf.Variable(tf.random_normal([n_input, n_hidden_1])),
+32     'l1_h2': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_1])),
+33     'l1_out': tf.Variable(tf.random_normal([n_hidden_1, n_input])),
+34     #网络2  256-128-256
+35     'l2_h1': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_2])),
+36     'l2_h2': tf.Variable(tf.random_normal([n_hidden_2, n_hidden_2])),
+37     'l2_out': tf.Variable(tf.random_normal([n_hidden_2, n_hidden_1])),
+38     #网络3  128-10
+39     'out': tf.Variable(tf.random_normal([n_hidden_2, n_classes]))
+40 }
+41 biases = {
+42     'b1': tf.Variable(tf.zeros([n_hidden_1])),
+43     'l1_b2': tf.Variable(tf.zeros([n_hidden_1])),
+44     'l1_out': tf.Variable(tf.zeros([n_input])),
+45     
+46     'l2_b1': tf.Variable(tf.zeros([n_hidden_2])),
+47     'l2_b2': tf.Variable(tf.zeros([n_hidden_2])),
+48     'l2_out': tf.Variable(tf.zeros([n_hidden_1])),
+49     
+50     'out': tf.Variable(tf.zeros([n_classes]))
+51 }</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">4．第1层网络结构</span>
+</p>
+<p class="ziti3">为第1层建立一个自编码网络，并定义其网络结构。这里注意，由于要往第1层里加入噪声，所以第1层需要有dropout层。</p>
+<p class="ziti3">代码10-6　自编码综合（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">52 #第1层的编码输出
+53 l1_out = tf.nn.sigmoid(tf.add(tf.matmul(x, weights['h1']), biases
+['b1'])) 
+54     
+55 #l1 解码器MODEL
+56 def noise_l1_autodecoder(layer_1, _weights, _biases, _keep_prob):
+57     layer_1out = tf.nn.dropout(layer_1, _keep_prob) 
+58     layer_2 = tf.nn.sigmoid(tf.add(tf.matmul(layer_1out, _weights
+    ['l1_h2']), _biases['l1_b2'])) 
+59     layer_2out = tf.nn.dropout(layer_2, _keep_prob) 
+60     return tf.nn.sigmoid(tf.matmul(layer_2out, _weights['l1_out']) + 
+    _biases['l1_out'])
+61 
+62 # 第一层的解码输出
+63 l1_reconstruction = noise_l1_autodecoder(l1_out, weights, biases, 
+dropout_keep_prob)
+64 
+65 # 计算COST
+66 l1_cost = tf.reduce_mean(tf.pow(l1_reconstruction-y, 2))
+67 # OPTIMIZER
+68 l1_optm = tf.train.AdamOptimizer(0.01).minimize(l1_cost)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">5．第2层网络结构</span>
+</p>
+<p class="ziti3">为第2层建立一个自编码网络，并定义其网络结构。</p>
+<p class="ziti3">代码10-6　自编码综合（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">69 #l2 解码器MODEL
+70 def l2_autodecoder(layer1_2, _weights, _biases):
+71     layer1_2out = tf.nn.sigmoid(tf.add(tf.matmul(layer1_2, _weights
+    ['l2_h2']), _biases['l2_b2'])) 
+72     return tf.nn.sigmoid(tf.matmul(layer1_2out, _weights['l2_out']) + 
+    _biases['l2_out'])
+73 
+74 #第二层的编码输出
+75 l2_out = tf.nn.sigmoid(tf.add(tf.matmul(l2x, weights['l2_h1']), 
+biases['l2_b1'])) 
+76 # 第二层的解码输出
+77 l2_reconstruction = l2_autodecoder(l2_out, weights, biases)
+78 
+79 # COST计算
+80 l2_cost = tf.reduce_mean(tf.pow(l2_reconstruction-l2y, 2))
+81 # 优化器
+82 optm2 = tf.train.AdamOptimizer(0.01).minimize(l2_cost)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">6．第3层网络结构</span>
+</p>
+<p class="ziti3">为第3层建立一个自编码网络，并定义其网络结构。</p>
+<p class="ziti3">代码10-6　自编码综合（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">83 l3_out = tf.matmul(l3x, weights['out']) + biases['out']
+84 l3_cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits
+(logits=l3_out, labels=l3y))
+85 l3_optm = tf.train.AdamOptimizer(0.01).minimize(l3_cost)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">7．定义级联网络结构</span>
+</p>
+<p class="ziti3">将3层网络级联在一起，建立第4个网络，并定义其网络结构。这里复用了l1_out的节点，因为它是第1层的输出，其输入数据也是原始样本，与级联网络结构里的第一层一样，其他几层则需要重新定义。</p>
+<p class="ziti3">代码10-6　自编码综合（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">86 #3层 级联
+87 #1联2
+88 l1_l2out = tf.nn.sigmoid(tf.add(tf.matmul(l1_out, weights['l2_h1']), 
+biases['l2_b1'])) 
+89 # 2联3
+90 pred = tf.matmul(l1_l2out, weights['out']) + biases['out']
+91 # 定义loss和优化器
+92 cost3 = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits
+(logits=pred, labels=l3y))
+93 optm3 = tf.train.AdamOptimizer(0.001).minimize(cost3)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">8．第1层网络训练</span>
+</p>
+<p class="ziti3">网络结构定义好之后，下面开始第1层网络的训练。</p>
+<p class="ziti3">代码10-6　自编码综合（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">94 epochs = 50
+95 batch_size = 100
+96 disp_step  = 10
+97 
+98 with tf.Session() as sess:
+99     sess.run(tf.global_variables_initializer())
+100     
+101     print ("开始训练")
+102     for epoch in range(epochs):
+103         num_batch  = int(mnist.train.num_examples/batch_size)
+104         total_cost = 0.
+105         for i in range(num_batch):
+106            batch_xs, batch_ys = mnist.train.next_batch(batch_size)
+107            batch_xs_noisy = batch_xs + 0.3*np.random.randn(batch_size, 784)
+108            feeds = {x: batch_xs_noisy, y: batch_xs, dropout_keep_prob: 0.5}
+109            sess.run(l1_optm, feed_dict=feeds)
+110            total_cost += sess.run(l1_cost, feed_dict=feeds)
+111         # DISPLAY
+112         if epoch % disp_step == 0:
+113             print ("Epoch %02d/%02d average cost: %.6f" 
+114                    % (epoch, epochs, total_cost/num_batch))
+115     print ("完成")    </pre>
+<hr class="calibre6"/>
+<p class="ziti3">执行上面的代码，生成如下信息：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">开始训练
+Epoch 00/50 average cost: 0.113718
+Epoch 10/50 average cost: 0.035614
+Epoch 20/50 average cost: 0.033097
+Epoch 30/50 average cost: 0.032123
+Epoch 40/50 average cost: 0.031541
+完成</pre>
+<hr class="calibre6"/>
+<p class="ziti3">从测试数据集中拿出10个样本放到模型里，将生成的结果可视化。</p>
+<p class="ziti3">代码10-6　自编码综合（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">116 show_num = 10
+117     test_noisy = mnist.test.images[:show_num] + 0.3*np.random.randn
+    (show_num, 784)
+118     encode_decode = sess.run(
+119         l1_reconstruction, feed_dict={x: test_noisy, dropout_keep_
+        prob: 1.})
+120     f, a = plt.subplots(3, 10, figsize=(10, 3))
+121     for i in range(show_num):
+122         a[0][i].imshow(np.reshape(test_noisy[i], (28, 28)))
+123         a[1][i].imshow(np.reshape(mnist.test.images[i], (28, 28)))
+124         a[2][i].matshow(np.reshape(encode_decode[i], (28, 28)), 
+        cmap=plt.get_cmap('gray'))
+125     plt.show()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">执行上面的代码，生成如图10-15所示信息。</p>
+<div class="pic"><img alt="" src="Image00215.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-15　自编码综合实例第1层结果</p>
+<p class="ziti3">为什么这次的还原数据几乎将噪声全部过滤了呢？还记得去噪自编码那一章的练习题吗？这就是dropout的效果。仔细看，这次dropout的值设成了0.5，意味着有一半的节点是丢弃的，所以才会得到更好的拟合效果。</p>
+<p class="ziti4">
+<span class="yanse">9．第2层网络训练</span>
+</p>
+<p class="ziti3">下面开始训练第2层网络。需要注意的地方是，这个网络模型的输入已经不再是我们的MNIST图片了，而是上一层的输出，所以在准备输入数据时，要让输入的数据在上一层的模型中运算一次才可以作为本次的输入。</p>
+<p class="ziti3">代码10-6　自编码综合（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">126 with tf.Session() as sess:
+127     sess.run(tf.global_variables_initializer())
+128     print ("开始训练")
+129     for epoch in range(epochs):
+130         num_batch  = int(mnist.train.num_examples/batch_size)
+131         total_cost = 0.
+132         for i in range(num_batch):
+133             batch_xs, batch_ys = mnist.train.next_batch(batch_size)
+134 
+135             l1_h = sess.run(l1_out, feed_dict={x: batch_xs, y: batch_xs, 
+            dropout_keep_prob: 1.})
+136             _,l2cost = sess.run([optm2,l2_cost], feed_dict={l2x: l1_h, 
+            l2y: l1_h })
+137             total_cost += l2cost
+138        
+139        # log输出
+140         if epoch % disp_step == 0:
+141             print ("Epoch %02d/%02d average cost: %.6f" 
+142                    % (epoch, epochs, total_cost/num_batch))
+143     print ("完成  layer_2 训练")
+144     </pre>
+<hr class="calibre6"/>
+<p class="ziti3">执行上面的代码，生成如下信息：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">开始训练
+Epoch 00/50 average cost: 0.126013
+Epoch 10/50 average cost: 0.019285
+Epoch 20/50 average cost: 0.014477
+Epoch 30/50 average cost: 0.012606
+Epoch 40/50 average cost: 0.012108
+完成  layer_2 训练</pre>
+<hr class="calibre6"/>
+<p class="ziti3">同理，可视化部分也是这样，所有准备输入的点都要在模型1中生成一次，见以下代码。</p>
+<p class="ziti3">代码10-6　自编码综合（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">145     show_num = 10
+146     testvec = mnist.test.images[:show_num]
+147     out1vec = sess.run(l1_out, feed_dict={x: testvec,y: testvec, 
+    dropout_keep_prob: 1.})
+148     out2vec = sess.run(l2_reconstruction, feed_dict={l2x: out1vec})
+149 
+150     f, a = plt.subplots(3, 10, figsize=(10, 3))
+151     for i in range(show_num):
+152         a[0][i].imshow(np.reshape(testvec[i], (28, 28)))
+153         a[1][i].imshow(np.reshape(out1vec[i], (16, 16)))
+154         a[2][i].matshow(np.reshape(out2vec[i], (16, 16)), cmap=plt.
+        get_cmap('gray'))
+155     plt.show()</pre>
+<hr class="calibre6"/>
+<p class="ziti3">执行上面的代码，生成如图10-16所示信息。</p>
+<div class="pic"><img alt="" src="Image00216.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图10-16　自编码综合实例第2层结果</p>
+<p class="ziti4">
+<span class="yanse">10．第3层网络训练</span>
+</p>
+<p class="ziti3">现在开始训练第3层的网络，同理，这次的输入数据要经过前面两层网络的运算才可以生成。</p>
+<p class="ziti3">代码10-6　自编码综合（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">156 with tf.Session() as sess:
+157     sess.run(tf.global_variables_initializer())
+158 
+159     print ("开始训练")
+160     for epoch in range(epochs):
+161         num_batch  = int(mnist.train.num_examples/batch_size)
+162         total_cost = 0.
+163         for i in range(num_batch):
+164             batch_xs, batch_ys = mnist.train.next_batch(batch_size) 
+165             l1_h = sess.run(l1_out, feed_dict={x: batch_xs, y: batch_xs, 
+            dropout_keep_prob: 1.})
+166             l2_h = sess.run(l2_out, feed_dict={l2x: l1_h, l2y: l1_h })
+167             _,l3cost = sess.run([l3_optm,l3_cost], feed_dict={l3x: l2_
+            h, l3y: batch_ys})
+168 
+169             total_cost += l3cost
+170         # 输出cost
+171         if epoch % disp_step == 0:
+172             print ("Epoch %02d/%02d average cost: %.6f" 
+173                    % (epoch, epochs, total_cost/num_batch))
+174     print ("完成  layer_3 训练")</pre>
+<hr class="calibre6"/>
+<p class="ziti3">执行上面的代码，生成如下信息：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">开始训练
+Epoch 00/50 average cost: 1.379495
+Epoch 10/50 average cost: 0.277589
+Epoch 20/50 average cost: 0.271069
+Epoch 30/50 average cost: 0.269604
+Epoch 40/50 average cost: 0.269904
+完成  layer_3 训练</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">11．栈式自编码网络验证</span>
+</p>
+<p class="ziti3">这次我们暂时略过对第3层网络模型的单独验证，直接去验证整个分类模型，将MNIST数据输入进去，看看栈式自编码器的分类效果如何。</p>
+<p class="ziti3">代码10-6　自编码综合（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">175 # 测试 model
+176     correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(l3y, 1))
+177     # 计算准确率
+178     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+179     print ("Accuracy:", accuracy.eval({x: mnist.test.images, l3y: 
+    mnist.test.labels}))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">执行上面的代码，生成如下信息：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Accuracy: 0.9213</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看出，直接将每层的训练参数堆起来，网络会有很好的表现。为了进一步优化，来看看下面的步骤。</p>
+<p class="ziti4">
+<span class="yanse">12．级联微调</span>
+</p>
+<p class="ziti3">下面进入微调阶段，将网络模型联起来进行分类训练，这部分的测试代码与前面一样，所以这里只把训练部分的代码贴出来。</p>
+<p class="ziti3">代码10-6　自编码综合（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">180 with tf.Session() as sess:
+181     sess.run(tf.global_variables_initializer())
+182    
+183     print ("开始训练")
+184     for epoch in range(epochs):
+185         num_batch  = int(mnist.train.num_examples/batch_size)
+186         total_cost = 0.
+187         for i in range(num_batch):
+188             batch_xs, batch_ys = mnist.train.next_batch(batch_size)
+189             
+190             feeds = {x: batch_xs, l3y: batch_ys}
+191             sess.run(optm3, feed_dict=feeds)
+192             total_cost += sess.run(cost3, feed_dict=feeds)
+193         # 输出cost
+194         if epoch % disp_step == 0:
+195             print ("Epoch %02d/%02d average cost: %.6f" 
+196                    % (epoch, epochs, total_cost/num_batch))
+197     print ("完成  级联 训练")</pre>
+<hr class="calibre6"/>
+<p class="ziti3">执行上面的代码，生成如下信息：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">开始训练
+Epoch 00/50 average cost: 1.003439
+Epoch 10/50 average cost: 0.035012
+Epoch 20/50 average cost: 0.001034
+Epoch 30/50 average cost: 0.000112
+Epoch 40/50 average cost: 0.000039
+完成  级联训练</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到，由于网络模型中各层的初始值已经训练好了，所以开始就是很低的错误率，错误率接着每次的迭代都有很大幅度的下降。到此这个例子就算是完成了，该例已经非常接近真实工作中的场景了，读者学习时在跟着做例子的同时更要理解所使用的方法，它可以将任何复杂的任务化简。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 提示：</span>
+ 搭建网络模型时，层数过多，参数也会随之增加，所以逻辑一定要清楚，一个好的命名规范可以让你在这个问题上轻松许多。</p>
+<h4 class="p3">10.8.2　实例81：添加模型存储支持分布训练</h4>
+<p class="ziti3">栈式自编码的另一个优点就是可以将神经网络模块化，便于分工，非常适合团队合作。在实际中，为了得到更好的模型，需要将上述的每个环节分别单独训练，由不同的小组或人员来分步工作。</p>
+<p class="ziti3">小组或人员之间的对接则需要通过模型文件来完成，这就要求每个环节的参数都必须保存下来，在自己的步骤开始之前先把上个步骤的环境加载进去。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">对自编码模型进行分布式模型存储与载入，使每一层都可以单个环节逐一训练。</p>
+<p class="ziti3">可以修改上述代码，在训练开始前定义模型保存参数。</p>
+<p class="ziti3">代码10-7　分布自编码综合</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 savedir = "d:/python/log/"
+02 saver   = tf.train.Saver(max_to_keep=1)  #保存一个模型
+03 load_epoch = 49
+04 print (savedir)
+05 with tf.Session() as sess:
+06 ……</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在每个训练迭代之后都将模型保存起来。</p>
+<p class="ziti3">代码10-7　分布自编码综合（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">07 ……
+08 if epoch % disp_step == 0:
+09             print ("Epoch %02d/%02d average cost: %.6f" 
+10                    % (epoch, epochs, total_cost/num_batch))
+11 saver.save(sess, savedir + 'stacked_auto_encoder.ckpt', global_
+step=epoch)
+12     print ("完成  级联 训练")</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在每次训练的开始将模型读入（第一个网络不需要读入）。</p>
+<p class="ziti3">代码10-7　分布自编码综合（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">13 with tf.Session() as sess:
+14     sess.run(tf.global_variables_initializer())
+15     saver.restore(sess, savedir +"stacked_auto_encoder.ckpt-" + 
+    str(load_epoch))
+16 ……</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 这里给出的代码是按照迭代保存的。这是一种好习惯，尤其在训练海量数据时，由于某种意外导致训练终止，使所有的训练结果丢失，还得需要花大量的时间重新训练。这种方法可以恢复到上一次迭代的结果。</p>
+<p class="ziti3">加完这些代码之后，就可以将上面的代码放在一个文件里，通过注释的方式，按照步骤一步步往下进行了（每次只打开一个模型训练的代码）。</p>
+<h4 class="p3">10.8.3　小心分布训练中的“坑”</h4>
+<p class="ziti3">如果读者是使用Anaconda在Windows下运行，那么这里有个“坑”需要填一下。当加上保存模型的功能之后，在一步一步训练过程中，如果运行两次读取模型则会报错。更奇怪的事情是，在保存模型过程中，如果你第一次运行一半停止了，第二次运行成功并且也生成了模型，但是当你从模型里载入时，会是错误的参数。</p>
+<p class="ziti3">原因是，在Anaconda中的py程序默认都是在同一个图中运行的，即除非关掉Anaconda，否则运行两次时，这两次的代码是在一个图中，那么会有什么影响呢？</p>
+<p class="ziti3">在定义变量时，在同一个图中，同一句代码tf.Variable所生成的变量是不同的名字，例如在代码中添加打印信息，输出变量的名字：</p>
+<hr class="calibre6"/>
+<pre class="ziti5"># 权重
+weights = {
+    #网络1  784-256-784
+    'h1': tf.Variable(tf.random_normal([n_input, n_hidden_1])),
+……
+print (weights['h1'].name)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">执行上面的代码，生成如下信息：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">Variable:0
+Variable:14</pre>
+<hr class="calibre6"/>
+<p class="ziti3">这时会发现，运行两次weights[h1]有了两个不同的名字，在内存里会有两套变量。所以当运行两次后保存模型时，其实是保存了两套，但是读取时只是读取了第一套。同理。当运行两次读取时，第一次的模型可以与变量对应上，第二次会新生成另外一套变量，并且模型里找对应关系，但因为找不到所以就报错了。</p>
+<p class="ziti3">解决方法：只需要在变量定义之前加上下面一行代码。让所有的图环境重置，即可解决问题。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">tf.reset_default_graph()   </pre>
+<hr class="calibre6"/>
+<h4 class="p3">10.8.4　练习题</h4>
+<p class="ziti3">使用栈式自编码对MNIST数据集逐层训练压缩特征，直到压缩成二维数据（如512、256、128、64、32、16、2），再将其图示出来。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

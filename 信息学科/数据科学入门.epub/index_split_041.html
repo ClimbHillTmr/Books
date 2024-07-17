@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>数据科学入门</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<p id="filepos209323" class="calibre_15"><span class="calibre6"><span class="bold"> 6.3　贝叶斯定理 </span></span></p><p class="calibre_">贝叶斯定理是数据科学家的最佳朋友之一，它是条件概率的某种逆运算。假设我们需要计算事件 <span class="italic">E</span> 基于已发生的事件 <span class="italic">F</span> 的条件概率，但我们已知的条件仅仅是事件 <span class="italic">F</span> 基于已发生的事件 <span class="italic">E</span> 的条件概率。两次利用条件概率的定义，可以得到下式：</p><p class="calibre_12"><img src="images/00018.jpg" class="calibre_47"/>
+</p><p class="calibre_">事件 <span class="italic">F</span> 可以分割为两个互不重合的事件“<span class="italic">F</span> 和 <span class="italic">E</span> 同时发生”与“<span class="italic">F</span> 发生 <span class="italic">E</span> 不发生”。我们用符号 <img src="images/00028.jpg" class="calibre_48"/> 指代“非 <span class="italic">E</span> ”（即“<span class="italic">E</span> 没有发生”），有下式：</p><p class="calibre_12"><img src="images/00043.jpg" class="calibre_49"/>
+</p><p class="calibre_">因此：</p><p class="calibre_12"><img src="images/00057.jpg" class="calibre_50"/>
+</p><p class="calibre_">上式为贝叶斯定理常用的表达方式。</p><p class="calibre_">贝叶斯定理常常用来证明为什么数据科学家比医生更聪明。假设有这样一种病，10 000 个人中会有一个得这个病。还假设有种针对该病的测试，具有 99% 的可能性能给出正确判断（如果患病，测试显示“有病”，如果健康，则显示“无病”）。</p><p class="calibre_">阳性的测试结果意味着什么呢？我们用 <span class="italic">T</span> 表示“测试结果阳性”，用 <span class="italic">D</span> 表示“你患有该病”。那么，根据贝叶斯定理，如果测试结果为阳性，那么你患有该病的概率是：</p><p class="calibre_12"><img src="images/00067.jpg" class="calibre_51"/>
+</p><p class="calibre_">我们知道，<span class="italic">P</span> (<span class="italic">T</span> |<span class="italic">D</span> )，即一个人测试结果为阳性并且本人实际患病的概率为 0.99。<span class="italic">P</span> (<span class="italic">D</span> )，即一个人实际患病的概率是 1/10 000=0.0001 。<img src="images/00077.jpg" class="calibre_52"/> ，即一个不患病的人检测结果呈阳性的概率是 0.01 。<img src="images/00089.jpg" class="calibre_53"/> ，即一个人实际上不患该病的概率为 0.9999 。如果将以上数据代入贝叶斯定理，可得：</p><p class="calibre_12"><img src="images/00005.jpg" class="calibre_54"/>
+</p><p class="calibre_">结果表示，测试结果为阳性的人实际患病的概率不到 1%。</p><blockquote class="calibre_14"><img src="images/00100.jpg" class="calibre_10"/> 　移除异常值之后的相关系数我们实际上假设了人们接受测试的概率或多或少都是随机的。如果只有表现出特定症状的人才会去接受测试，我们应该将表达式重新表达为基于事件“测试结果正常，并且表现出症状”的条件概率，这样计算出的结果会增高很多。</blockquote><p class="calibre_">对于数据科学家来说，这是小菜一碟，但大部分医生会猜测 <span class="italic">P</span> (<span class="italic">D</span> |<span class="italic">T</span> ) 的值接近 2。</p><p class="calibre_">一个更直观的计算方式是，首先假设总体包括 1 百万个人。你预期其中 100 个人患有该病，而这 100 个人中会有 99 个测试结果显示阳性。另一方面，你认为 999 900 个人不患有该病，其中 9999 个人测试结果呈阳性。这意味着在（99+9999）个测试结果呈阳性的人中，你认为仅有 99 个人实际上患有该病。</p><div class="mbp_pagebreak" id="calibre_pb_41"></div>
+<div class="calibre5">本书由「<a href="https://epubw.com" class="calibre3">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="calibre3">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body></html>

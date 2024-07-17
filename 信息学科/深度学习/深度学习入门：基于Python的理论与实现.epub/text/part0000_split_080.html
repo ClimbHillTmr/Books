@@ -1,0 +1,127 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_185" class="calibre8">7.5　CNN的实现</h2>
+<p class="calibre1">我们已经实现了卷积层和池化层，现在来组合这些层，搭建进行手写数字识别的 CNN。这里要实现如图 7-23 所示的 CNN。</p>
+<p class="tu"><img src="../images/00309.jpeg" alt="" width="98%" class="calibre31"/></p>
+<p class="calibre1"><strong class="calibre2">图 7-23　简单 CNN 的网络构成</strong></p>
+<p class="calibre1">如图 7-23 所示，网络的构成是“Convolution - ReLU - Pooling -Affine - ReLU - Affine - Softmax”，我们将它实现为名为 <code class="calibre15">SimpleConvNet</code> 的类。</p>
+<p class="calibre1">首先来看一下 <code class="calibre15">SimpleConvNet</code> 的初始化（<code class="calibre15">__init__</code>），取下面这些参数。</p>
+<p class="calibre1"><strong class="calibre2">参数</strong></p>
+<blockquote class="calibre10">
+<ul class="calibre12">
+<li class="di_2ji_wu_xu_lie_biao"><code class="calibre15">input_dim</code>——输入数据的维度：（通道，高，长）</li>
+<li class="di_2ji_wu_xu_lie_biao"><p class="calibre1"><code class="calibre15">conv_param</code>——卷积层的超参数（字典）。字典的关键字如下：</p>
+<p class="calibre1"><code class="calibre15">filter_num</code>——滤波器的数量</p>
+<p class="calibre1"><code class="calibre15">filter_size</code>——滤波器的大小</p>
+<p class="calibre1"><code class="calibre15">stride</code>——步幅</p>
+<p class="calibre1"><code class="calibre15">pad</code>——填充</p>
+</li>
+<li class="di_2ji_wu_xu_lie_biao"><p class="calibre1"><code class="calibre15">hidden_size</code>——隐藏层（全连接）的神经元数量</p>
+</li>
+<li class="di_2ji_wu_xu_lie_biao"><code class="calibre15">output_size</code>——输出层（全连接）的神经元数量</li>
+<li class="di_2ji_wu_xu_lie_biao"><code class="calibre15">weitght_int_std</code>——初始化时权重的标准差</li>
+</ul>
+</blockquote>
+<p class="calibre1">这里，卷积层的超参数通过名为 <code class="calibre15">conv_param</code> 的字典传入。我们设想它会像 <code class="calibre15">{'filter_num':30,'filter_size':5, 'pad':0, 'stride':1}</code> 这样，保存必要的超参数值。</p>
+<p class="calibre1"><code class="calibre15">SimpleConvNet</code> 的初始化的实现稍长，我们分成 3 部分来说明，首先是初始化的最开始部分。</p>
+<pre class="calibre18"><code class="calibre20">class SimpleConvNet:
+    def __init__(self, input_dim=(1, 28, 28),
+                 conv_param={'filter_num':30, 'filter_size':5,
+                             'pad':0, 'stride':1},
+                 hidden_size=100, output_size=10, weight_init_std=0.01):
+        filter_num = conv_param['filter_num']
+        filter_size = conv_param['filter_size']
+        filter_pad = conv_param['pad']
+        filter_stride = conv_param['stride']
+        input_size = input_dim[1]
+        conv_output_size = (input_size - filter_size + 2*filter_pad) / \
+                            filter_stride + 1
+        pool_output_size = int(filter_num * (conv_output_size/2) *
+                               (conv_output_size/2))
+
+</code></pre>
+<p class="calibre1">这里将由初始化参数传入的卷积层的超参数从字典中取了出来（以方便后面使用），然后，计算卷积层的输出大小。接下来是权重参数的初始化部分。</p>
+<pre class="calibre18"><code class="calibre20">self.params = {}
+self.params['W1'] = weight_init_std * \
+                    np.random.randn(filter_num, input_dim[0],
+                                    filter_size, filter_size)
+self.params['b1'] = np.zeros(filter_num)
+self.params['W2'] = weight_init_std * \
+                    np.random.randn(pool_output_size,
+                                    hidden_size)
+self.params['b2'] = np.zeros(hidden_size)
+self.params['W3'] = weight_init_std * \
+                    np.random.randn(hidden_size, output_size)
+self.params['b3'] = np.zeros(output_size)
+
+</code></pre>
+<p class="calibre1">学习所需的参数是第 1 层的卷积层和剩余两个全连接层的权重和偏置。将这些参数保存在实例变量的 <code class="calibre15">params</code> 字典中。将第 1 层的卷积层的权重设为关键字 <code class="calibre15">W1</code>，偏置设为关键字 <code class="calibre15">b1</code>。同样，分别用关键字 <code class="calibre15">W2</code>、<code class="calibre15">b2</code> 和关键字 <code class="calibre15">W3</code>、<code class="calibre15">b3</code> 来保存第 2 个和第 3 个全连接层的权重和偏置。</p>
+<p class="calibre1">最后，生成必要的层。</p>
+<pre class="calibre18"><code class="calibre20">self.layers = OrderedDict()
+self.layers['Conv1'] = Convolution(self.params['W1'],
+                                   self.params['b1'],
+                                   conv_param['stride'],
+                                   conv_param['pad'])
+
+self.layers['Relu1'] = Relu()
+self.layers['Pool1'] = Pooling(pool_h=2, pool_w=2, stride=2)
+self.layers['Affine1'] = Affine(self.params['W2'],
+                              self.params['b2'])
+
+self.layers['Relu2'] = Relu()
+self.layers['Affine2'] = Affine(self.params['W3'],
+                              self.params['b3'])
+self.last_layer = softmaxwithloss()
+
+</code></pre>
+<p class="calibre1">从最前面开始按顺序向有序字典（<code class="calibre15">OrderedDict</code>）的 <code class="calibre15">layers</code> 中添加层。只有最后的 <code class="calibre15">SoftmaxWithLoss</code> 层被添加到别的变量 <code class="calibre15">lastLayer</code> 中。</p>
+<p class="calibre1">以上就是 <code class="calibre15">SimpleConvNet</code> 的初始化中进行的处理。像这样初始化后，进行推理的 <code class="calibre15">predict</code> 方法和求损失函数值的 <code class="calibre15">loss</code> 方法就可以像下面这样实现。</p>
+<pre class="calibre18"><code class="calibre20">def predict(self, x):
+    for layer in self.layers.values():
+        x = layer.forward(x)
+    return x
+
+def loss(self, x, t):
+    y = self.predict(x)
+    return self.lastLayer.forward(y, t)
+
+</code></pre>
+<p class="calibre1">这里，参数 <code class="calibre15">x</code> 是输入数据，<code class="calibre15">t</code> 是教师标签。用于推理的 <code class="calibre15">predict</code> 方法从头开始依次调用已添加的层，并将结果传递给下一层。在求损失函数的 <code class="calibre15">loss</code> 方法中，除了使用 <code class="calibre15">predict</code> 方法进行的 <code class="calibre15">forward</code> 处理之外，还会继续进行 <code class="calibre15">forward</code> 处理，直到到达最后的 <code class="calibre15">SoftmaxWithLoss</code> 层。</p>
+<p class="calibre1">接下来是基于误差反向传播法求梯度的代码实现。</p>
+<pre class="calibre18"><code class="calibre20">def gradient(self, x, t):
+    # forward
+    self.loss(x, t)
+
+    # backward
+    dout = 1
+    dout = self.lastLayer.backward(dout)
+
+    layers = list(self.layers.values())
+    layers.reverse()
+    for layer in layers:
+        dout = layer.backward(dout)
+
+    # 设定
+    grads = {}
+    grads['W1'] = self.layers['Conv1'].dW
+    grads['b1'] = self.layers['Conv1'].db
+    grads['W2'] = self.layers['Affine1'].dW
+    grads['b2'] = self.layers['Affine1'].db
+    grads['W3'] = self.layers['Affine2'].dW
+    grads['b3'] = self.layers['Affine2'].db
+
+    return grads
+
+</code></pre>
+<p class="calibre1">参数的梯度通过误差反向传播法（反向传播）求出，通过把正向传播和反向传播组装在一起来完成。因为已经在各层正确实现了正向传播和反向传播的功能，所以这里只需要以合适的顺序调用即可。最后，把各个权重参数的梯度保存到 <code class="calibre15">grads</code> 字典中。这就是 <code class="calibre15">SimpleConvNet</code> 的实现。</p>
+<p class="calibre1">现在，使用这个 <code class="calibre15">SimpleConvNet</code> 学习 MNIST 数据集。用于学习的代码与 4.5 节中介绍的代码基本相同，因此这里不再罗列（源代码在 <code class="calibre15">ch07/train_convnet.py</code> 中）。</p>
+<p class="calibre1">如果使用 MNIST 数据集训练 <code class="calibre15">SimpleConvNet</code>，则训练数据的识别率为 99.82%，测试数据的识别率为 98.96%（每次学习的识别精度都会发生一些误差）。测试数据的识别率大约为 99%，就小型网络来说，这是一个非常高的识别率。下一章，我们会通过进一步叠加层来加深网络，实现测试数据的识别率超过 99% 的网络。</p>
+<p class="calibre1">如上所述，卷积层和池化层是图像识别中必备的模块。CNN 可以有效读取图像中的某种特性，在手写数字识别中，还可以实现高精度的识别。</p>
+</body></html>

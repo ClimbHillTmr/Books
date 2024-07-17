@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">5.3　构建模型</h3>
+<p class="ziti3">样本完成后就可以构建模型了。下面列出了构建模型的相关步骤。</p>
+<h4 class="p3">5.3.1　定义学习参数</h4>
+<p class="ziti3">模型也需要权重值和偏置量，它们被统一叫做学习参数。在TensorFlow里，使用Variable来定义学习参数。</p>
+<p class="ziti3">一个Variable代表一个可修改的张量，定义在TensorFlow的图（一个执行任务）中，其本身也是一种变量。使用Variable定义的学习参数可以用于计算输入值，也可以在计算中被修改。</p>
+<p class="ziti3">代码5-2　MNIST分类（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">10 W = tf.Variable(tf.random_normal(([784,10]))
+11 b = tf.Variable(tf.zeros([10]))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">在这里赋予tf.Variable不同的初值来创建不同的参数。一般将W设为一个随机值，将b设为0。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ W的维度是[784，10]，因为想要用784维的图片向量乘以它，以得到一个10维的证据值向量，每一位对应不同数字类。b的形状是[10]，所以可以直接把它加到输出上面。</p>
+<h4 class="p3">5.3.2　定义输出节点</h4>
+<p class="ziti3">有了输入和模型参数，接着便可以将它们串起来构建成真正的模型。</p>
+<p class="ziti3">代码5-2　MNIST分类（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">12 pred = tf.nn.softmax(tf.matmul(x, W) + b) # Softmax分类</pre>
+<hr class="calibre6"/>
+<p class="ziti3">首先，用tf.matmul（x，W）表示x乘以W，这里x是一个二维张量，拥有多个输入。然后再加上b，把它们的和输入到tf.nn.softmax函数里。</p>
+<p class="ziti3">至此就构建好了正向传播的结构。也就是表明，只要模型中的参数合适，通过具体的数据输入，就能得到我们想要的分类。</p>
+<h4 class="p3">5.3.3　定义反向传播的结构</h4>
+<p class="ziti3">下面定义一个反向传播的结构，编译训练模型，以得到合适的参数。</p>
+<p class="ziti3">这里涉及一个“学习率”的概念。学习率，是指每次改变学习参数的大小。在这里读者只要先有个概念即可，后面章节还会详细介绍。</p>
+<p class="ziti3">先看下面代码。</p>
+<p class="ziti3">代码5-2　MNIST分类（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">13  # 损失函数
+14  cost=tf.reduce_mean(-tf.reduce_sum(y*tf.log(pred),reduction_indices=1))
+15  
+16  # 定义参数
+17  learning_rate = 0.01
+18  # 使用梯度下降优化器
+19  optimizer=tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面的代码可以这样来理解：</p>
+<p class="ziti3">（1）将生成的pred与样本标签y进行一次交叉熵的运算，然后取平均值。</p>
+<p class="ziti3">（2）将这个结果作为一次正向传播的误差，通过梯度下降的优化方法找到能够使这个误差最小化的b和W的偏移量。</p>
+<p class="ziti3">（3）更新b和W，使其调整为合适的参数。</p>
+<p class="ziti3">整个过程就是不断地让损失值（误差值cost）变小。因为损失值越小，才能表明输出的结果跟标签数据越相近。当cost小到我们的需求时，这时的b和W就是训练出来的合适值。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

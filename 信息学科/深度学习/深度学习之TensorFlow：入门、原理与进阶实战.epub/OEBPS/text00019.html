@@ -1,0 +1,163 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">3.3　了解TensorFlow开发的基本步骤</h3>
+<p class="ziti3">通过上面的例子，现在将TensorFlow开发的基本步骤总结如下：</p>
+<p class="ziti3">（1）定义TensorFlow输入节点。</p>
+<p class="ziti3">（2）定义“学习参数”的变量。</p>
+<p class="ziti3">（3）定义“运算”。</p>
+<p class="ziti3">（4）优化函数，优化目标。</p>
+<p class="ziti3">（5）初始化所有变量。</p>
+<p class="ziti3">（6）迭代更新参数到最优解。</p>
+<p class="ziti3">（7）测试模型。</p>
+<p class="ziti3">（8）使用模型。</p>
+<p class="ziti3">下面进行逐项介绍。</p>
+<h4 class="p3">3.3.1　定义输入节点的方法</h4>
+<p class="ziti3">TensorFlow中有如下几种定义输入节点的方法。</p>
+<p class="ziti4">·通过占位符定义：一般使用这种方式。</p>
+<p class="ziti4">·通过字典类型定义：一般用于输入比较多的情况。</p>
+<p class="ziti4">·直接定义：一般很少使用。</p>
+<p class="ziti3">本章开篇的第一个例子“3-1线性回归.py”就是通过占位符来定义输入节点的，具体使用了tf.placeholder函数，见如下代码。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">X = tf.placeholder("float")
+Y = tf.placeholder("float")</pre>
+<hr class="calibre6"/>
+<p class="ziti3">下面介绍“通过字典定义”与“直接定义”的方法。</p>
+<h4 class="p3">3.3.2　实例2：通过字典类型定义输入节点</h4>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">在代码“3-1线性回归.py”文件的基础上，使用字典占位符来代替用占位符定义的输入。</p>
+<p class="ziti3">通过字典定义的方式和第一种比较像，只不过是堆叠到了一起。具体代码如下：</p>
+<p class="ziti3">代码3-2　通过字典类型定义输出节点</p>
+<hr class="calibre6"/>
+<pre class="ziti5">￼……
+# 占位符
+inputdict = {
+    'x': tf.placeholder("float"),
+    'y': tf.placeholder("float")
+}</pre>
+<hr class="calibre6"/>
+<h4 class="p3">3.3.3　实例3：直接定义输入节点</h4>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">在代码“3-1线性回归.py”文件的基础上，使用直接定义法来代替用占位符定义的输入。</p>
+<p class="ziti3">直接定义，就是将定义好的Python变量直接放到OP节点中参与输入的运算，将模拟数据的变量直接放到模型中进行训练。代码如下：</p>
+<p class="ziti3">代码3-3　直接定义输入节点</p>
+<hr class="calibre6"/>
+<pre class="ziti5">￼……
+ 
+#生成模拟数据
+train_X =np.float32( np.linspace(-1, 1, 100))
+train_Y = 2 * train_X + np.random.randn(*train_X.shape) * 0.3 # y=2x，但是加入了噪声
+#图形显示
+plt.plot(train_X, train_Y, 'ro', label='Original data')
+plt.legend()
+plt.show()
+ 
+# 模型参数
+W = tf.Variable(tf.random_normal([1]), name="weight")
+b = tf.Variable(tf.zeros([1]), name="bias")
+# 前向结构
+z = tf.multiply(W, train_X)+ b</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 提示：</span>
+ 上面只列出了3种方法中的关键代码，全部的代码在本书的配套代码可以中找到。</p>
+<h4 class="p3">3.3.4　定义“学习参数”的变量</h4>
+<p class="ziti3">学习参数的定义与输入的定义很像，分为直接定义和字典定义两部分。这两种都是常见的使用方式，只不过在深层神经网络里由于参数过多，普遍都会使用第二种情况。</p>
+<p class="ziti3">在前面“3-1线性回归.py”的例子中使用的就是第一种方法，通过tf.Variable可以对参数直接定义。代码如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5"># 模型参数
+W = tf.Variable(tf.random_normal([1]), name="weight")
+b = tf.Variable(tf.zeros([1]), name="bias")</pre>
+<hr class="calibre6"/>
+<p class="ziti3">下面通过例子演示使用字典定义学习参数。</p>
+<h4 class="p3">3.3.5　实例4：通过字典类型定义“学习参数”</h4>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">在代码“3-1线性回归.py”文件的基础上，使用字典的方式来定义学习参数。</p>
+<p class="ziti3">通过字典的方式定义和直接定义比较相似，只不过是堆叠到了一起。修改“3-1线性回归.py”例子代码如下。</p>
+<p class="ziti3">代码3-4　通过字典类型定义学习参数</p>
+<hr class="calibre6"/>
+<pre class="ziti5">￼……
+ 
+# 模型参数
+paradict = {
+    'w': tf.Variable(tf.random_normal([1])),
+    'b': tf.Variable(tf.zeros([1]))
+}
+# 前向结构
+z = tf.multiply(X, paradict['w'])+ paradict['b']</pre>
+<hr class="calibre6"/>
+<p class="ziti3">上面代码同样只是列出了关键部分，全部的代码都可以在本书的配套代码中找到。</p>
+<h4 class="p3">3.3.6　定义“运算”</h4>
+<p class="ziti3">定义“运算”的过程是建立模型的核心过程，直接决定了模型的拟合效果，具体的代码演示在前面也介绍过了。这里主要阐述一下定义运算的类型，以及其在深度学习中的作用。</p>
+<p class="ziti4">
+<span class="yanse">1．定义正向传播模型</span>
+</p>
+<p class="ziti3">在前面“3-1线性回归.py”的例子中使用的网络结构很简单，只有一个神经元。在后面会学到多层神经网络、卷积神经网、循环神经网络及更深层的GoogLeNet、Resnet等，它们都是由神经元以不同的组合方式组成的网络结构，而且每年还会有很多更高效且拟合性更强的新结构诞生。</p>
+<p class="ziti4">
+<span class="yanse">2．定义损失函数</span>
+</p>
+<p class="ziti3">损失函数主要是计算“输出值”与“目标值”之间的误差，是配合反向传播使用的。为了在反向传播中可以找到最小值，要求该函数必须是可导的。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 提示：</span>
+ 损失函数近几年来没有太大变化。读者只需要记住常用的几种，并能够了解内部原理就可以了，不需要掌握太多细节，因为TensorFlow框架已经为我们做好了。</p>
+<h4 class="p3">3.3.7　优化函数，优化目标</h4>
+<p class="ziti3">在有了正向结构和损失函数后，就是通过优化函数来优化学习参数了，这个过程也是在反向传播中完成的。</p>
+<p class="ziti3">反向传播过程，就是沿着正向传播的结构向相反方向将误差传递过去。这里面涉及的技术比较多，如L1、L2正则化、冲量调节、学习率自适应、adm随机梯度下降算法等，每一个技巧都代表一个时代。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 提示：</span>
+ 随着深度学习的飞速发展，反向传播过程的技术会达到一定程度的瓶颈，更新并不如网络结构变化得那么快，所以读者也只需将常用的几种记住即可。</p>
+<h4 class="p3">3.3.8　初始化所有变量</h4>
+<p class="ziti3">初始化所有变量的过程，虽然只有一句代码，但也是一个关键环节，所以特意将其列出来。</p>
+<p class="ziti3">在session创建好了之后，第一件事就是需要初始化。还以“3-1线性回归.py”举例，代码如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">init = tf.global_variables_initializer()
+# 启动Session
+with tf.Session() as sess:
+    sess.run(init)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 注意：</span>
+ 使用tf.global_variables_initializer函数初始化所有变量的步骤，必须在所有变量和OP定义完成之后。这样才能保证定义的内容有效，否则，初始化之后定义的变量和OP都无法使用session中的run来进行算值。</p>
+<h4 class="p3">3.3.9　迭代更新参数到最优解</h4>
+<p class="ziti3">在迭代训练环节，都是需要通过建立一个session来完成的，常用的是使用with语法，可以在session结束后自行关闭，当然还有其他方法，第4章会详细介绍。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">with tf.Session() as sess:</pre>
+<hr class="calibre6"/>
+<p class="ziti3">前面说过，在session中通过run来运算模型中的节点，在训练环节也是如此，只不过run里面放的是优化操作的OP，同时会在外层加上循环次数。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">for epoch in range(training_epochs):
+        for (x, y) in zip(train_X, train_Y):
+            sess.run(optimizer, feed_dict={X: x, Y: y})</pre>
+<hr class="calibre6"/>
+<p class="ziti3">真正使用过程中会引入一个叫做MINIBATCH概念进行迭代训练，即每次取一定量的数据同时放到网络里进行训练，这样做的好处和意义会在后面详细介绍。</p>
+<h4 class="p3">3.3.10　测试模型</h4>
+<p class="ziti3">测试模型部分已经不是神经网络的核心环节了，同归对评估节点的输出，得到模型的准确率（或错误率）从而来描述模型的好坏，这部分很简单没有太多的技术，在“3-1线性回归.py”中可以找到如下代码：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">print ("cost=", sess.run(cost, feed_dict={X: train_X, Y: train_Y}), "W=", 
+sess.run(W), "b=", sess.run(b))</pre>
+<hr class="calibre6"/>
+<p class="ziti3">当然这句话还可以改写成以下这样：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">print ("cost:",cost.eval({X: train_X, Y: train_Y}))</pre>
+<hr class="calibre6"/>
+<h4 class="p3">3.3.11　使用模型</h4>
+<p class="ziti3">使用模型也与测试模型类似，只不过是将损失值的节点换成输出的节点即可。在“3-1线性回归.py”例子中也有介绍。</p>
+<p class="ziti3">这里要说的是，一般会把生成的模型保存起来，再通过载入已有的模型来进行实际的使用。关于模型的载入和读取，后面章节会有介绍。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

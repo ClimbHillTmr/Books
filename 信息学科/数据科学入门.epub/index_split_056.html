@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>数据科学入门</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<p id="filepos262395" class="calibre_"><span class="calibre6"><span class="bold"> 8.1　梯度下降的思想 </span></span></p><p class="calibre_">假设我们拥有某个函数 <tt class="calibre7">f</tt> ，这个函数输入一个实数向量，输出一个实数。一个简单的例子如下：</p><blockquote class="calibre_14"><span class="calibre11"><tt class="calibre7"><br class="calibre12"/>def sum_of_squares(v):<br class="calibre12"/>    """computes the sum of squared elements in v"""<br class="calibre12"/>    return sum(v_i ** 2 for v_i in v)<br class="calibre12"/><br class="calibre12"/><br class="calibre12"/><br class="calibre12"/></tt></span></blockquote><p class="calibre_15">我们常常需要最大化（或最小化）这个函数。这意味着我们需要找出能计算出最大（或最小）可能值的输入 <tt class="calibre7">v</tt> 。</p><p class="calibre_">对我们的函数来说，<span class="bold">梯度</span> （在微积分里，这表示偏导数向量）给出了输入值的方向，在这个方向上，函数增长得最快。（如果记不起微积分，用我提到的关键词上网查查。）</p><p class="calibre_">相应地，最大化函数的算法首先从一个随机初始点开始，计算梯度，在梯度方向（这是使函数增长最快的一个方向）上跨越一小步，再从一个新的初始点开始重复这个过程。同样，你也可以在<span class="bold">相反</span> 方向上逐步最小化函数，如图 8-1 所示。</p><p class="calibre_12"><img src="images/00124.jpg" class="calibre_73"/>
+</p><p class="calibre_">
+<span class="bold">图 8-1：用梯度下降法计算最小点</span>
+</p><blockquote class="calibre_14"><img src="images/00100.jpg" class="calibre_10"/> 　如果一个函数有一个全局最小点，那么这个方法很可能会找到它。如果这个函数有多个（局部）最小点，那么这种方法可能找不到这个点，但你可以通过多尝试一些初始点来重复运行这个方法。如果一个函数没有最小点，也许计算会陷入死循环。</blockquote><div class="mbp_pagebreak" id="calibre_pb_56"></div>
+<div class="calibre5">本书由「<a href="https://epubw.com" class="calibre3">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="calibre3">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body></html>

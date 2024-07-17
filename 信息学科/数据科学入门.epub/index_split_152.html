@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>数据科学入门</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<p id="filepos675903" class="calibre_"><span class="calibre1"><span class="bold"> 第 22 章　推荐系统 </span></span></p><p class="calibre_4">
+<span class="bold">哦，老天，老天，你为什么如此随便，老是把提供错误建议的人送到这个世间？！</span>
+</p><p class="calibre_4">
+<span class="bold">——亨利 · 菲尔丁</span>
+</p><p class="calibre_">现实中，利用数据提供某种<span class="bold">建议</span> 也是很常见的。例如，Netflix 能够向用户推荐他们可能想看的电影，亚马逊会向你推荐你可能会买的商品，Twitter 会为你推荐你可能想关注的用户。本章将介绍几种利用数据来提供建议的方法。</p><p class="calibre_">需要指出的是，这里要考察的 <tt class="calibre7">users_interests</tt> 是之前就曾用过的一个数据集：</p><blockquote class="calibre_14"><span class="calibre11"><tt class="calibre7"><br class="calibre12"/>users_interests = [<br class="calibre12"/>    ["Hadoop", "Big Data", "HBase", "Java", "Spark", "Storm", "Cassandra"],<br class="calibre12"/>    ["NoSQL", "MongoDB", "Cassandra", "HBase", "Postgres"],<br class="calibre12"/>    ["Python", "scikit-learn", "scipy", "numpy", "statsmodels", "pandas"],<br class="calibre12"/>    ["R", "Python", "statistics", "regression", "probability"],<br class="calibre12"/>    ["machine learning", "regression", "decision trees", "libsvm"],<br class="calibre12"/>    ["Python", "R", "Java", "C++", "Haskell", "programming languages"],<br class="calibre12"/>    ["statistics", "probability", "mathematics", "theory"],<br class="calibre12"/>    ["machine learning", "scikit-learn", "Mahout", "neural networks"],<br class="calibre12"/>    ["neural networks", "deep learning", "Big Data", "artificial intelligence"],<br class="calibre12"/>    ["Hadoop", "Java", "MapReduce", "Big Data"],<br class="calibre12"/>    ["statistics", "R", "statsmodels"],<br class="calibre12"/>    ["C++", "deep learning", "artificial intelligence", "probability"],<br class="calibre12"/>    ["pandas", "R", "Python"],<br class="calibre12"/>    ["databases", "HBase", "Postgres", "MySQL", "MongoDB"],<br class="calibre12"/>    ["libsvm", "regression", "support vector machines"]<br class="calibre12"/>]<br class="calibre12"/><br class="calibre12"/><br class="calibre12"/><br class="calibre12"/></tt></span></blockquote><p class="calibre_15">同时，我们要考虑如何根据用户当前特定的兴趣来向其推荐新的感兴趣的东西。</p><div class="mbp_pagebreak" id="calibre_pb_152"></div>
+<div class="calibre5">本书由「<a href="https://epubw.com" class="calibre3">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="calibre3">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body></html>

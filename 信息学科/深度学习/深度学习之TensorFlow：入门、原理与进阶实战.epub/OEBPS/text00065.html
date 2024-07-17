@@ -1,0 +1,443 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">9.2　简单RNN</h3>
+<p class="ziti3">了解完RNN的原理后，下面一起来实现一个简单的RNN网络。</p>
+<h4 class="p3">9.2.1　实例55：简单循环神经网络实现——裸写一个退位减法器</h4>
+<p class="ziti3">本例将把前面所讲述的内容用代码实现一遍。如果前面的描述读者还不明白，可以通过这个例子，加深对前面内容的理解。</p>
+<p class="ziti3">本例是一个纯手写的代码例子，使用Python手动搭建一个简单的RNN网络，让它来拟合一个退位减法。退位减法也具有RNN的特性，即输入的两个数相减时，一旦发生退位运算，需要将中间状态保存起来，当高位的数传入时将退位标志一并传入参与运算。</p>
+<p class="ziti3">下面就来用代码实现RNN拟合减法，具体步骤如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">使用Ptyhon编写简单循环神经网络拟合一个退位减法的操作，观察其反向传播过程。</p>
+<p class="ziti4">
+<span class="yanse">1．定义基本函数</span>
+</p>
+<p class="ziti3">首先手动写一个Sigmoid函数及其导数（导数用于反向传播）。</p>
+<p class="ziti3">代码9-1　subtraction</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import copy, numpy as np
+02 np.random.seed(0)            #固定随机数生成器的种子，可以每次得到一样的值
+03 def sigmoid(x):              #激活函数
+04     output = 1/(1+np.exp(-x))
+05     return output
+06 
+07 def sigmoid_output_to_derivative(output): #激活函数的导数
+08     return output*(1-output)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．建立二进制映射</span>
+</p>
+<p class="ziti3">定义的减法最大值限制在256之内，即8位二进制的减法，定义int与二进制之间的映射数组int2binary。</p>
+<p class="ziti3">代码9-1　subtraction（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">09 int2binary = {}                #整数到其二进制表示的映射
+10 binary_dim = 8                 #暂时制作256以内的减法
+11 ## 计算0～256的二进制表示
+12 largest_number = pow(2,binary_dim)
+13 binary = np.unpackbits(
+14     np.array([range(largest_number)],dtype=np.uint8).T,axis=1)
+15 for i in range(largest_number):
+16     int2binary[i] = binary[i]</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">3．定义参数</span>
+</p>
+<p class="ziti3">定义学习参数：隐藏层的权重synapse_0、循环节点的权重synapse_h（输入节点16、输出节点16）、输出层的权重synapse_1（输入16节点，输出1节点）。为了减小复杂度，这里只设置w权重，b被忽略。</p>
+<p class="ziti3">代码9-1　subtraction（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">17 # 参数设置
+18 alpha = 0.9                        #学习速率
+19 input_dim = 2                      #输入的维度是2，减数和被减数
+20 hidden_dim = 16 
+21 output_dim = 1                     #输出维度为1
+22 
+23 # 初始化网络
+24 synapse_0 = (2*np.random.random((input_dim,hidden_dim)) - 1)*0.05 
+#维度为2*16，2是输入维度，16是隐藏层维度
+25 synapse_1 = (2*np.random.random((hidden_dim,output_dim)) - 1)*0.05
+26 synapse_h = (2*np.random.random((hidden_dim,hidden_dim)) - 1)*0.05
+27 # =&gt; [-0.05, 0.05)，
+28 
+29 # 用于存放反向传播的权重更新值
+30 synapse_0_update = np.zeros_like(synapse_0)
+31 synapse_1_update = np.zeros_like(synapse_1)
+32 synapse_h_update = np.zeros_like(synapse_h)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">synapse_0_update在前面很少见到，是因为它被隐含在优化器里了。这里全部“裸写”（不使用Tensor Flow库函数），需要定义一组变量，用于反向优化参数时存放参数需要调整的调整值，对应于前面的3个权重synapse_0、synapse_1和synapse_h。</p>
+<p class="ziti4">
+<span class="yanse">4．准备样本数据</span>
+</p>
+<p class="ziti3">大致是这样的过程：</p>
+<p class="ziti3">（1）建立循环生成样本数据，先生成两个数a和b。如果a小于b，就交换位置，保证被减数大。</p>
+<p class="ziti3">（2）计算出相减的结果c。</p>
+<p class="ziti3">（3）将3个数转换成二进制，为模型计算做准备。</p>
+<p class="ziti3">将上面过程一一实现，代码如下。</p>
+<p class="ziti3">代码9-1　subtraction（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">33 # 开始训练
+34 for j in range(10000):
+35     
+36     #生成一个数字a
+37     a_int = np.random.randint(largest_number) 
+38     #生成一个数字b，b的最大值取的是largest_number/2，作为被减数，让它小一点
+39     b_int = np.random.randint(largest_number/2) 
+40     #如果生成的b大了，那么交换一下
+41     if a_int&lt;b_int:
+42         tt = a_int
+43         b_int = a_int
+44         a_int=tt
+45     
+46     a = int2binary[a_int] # 二进制编码
+47     b = int2binary[b_int] # 二进制编码
+48     # 正确的答案
+49     c_int = a_int - b_int
+50     c = int2binary[c_int]</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">5．模型初始化</span>
+</p>
+<p class="ziti3">初始化输出值为0，初始化总误差为0，定义layer_2_deltas存储反向传播过程中的循环层的误差，layer_1_values为隐藏层的输出值，由于第一个数据传入时，没有前面的隐藏层输出值来作为本次的输入，所以需要为其定义一个初始值，这里定义为0.1。</p>
+<p class="ziti3">代码9-1　subtraction（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">51     # 存储神经网络的预测值
+52     d = np.zeros_like(c)
+53     overallError = 0                  #每次把总误差清零
+54     
+55     layer_2_deltas = list()         #存储每个时间点输出层的误差
+56     layer_1_values = list()         #存储每个时间点隐藏层的值
+57     
+58     layer_1_values.append(np.ones(hidden_dim)*0.1) # 一开始没有隐藏层，所以初始化一下原始值为0.1</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">6．正向传播</span>
+</p>
+<p class="ziti3">循环遍历每个二进制位，从个位开始依次相减，并将中间隐藏层的输出传入下一位的计算（退位减法），把每一个时间点的误差导数都记录下来，同时统计总误差，为输出准备。</p>
+<p class="ziti3">代码9-1　subtraction（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">59 for position in range(binary_dim):         #循环遍历每一个二进制位
+60         
+61         # 生成输入和输出
+62         X = np.array([[a[binary_dim - position - 1],b[binary_dim - 
+        position - 1]]]) #从右到左，每次取两个输入数字的一个bit位
+63         y = np.array([[c[binary_dim - position - 1]]]).T #正确答案
+64         # hidden layer (input ~+ prev_hidden)
+65         layer_1 = sigmoid(np.dot(X,synapse_0) + np.dot(layer_1_values
+        [-1],synapse_h))#（输入层 + 之前的隐藏层） -&gt; 新的隐藏层，这是体现循环
+        神经网络的最核心的地方
+66         # output layer (new binary representation)
+67         layer_2 = sigmoid(np.dot(layer_1,synapse_1))   #隐藏层 * 隐藏层到输出层的转化矩阵synapse_1 -&gt; 输出层
+68         
+69         layer_2_error = y - layer_2                        #预测误差
+70       layer_2_deltas.append((layer_2_error)*sigmoid_output_to_
+  derivative (layer_2)) #把每一个时间点的误差导数都记录下来
+71         overallError += np.abs(layer_2_error[0])         #总误差
+72     
+73         d[binary_dim - position - 1] = np.round(layer_2[0][0]) #记录下每一个预测bit位
+74         
+75         # 将隐藏层保存起来。下个时间序列便可以使用
+76         layer_1_values.append(copy.deepcopy(layer_1))       #记录下隐藏层的值，在下一个时间点用
+77     
+78     future_layer_1_delta = np.zeros(hidden_dim)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">最后一行代码是为了反向传播准备的初始化。同正向传播一样，反向传播是从最后一次往前反向计算误差，对于每一个当前的计算都需要有它的下一次结果参与。</p>
+<p class="ziti3">反向计算是从最后一次开始的，它没有后一次的输出，所以需要初始化一个值作为其后一次的输入，这里初始化为0。</p>
+<p class="ziti4">
+<span class="yanse">7．反向训练</span>
+</p>
+<p class="ziti3">初始化之后，开始从高位往回遍历，一次对每一位的所有层计算误差，并根据每层误差对权重求偏导，得到其调整值，最终将每一位算出的各层权重的调整值加在一起乘以学习率，来更新各层的权重，完成一次优化训练。</p>
+<p class="ziti3">代码9-1　subtraction（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">79 #反向传播，从最后一个时间点到第一个时间点
+80     for position in range(binary_dim):
+81         
+82         X = np.array([[a[position],b[position]]]) #最后一次的两个输入
+83         layer_1 = layer_1_values[-position-1]    #当前时间点的隐藏层
+84         prev_layer_1 = layer_1_values[-position-2] #前一个时间点的隐藏层
+85         
+86         layer_2_delta = layer_2_deltas[-position-1] #当前时间点输出层导数
+87         # 通过后一个时间点（因为是反向传播）的隐藏层误差和当前时间点的输出层误差，
+        计算当前时间点的隐藏层误差
+88         layer_1_delta = (future_layer_1_delta.dot(synapse_h.T) + layer_
+        2_delta.dot(synapse_1.T)) * sigmoid_output_to_derivative
+       (layer_1)
+89         
+90        # 等完成了所有反向传播误差计算，才会更新权重矩阵，先暂时把更新矩阵存起来
+91         synapse_1_update += np.atleast_2d(layer_1).T.dot(layer_2_
+        delta)
+92         synapse_h_update += np.atleast_2d(prev_layer_1).T.dot(layer_1_
+        delta)
+93         synapse_0_update += X.T.dot(layer_1_delta)
+94         
+95         future_layer_1_delta = layer_1_delta
+96     
+97     # 完成所有反向传播之后，更新权重矩阵，并把矩阵变量清零
+98     synapse_0 += synapse_0_update * alpha
+99     synapse_1 += synapse_1_update * alpha
+100     synapse_h += synapse_h_update * alpha
+101     synapse_0_update *= 0
+102     synapse_1_update *= 0
+103     synapse_h_update *= 0</pre>
+<hr class="calibre6"/>
+<p class="ziti3">更新完后会将中间变量值清零。</p>
+<p class="ziti4">
+<span class="yanse">8．输出结果</span>
+</p>
+<p class="ziti3">每运行800次将结果输出，代码如下。</p>
+<p class="ziti3">代码9-1　subtraction（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">104 # 打印输出过程
+105     if(j % 800 == 0):
+106         
+107         print("总误差:" + str(overallError))
+108         print("Pred:" + str(d))
+109         print("True:" + str(c))
+110         out = 0
+111         for index,x in enumerate(reversed(d)):
+112             out += x*pow(2,index)
+113         print(str(a_int) + " - " + str(b_int) + " = " + str(out))
+114         print("------------")</pre>
+<hr class="calibre6"/>
+<p class="ziti3">运行代码，输出结果如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">总误差:[ 3.97242498]
+Pred:[0 0 0 0 0 0 0 0]
+True:[0 0 0 0 0 0 0 0]
+9 - 9 = 0
+------------
+总误差:[ 2.1721182]
+Pred:[0 0 0 0 0 0 0 0]
+True:[0 0 0 1 0 0 0 1]
+17 - 0 = 0
+------------
+……
+------------
+总误差:[ 0.04588656]
+Pred:[1 0 0 1 0 1 1 0]
+True:[1 0 0 1 0 1 1 0]
+167 - 17 = 150
+------------
+总误差:[ 0.08098026]
+Pred:[1 0 0 1 1 0 0 0]
+True:[1 0 0 1 1 0 0 0]
+204 - 52 = 152
+------------
+总误差:[ 0.03262333]
+Pred:[1 1 0 0 0 0 0 0]
+True:[1 1 0 0 0 0 0 0]
+209 - 17 = 192
+------------</pre>
+<hr class="calibre6"/>
+<p class="ziti3">可以看到，刚开始还不准，随着迭代次数增加，到后来已经可以完全拟合退位减法了。</p>
+<h4 class="p3">9.2.2　实例56：使用RNN网络拟合回声信号序列</h4>
+<p class="ziti3">本例使用TensorFlow中的函数来演示搭建一个简单RNN网络，使用一串随机的模拟数据作为原始信号，让RNN网络来拟合其对应的回声信号。详细介绍如下。</p>
+<p class="ziti3">样本数据为一串随机的由0、1组成的数字，将其当成发射出去的一串信号。当碰到阻挡被反弹回来时，会收到原始信号的回音。</p>
+<p class="ziti3">如果步长为3，那么输入和输出的序列如图9-7所示。</p>
+<div class="pic"><img alt="" src="Image00160.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-7　回声序列</p>
+<p class="ziti3">如图9-7所示，回声序列的前3项是null，原序列的第一个信号0，对应的是回声序列的第4项，即回声序列的每一个数都会比原序列滞后3个时序。本例的任务就是将序列截取出来，对于每个原序列来预测它的回声序列。</p>
+<p class="ziti3">构建的网络结构如图9-8所示。</p>
+<div class="pic"><img alt="" src="Image00161.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-8　echo例子网络结构</p>
+<p class="ziti3">图9-8中，初始的输入有5个，其中4个是中间状态，1个是x的序列值。通过一层具有4个节点的RNN网络，再接一个全连接层输出0、1分类。这样序列中的每个x都会有一个对应的预测分类值，最终将整个序列x生成了预测序列。具体步骤如下。</p>
+<p class="ziti3">
+<span class="yanse">实例描述</span>
+</p>
+<p class="ziti3">构建一组序列，生成其对应的模拟回声序列。使用TensorFlow创建一个简单循环神经网络拟合这个回声序列。</p>
+<p class="ziti4">
+<span class="yanse">1．定义参数生成样本数据</span>
+</p>
+<p class="ziti3">在了解前面样本的规则后，开始编写代码制作样本。</p>
+<p class="ziti3">导入Python库，定义相关参数，取50000个序列样本数据，每个测试数据截取15个序列，回声序列的步长为3，最小批次为5。定义生成样本函数generateData，在函数里先随机生成50000个0、1数据的数组x，作为原始的序列，令x里的数据向右循环移动3个位置，生成数据y，作为x的回声序列。因为回声步长是3，表明回声y是从x的第3个数据开始才出现，所以将y的前3个数据清零。</p>
+<p class="ziti3">代码9-2　echo模拟</p>
+<hr class="calibre6"/>
+<pre class="ziti5">01 import numpy as np
+02 import tensorflow as tf
+03 import matplotlib.pyplot as plt
+04 
+05 num_epochs = 5
+06 total_series_length = 50000
+07 truncated_backprop_length = 15
+08 state_size = 4
+09 num_classes = 2
+10 echo_step = 3
+11 batch_size = 5
+12 num_batches = total_series_length//batch_size//truncated_backprop_
+length
+13 
+14 def generateData():
+15     x = np.array(np.random.choice(2, total_series_length, p=[0.5,
+    0.5])) #在0 和1 中选择total_series_length个数
+16     y = np.roll(x, echo_step)#向右循环移位，将【1111000】变为【0001111】
+17     y[0:echo_step] = 0
+18 
+19     x = x.reshape((batch_size, -1)) # 5,10000
+20     y = y.reshape((batch_size, -1))
+21 
+22     return (x, y)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">2．定义占位符处理输入数据</span>
+</p>
+<p class="ziti3">定义3个占位符，输入的batchX_placeholder原始序列，回声batchY_placeholder作为标签，循环节点的初始值state。如前面介绍的网络结构，x的原始序列是逐个输入网络的，所以需要将输进去的数据打散，按照时间序列变成15个数组，每个数组有batch_size个元素，进行统一批处理。</p>
+<p class="ziti3">代码9-2　echo模拟（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">23 batchX_placeholder = tf.placeholder(tf.float32,[batch_size, truncated_
+backprop_length])
+24 batchY_placeholder = tf.placeholder(tf.int32,[batch_size, truncated_
+backprop_length])
+25 init_state = tf.placeholder(tf.float32, [batch_size, state_size])
+26 
+27 # 将batchX_Placeholder沿维度为1的轴方向进行拆分
+28 inputs_series = tf.unstack(batchX_placeholder, axis=1)
+#truncated_backprop_length个序列
+29 labels_series = tf.unstack(batchY_placeholder, axis=1)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">3．定义网络结构</span>
+</p>
+<p class="ziti3">按照图9-8中的网络结构，定义一层循环网络与一层全连接网络。由于数据是一个数组序列，所以需要通过循环将输入数据按照原有序列逐个输入网络，并输出对应的predictions序列。同样的，对于每个序列值都要对其输出做loss计算，在loss中使用了sparse_softmax_cross_entropy_with_logits函数，因为label的最大值正好是1，而且是一位的，就不需要再转成one_hot编码了（具体细节见本书6.5.3节），最终将所有的loss取均值放入优化器中。</p>
+<p class="ziti3">代码9-2　echo模拟（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">30 current_state = init_state
+31 predictions_series = []
+32 losses =[]
+33 #使用一个循环，按照序列逐个输入
+34 for current_input, labels in zip(inputs_series,labels_series):
+35     current_input = tf.reshape(current_input, [batch_size, 1])
+36 #加入初始状态
+37     input_and_state_concatenated = tf.concat([current_input, current_
+    state],1) 
+38 
+39     next_state = tf.contrib.layers.fully_connected(input_and_state_
+    concatenated,state_size,activation_fn=tf.tanh)
+40     current_state = next_state
+41     logits =tf.contrib.layers.fully_connected(next_state,num_
+    classes,activation_fn=None)
+42     loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=
+    labels,logits=logits)
+43     losses.append(loss)
+44     predictions = tf.nn.softmax(logits)
+45     predictions_series.append(predictions)
+46     
+47 
+48 total_loss = tf.reduce_mean(losses)
+49 train_step = tf.train.AdagradOptimizer(0.3).minimize(total_loss)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">4．建立session训练数据</span>
+</p>
+<p class="ziti3">建立session，总样本循环10次进行迭代。将初始化循环神经网络的状态设为0，在总样本中循环读取15个序列作为批次中的一个样本。</p>
+<p class="ziti3">代码9-2　echo模拟（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">50 with tf.Session() as sess:
+51     sess.run(tf.global_variables_initializer())
+52     plt.ion()
+53     plt.figure()
+54     plt.show()
+55     loss_list = []
+56 
+57     for epoch_idx in range(num_epochs):
+58         x,y = generateData()
+59         _current_state = np.zeros((batch_size, state_size))
+60 
+61         print("New data, epoch", epoch_idx)
+62 
+63         for batch_idx in range(num_batches):#50000/ 5 /15=分成多少段
+64             start_idx = batch_idx * truncated_backprop_length
+65             end_idx = start_idx + truncated_backprop_length
+66 
+67             batchX = x[:,start_idx:end_idx]
+68             batchY = y[:,start_idx:end_idx]
+69 
+70             _total_loss, _train_step, _current_state, _predictions_
+            series = sess.run(
+71                 [total_loss, train_step, current_state, predictions_
+                series],
+72                 feed_dict={
+73                     batchX_placeholder:batchX,
+74                     batchY_placeholder:batchY,
+75                     init_state:_current_state
+76                 })
+77 
+78             loss_list.append(_total_loss)</pre>
+<hr class="calibre6"/>
+<p class="ziti4">
+<span class="yanse">5．测试模型及可视化</span>
+</p>
+<p class="ziti3">每循环100次，将打印数据并调用plot函数生成图像。</p>
+<p class="ziti3">代码9-2　echo模拟（续）</p>
+<hr class="calibre6"/>
+<pre class="ziti5">79             if batch_idx%100 == 0:
+80                 print("Step",batch_idx, "Loss", _total_loss)
+81                 plot(loss_list, _predictions_series, batchX, batchY)
+82 
+83 plt.ioff()
+84 plt.show()    </pre>
+<hr class="calibre6"/>
+<p class="ziti3">plot函数定义如下：</p>
+<hr class="calibre6"/>
+<pre class="ziti5">85 def plot(loss_list, predictions_series, batchX, batchY):
+86     plt.subplot(2, 3, 1)
+87     plt.cla()
+88     plt.plot(loss_list)
+89 
+90     for batch_series_idx in range(batch_size):
+91         one_hot_output_series = np.array(predictions_series)[:, batch_
+        series_idx, :]
+92         single_output_series = np.array([(1 if out[0] &lt; 0.5 else 0) for 
+        out in one_hot_output_series])
+93 
+94         plt.subplot(2, 3, batch_series_idx + 2)
+95         plt.cla()
+96         plt.axis([0, truncated_backprop_length, 0, 2])
+97         left_offset = range(truncated_backprop_length)
+98         left_offset2 = range(echo_step,truncated_backprop_length+echo_
+        step)
+99         
+100         label1 = "past values"
+101         label2 = "True echo values" 
+102         label3 = "Predictions"      
+103         plt.plot(left_offset2, batchX[batch_series_idx, :]*0.2+1.5, 
+        "o--b", label=label1)
+104         plt.plot(left_offset, batchY[batch_series_idx, :]*0.2+0.8,
+          "x--b", label=label2)
+105         plt.plot(left_offset,  single_output_series*0.2+0.1 , "o--y", 
+        label=label3)
+106     
+107     plt.legend(loc='best')
+108     plt.draw()
+109     plt.pause(0.0001)</pre>
+<hr class="calibre6"/>
+<p class="ziti3">函数中将输入的x序列、回声y序列和预测的序列同时打印到图像中。按照批次的个数生成图像。为了让3个序列看起来更明显，将其缩放0.2，并且调节每个图像的高度。同时将第一个原始序列的x在显示中滞后echo_step个序列，将3个图像放在同一序列顺序中比较。</p>
+<p class="ziti3">运行代码，生成如下结果，如图9-9所示。</p>
+<hr class="calibre6"/>
+<pre class="ziti5">New data, epoch 0
+Step 0 Loss 0.760327
+Step 100 Loss 0.462219
+Step 200 Loss 0.364076
+……
+New data, epoch 4
+Step 0 Loss 0.324354
+Step 100 Loss 0.103451
+Step 200 Loss 0.0894693
+Step 300 Loss 0.0940791
+Step 400 Loss 0.09462
+Step 500 Loss 0.10184
+Step 600 Loss 0.0910746</pre>
+<hr class="calibre6"/>
+<div class="pic"><img alt="" src="Image00162.jpg" class="calibre4"/>
+</div>
+<p class="middle-img">图9-9　RNN回声实例结果</p>
+<p class="ziti3">最下面的点为预测的序列，中间的为回声序列，从图像中可以看到预测序列和回声序列几乎相同，表明RNN网络已经完全可以学到回声的规则。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

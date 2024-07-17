@@ -1,0 +1,111 @@
+.boldf {
+    display: block;
+    font-size: 0.75em;
+    font-weight: bold;
+    text-indent: 2.3em;
+    margin: 1em 0
+    }
+.boldt {
+    font-weight: bold;
+    padding: 0
+    }
+.calibre {
+    display: block;
+    font-size: 1em;
+    padding-left: 0;
+    padding-right: 0;
+    margin: 0 5pt
+    }
+.copyright {
+    color: #000;
+    display: block;
+    font-family: "";
+    font-size: 1.41667em;
+    font-weight: bold;
+    letter-spacing: auto;
+    line-height: 2em;
+    text-align: left;
+    text-indent: 0;
+    margin: 1em 0
+    }
+.dateauthor {
+    display: block;
+    font-family: "FZKTK--GBK1-0", "FZKT--GB1-4", "STKaiti-SC-Regular", "STKAITI";
+    font-size: 1em;
+    letter-spacing: auto;
+    line-height: 1.5em;
+    text-align: right;
+    margin: 0.5em 0 1em
+    }
+.onetitle {
+    color: #000;
+    display: block;
+    font-family: "";
+    font-size: 1.41667em;
+    font-weight: bold;
+    letter-spacing: auto;
+    line-height: 1.5em;
+    text-align: left;
+    text-indent: 0;
+    margin: 0.8em 0 5em
+    }
+.quotation {
+    display: block;
+    font-family: "FZKTK--GBK1-0", "FZKT--GB1-4", "STKaiti-SC-Regular", "STKAITI";
+    font-size: 0.75em;
+    letter-spacing: auto;
+    line-height: 1.4em;
+    text-align: left;
+    text-indent: 2em;
+    margin: 0.5em 1em 0.1em
+    }
+.sgc-toc-level {
+    display: block;
+    margin-left: 0
+    }
+.sgc-toc-level1 {
+    display: block;
+    margin-left: 2em
+    }
+.sgc-toc-title {
+    display: block;
+    font-size: 2em;
+    font-weight: bold;
+    line-height: 1.2;
+    margin-bottom: 1em;
+    text-align: center
+    }
+.text {
+    display: block;
+    font-family: "";
+    font-size: 1em;
+    letter-spacing: auto;
+    line-height: 1.5em;
+    text-align: left;
+    text-indent: 2em;
+    margin: 0.6em 0
+    }
+.twotitle {
+    color: #000;
+    display: block;
+    font-family: "";
+    font-size: 1.41667em;
+    font-weight: bold;
+    letter-spacing: auto;
+    line-height: 1.5em;
+    text-align: left;
+    text-indent: 0;
+    margin: 1em 0 3em
+    }
+.twotitle1 {
+    color: #000;
+    display: block;
+    font-family: "";
+    font-size: 1.41667em;
+    font-weight: bold;
+    letter-spacing: auto;
+    line-height: 1.5em;
+    text-align: left;
+    text-indent: 0;
+    margin: 1em 0 3em
+    }

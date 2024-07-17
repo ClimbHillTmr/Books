@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_157" class="calibre8">6.3　Batch Normalization</h2>
+<p class="calibre1">在上一节，我们观察了各层的激活值分布，并从中了解到如果设定了合适的权重初始值，则各层的激活值分布会有适当的广度，从而可以顺利地进行学习。那么，为了使各层拥有适当的广度，“强制性”地调整激活值的分布会怎样呢？实际上，Batch Normalization<sup class="calibre16">[11]</sup> 方法就是基于这个想法而产生的。</p>
+<h3 id="nav_point_158" class="calibre17">6.3.1　Batch Normalization 的算法</h3>
+<p class="calibre1">Batch Normalization（下文简称 Batch Norm）是 2015 年提出的方法。Batch Norm 虽然是一个问世不久的新方法，但已经被很多研究人员和技术人员广泛使用。实际上，看一下机器学习竞赛的结果，就会发现很多通过使用这个方法而获得优异结果的例子。</p>
+<p class="calibre1">为什么 Batch Norm 这么惹人注目呢？因为 Batch Norm 有以下优点。</p>
+<blockquote class="calibre10">
+<ul class="calibre12">
+<li class="di_2ji_wu_xu_lie_biao">可以使学习快速进行（可以增大学习率）。</li>
+<li class="di_2ji_wu_xu_lie_biao">不那么依赖初始值（对于初始值不用那么神经质）。</li>
+<li class="di_2ji_wu_xu_lie_biao">抑制过拟合（降低 Dropout 等的必要性）。</li>
+</ul>
+</blockquote>
+<p class="calibre1">考虑到深度学习要花费很多时间，第一个优点令人非常开心。另外，后两点也可以帮我们消除深度学习的学习中的很多烦恼。</p>
+<p class="calibre1">如前所述，Batch Norm 的思路是调整各层的激活值分布使其拥有适当的广度。为此，要向神经网络中插入对数据分布进行正规化的层，即 Batch Normalization 层（下文简称 Batch Norm 层），如图 6-16 所示。</p>
+<p class="tu"><img src="../images/00258.jpeg" alt="" width="98%" class="calibre31"/></p>
+<p class="calibre1"><strong class="calibre2">图 6-16　使用了 Batch Normalization 的神经网络的例子（Batch Norm 层的背景为灰色）</strong></p>
+<p class="calibre1">Batch Norm，顾名思义，以进行学习时的 mini-batch 为单位，按 mini-batch 进行正规化。具体而言，就是进行使数据分布的均值为 0、方差为 1 的正规化。用数学式表示的话，如下所示。</p>
+<p class="tu"><img src="../images/00259.gif" alt="\begin{aligned}\mu_B&amp;\leftarrow\frac{1}{m}\sum^m_{i=1}x_i\\\sigma^2_B&amp;\leftarrow\frac{1}{m}\sum^m_{i=1}(x_i-\mu_B)^2\\\hat{x}_i&amp;\leftarrow\frac{x_i-\mu_B}{\sqrt{\sigma^2_B+\varepsilon}}\end{aligned}\quad\quad\quad\quad\quad(6.7)" class="calibre24"/></p>
+<p class="calibre1">这里对 mini-batch 的 <em class="calibre7">m</em> 个输入数据的集合 <img src="../images/00260.gif" alt="B={x_1,x_2\cdots,x_m\}" class="calibre24"/> 求均值 <img src="../images/00261.gif" alt="\mu_B" class="calibre24"/> 和方差 <img src="../images/00262.gif" alt="\sigma^2_B" class="calibre24"/>。然后，对输入数据进行均值为 0、方差为 1（合适的分布）的正规化。式（6.7）中的 <em class="calibre7">ε</em> 是一个微小值（比如，<code class="calibre15">10e-7</code> 等），它是为了防止出现除以 0 的情况。</p>
+<p class="calibre1">式（6.7）所做的是将 mini-batch 的输入数据 <img src="../images/00263.gif" alt="{x_1,x_2\cdots,x_m\}" class="calibre24"/> 变换为均值为 0、方差为 1 的数据 <img src="../images/00264.gif" alt="{\hat{x}_1,\hat{x}_2\cdots,\hat{x}_m\}" class="calibre24"/>，非常简单。通过将这个处理插入到激活函数的前面（或者后面）<span class="zhu_shi_bian_hao">5</span>，可以减小数据分布的偏向。</p>
+<p class="zhu_shi_nei_rong"><span class="zhu_shi_bian_hao_xia">5</span>文献 [11]、文献 [12] 等中有讨论（做过实验）应该把 Batch Normalization 插入到激活函数的前面还是后面。</p>
+<p class="calibre1">接着，Batch Norm 层会对正规化后的数据进行缩放和平移的变换，用数学式可以如下表示。</p>
+<p class="tu"><img src="../images/00265.gif" alt="y_i\leftarrow\gamma\hat{x}_i+\beta\quad\quad\quad\quad\quad(6.8)" class="calibre24"/></p>
+<p class="calibre1">这里，<em class="calibre7">γ</em> 和 <em class="calibre7">β</em> 是参数。一开始 <em class="calibre7">γ</em> = 1，<em class="calibre7">β</em> = 0，然后再通过学习调整到合适的值。</p>
+<p class="calibre1">上面就是 Batch Norm 的算法。这个算法是神经网络上的正向传播。如果使用第 5 章介绍的计算图，Batch Norm 可以表示为图 6-17。</p>
+<p class="tu"><img src="../images/00266.jpeg" alt="" width="98%" class="calibre31"/></p>
+<p class="calibre1"><strong class="calibre2">图 6-17　Batch Normalization 的计算图（引用自文献 [13]）</strong></p>
+<p class="calibre1">Batch Norm 的反向传播的推导有些复杂，这里我们不进行介绍。不过如果使用图 6-17 的计算图来思考的话，Batch Norm 的反向传播或许也能比较轻松地推导出来。Frederik Kratzert 的博客“Understanding the backward pass through Batch Normalization Layer”<sup class="calibre16">[13]</sup> 里有详细说明，感兴趣的读者可以参考一下。</p>
+<h3 id="nav_point_159" class="calibre17">6.3.2　Batch Normalization的评估</h3>
+<p class="calibre1">现在我们使用 Batch Norm 层进行实验。首先，使用 MNIST 数据集，观察使用Batch Norm 层和不使用 Batch Norm 层时学习的过程会如何变化（源代码在 <code class="calibre15">ch06/batch_norm_test.py</code> 中），结果如图 6-18 所示。</p>
+<p class="tu"><img src="../images/00267.jpeg" alt="" width="85%" class="calibre22"/></p>
+<p class="calibre1"><strong class="calibre2">图 6-18　基于 Batch Norm 的效果：使用 Batch Norm 后，学习进行得更快了</strong></p>
+<p class="calibre1">从图 6-18 的结果可知，使用 Batch Norm 后，学习进行得更快了。接着，给予不同的初始值尺度，观察学习的过程如何变化。图 6-19 是权重初始值的标准差为各种不同的值时的学习过程图。</p>
+<p class="tu"><img src="../images/00268.jpeg" alt="" width="93%" class="calibre47"/></p>
+<p class="calibre1"><strong class="calibre2">图 6-19　图中的实线是使用了 Batch Norm 时的结果，虚线是没有使用 Batch Norm 时的结果：图的标题处标明了权重初始值的标准差</strong></p>
+<p class="calibre1">我们发现，几乎所有的情况下都是使用 Batch Norm 时学习进行得更快。同时也可以发现，实际上，在不使用 Batch Norm 的情况下，如果不赋予一个尺度好的初始值，学习将完全无法进行。</p>
+<p class="calibre1">综上，通过使用 Batch Norm，可以推动学习的进行。并且，对权重初始值变得健壮（“对初始值健壮”表示不那么依赖初始值）。Batch Norm 具备了如此优良的性质，一定能应用在更多场合中。</p>
+</body></html>

@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h3 class="p">11.8　实物检测领域的相关模型</h3>
+<p class="ziti3">前面的预置模型都属于实物检测领域的优秀模型，也是比较成熟的模型。本节来介绍一下该领域的其他相关模型知识。</p>
+<h4 class="p3">11.8.1　RCNN基于卷积神经网络特征的区域方法</h4>
+<p class="ziti3">实物检测领域的基础模型需要从RCNN（regions with CNN）说起。RCNN模型可以理解为，增加特征的穷举范围，然后在其中发现有价值的特征。大概步骤如下。</p>
+<p class="ziti3">（1）对于一幅输入的图片，通过选择性搜索，找出2000个候选窗口。</p>
+<p class="ziti3">（2）利用CNN对它们提取特征向量，即将这2000个子图片统一缩放到227×227，然后进行卷积操作。</p>
+<p class="ziti3">（3）利用SVM算法对特征向量进行分类识别。</p>
+<p class="ziti3">RCNN中对每一类都进行SVM训练，根据输出的特征类为每一个区打分，最终决定保留或拒绝该区域特征。</p>
+<h4 class="p3">11.8.2　SPP-Net：基于空间金字塔池化的优化RCNN方法</h4>
+<p class="ziti3">RCNN这种海量的穷举方法显然会带来巨大的计算量，有一种优化办法是使用空间金字塔池化方法。</p>
+<p class="ziti3">空间金字塔池化（Spatial Pyramid Pooling，SPP）最大的特点是，不再关心输入图片的尺寸，而是根据最后的输出类别个数，通过算法来生成多个不同范围的池化层，由它们对输入进行并行池化处理，使最终的输出特征个数与生成类别个数相等，接着再进行类别的比较和判定。</p>
+<p class="ziti3">由这样的技术产生的网络叫做SPP-Net。该网络只需要计算完整图像的特征图（feature maps）一次，然后通过池化子窗口的特征，来保持固定长度的输出，比RCNN先划分窗口再对每个窗口进行卷积的效率要快30～170倍，并且有更好的准确率。</p>
+<h4 class="p3">11.8.3　Fast-R-CNN快速的RCNN模型</h4>
+<p class="ziti3">Fast-R-CNN在SPP-Net基础上进行了改进，并将它嫁接到VGG16上所形成的网络，将SPP改成RoI Layer pooling层，并且不再使用SVM分类器，而是通过Softmax Classifer和Bounding-Box Regressors联合训练的方式来更新所有参数，实现了整个网络端到端的训练。</p>
+<p class="ziti3">RoI Pooling Layer可以理解为SPP-Layer的简化形式。SPP-Layer中会包含不同尺度的池化层；而RoI Layer只包含一种尺度，它是先将图片进行相同尺度的裁分，每个子块就成为RoI，然后对所有的RoI进行单独的Max-Pool，得到每个Block的最大值。</p>
+<p class="ziti3">Fast-R-CNN保留了VGG16中的第5个池化层之前的网络，后面接上自己的RoI Pooling Layer，然后通过全连接层进行softmax分类，最终形成了整个网络。其结构可以简单描述为：“13个卷积层+4个Pooling层+RoI层+2个FC层+两个平级层”（即SoftmaxLoss层和SmoothL1Loss层）。</p>
+<p class="ziti3">后来人们习惯在其前面加上一个RPN网络，用来对图片进行一次候选框的筛选，所以整个网络结构会变成“RPN+Fast-R-CNN”的形式。</p>
+<p class="ziti3">所谓的RPN（Region Proposal Network）是指，先使用n×n的滑块窗口在原图像上扫描，生成M个特征值，将这M个特征值接到两个卷积网络reglayer与classlayer中输出。Reglayer里面包含图像坐标的x、y与长宽，classlayer里面有判断这部分是前景还是背景的标志值。在训练时，一个Mini-batch是由一幅图像中任意选取的256个候选框组成的，其中正、负样本的比例为1∶1。如果正样本不足128，则多用一些负样本，以满足有256个Proposal可以用于训练。对于正、负样本的标注是，reglayer范围内对应的classlayer的重合度大于0.7（即为正样本），如果都不大于0.7，则其中的最大值为正样本。最终通过softmax loss和regression loss按照一定权重比例计算loss。</p>
+<h4 class="p3">11.8.4　YOLO：能够一次性预测多个位置和类别的模型</h4>
+<p class="ziti3">使用滑窗（即前景背景）时，RPN常常把背景区域误检为特定目标。所以YOLO（You Only Look Once）使用了全新的训练方式筛选候选框的筛选——采用整图的方式来训练模型，并且可以一次性预测多个Box的位置和类别。</p>
+<p class="ziti3">YOLO的方式是，先将图片分为S×S个网格，每个网格相当于一个任务，负责检测内部是否有物体的中心点落入该区域，一旦有的话，则启动该任务来检测n个bounding boxes对象。</p>
+<p class="ziti3">bounding boxes由中心点坐标（x，y）、宽高（w，h）和置信度评分这5部分组成。置信度评分可以理解为当前网格内物体属于该类别的概率与真实和预测区域的重叠度的乘积。</p>
+<p class="ziti3">例如，如果一共有4类物体，那么每个网格里面就会有该物体对应的这4个类的概率（p0，p1，p2，p3），同时通过bounding boxes的位置信息（x、y、w、h）可以知道其预测区域，并算出与对于类别真实区域的重叠度（Iou1、Iou2、Iou3、Iou4），二者相乘就可以得到置信度。这样，如果有9个网格（7×7），每个网格负责找到2个bounding boxes，每个bounding boxes内部由5个元素组成，而且每个网格还需要有对应10个类别的概率，如式子49×（2×5+10）=1470个特征值。YOLO网络通过预测该特征值的训练，来实现实物的识别检测。</p>
+<p class="ziti3">对于这1470个特征值的loss计算，并没有用常用的平方差等方法，原因是大多数网格实际不包含物体（即很多网格的分类概率为0），这会出现位置误差正常、分类误差稀疏的情况。</p>
+<p class="ziti4">
+<span class="yanse"><img alt="" class="formula-2em" src="Image00014.jpg"/>
+ 提示：</span>
+ 106维度的数据内部存在着某部分维度分布不均的情况，如直接用平方差会使整体的loss很不稳定，所以这部分也采用了更复杂的算法，这里不再展开。</p>
+<p class="ziti3">YOLO网络结构分为两种：一个是正常的网络结构，用到了Inception的结构；另一个是其简化版，会有更好的速度，但是准确度会降低。</p>
+<h4 class="p3">11.8.5　SSD：比YOLO更快更准的模型</h4>
+<p class="ziti3">前面讲的YOLO也有缺陷：</p>
+<p class="ziti4">·每个网格预测的物体个数是指定的，容易造成遗漏（如指定检测2个，但是实际有3个）。</p>
+<p class="ziti4">·对物体的尺度相对比较敏感，对尺度变化较大的物体泛化能力较差。</p>
+<p class="ziti3">而SSD（Single Shot MultiBox Detector）的方法在YOLO的基础上融合了RPN的思想，在不同卷积层所输出的不同尺度的卷积结果（Feature Map）上面划格子，在多种尺度的格子上提取目标中心点，从而大大改善了这两个问题。</p>
+<p class="ziti3">类似于Fast-R-CNN，SSD网络使用的是基于VGG 16改进的模型结构。</p>
+<h4 class="p3">11.8.6　YOLO2：YOLO的升级版模型</h4>
+<p class="ziti3">YOLO2，在YOLO的基础上也改掉了很多缺陷，去掉了网格与类别的预测绑定在一起，也使用了anchor box模式。另外，在一些结构细节上做了一些优化：更多地使用了卷积来代替全连接网络，并增加了BN算法，同时提升了网络的入口分辨率，去掉最后池化层，保证有更好的分辨率等。同样，YOLO 2沿用了基于GoogLeNet的自定制网络，也使用了Inception（见11.2.3节至11.2.7节）中的很多最新技术，算是目前最好的实物检测模型了。</p>
+<div class="calibre1">本书由「<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="pcalibre calibre2">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body>
+</html>

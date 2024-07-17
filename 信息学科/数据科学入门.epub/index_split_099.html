@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>数据科学入门</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<p id="filepos454195" class="calibre_"><span class="calibre6"><span class="bold"> 14.3　最大似然估计 </span></span></p><p class="calibre_">我们为什么会选择最小二乘法呢？其中一个原因就是<span class="bold">最大似然估计</span> （maximum likelihood estimation）。假设我们的数据样本 <img src="images/00120.jpg" class="calibre_106"/> 服从由未知参数 <span class="italic">θ</span> 确定的概率分布：</p><p class="calibre_12"><img src="images/00125.jpg" class="calibre_107"/>
+</p><p class="calibre_">虽然我们不知道 <span class="italic">θ</span> ，但是可以回过头来通过给定样本与 <span class="italic">θ</span> 的相似度来考量这个参数：</p><p class="calibre_12"><img src="images/00137.jpg" class="calibre_108"/>
+</p><p class="calibre_">按照这种方法，<span class="italic">θ</span> 最可能的值就是最大化这个似然函数的值，即能够以最高概率产生观测数据的值。在具有概率分布函数而非概率密度函数的连续分布的情况下，我们也可以做同样的事情。</p><p class="calibre_">再回到回归这个话题。对于简单回归模型来说，通常假设回归误差是呈正态分布的，其均值为 0，并且已知标准偏差 <span class="italic">σ</span> 。如果是这样的话，那么就可以通过下面的似然函数来描述 <span class="italic">α</span> 和 <span class="italic">β</span> 产生 <tt class="calibre7">(x_i, y_i)</tt> 的可能性大小了：</p><p class="calibre_12"><img src="images/00147.jpg" class="calibre_109"/>
+</p><p class="calibre_">由于待估计的参数产生整个数据集的可能性为产生各个数据的可能性之积，因此令误差的平方和最小的 <tt class="calibre7">alpha</tt> 和 <tt class="calibre7">beta</tt> 最有可能是我们所求的。换句话说，在这种情况下（包括这些假设），最小化误差的平方和等价于最大化产生观测数据的可能性。</p><div class="mbp_pagebreak" id="calibre_pb_99"></div>
+<div class="calibre5">本书由「<a href="https://epubw.com" class="calibre3">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="calibre3">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body></html>

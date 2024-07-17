@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>未知</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="../stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="../page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<h2 id="nav_point_118" class="calibre8">5.2　链式法则</h2>
+<p class="calibre1">前面介绍的计算图的正向传播将计算结果正向（从左到右）传递，其计算过程是我们日常接触的计算过程，所以感觉上可能比较自然。而反向传播将局部导数向正方向的反方向（从右到左）传递，一开始可能会让人感到困惑。传递这个局部导数的原理，是基于<strong class="calibre2">链式法则</strong>（chain rule）的。本节将介绍链式法则，并阐明它是如何对应计算图上的反向传播的。</p>
+<h3 id="nav_point_119" class="calibre17">5.2.1　计算图的反向传播</h3>
+<p class="calibre1">话不多说，让我们先来看一个使用计算图的反向传播的例子。假设存在 <em class="calibre7">y</em> = <em class="calibre7">f</em> (<em class="calibre7">x</em>) 的计算，这个计算的反向传播如图 5-6 所示。</p>
+<p class="tu"><img src="../images/00154.jpeg" alt="" width="85%" class="calibre22"/></p>
+<p class="calibre1"><strong class="calibre2">图 5-6　计算图的反向传播：沿着与正方向相反的方向，乘上局部导数</strong></p>
+<p class="calibre1">如图所示，反向传播的计算顺序是，将信号 <em class="calibre7">E</em> 乘以节点的局部导数 <img src="../images/00155.gif" alt="(\frac{\partial y}{\partial x})" class="calibre24"/>，然后将结果传递给下一个节点。这里所说的局部导数是指正向传播中 <em class="calibre7">y</em> = <em class="calibre7">f</em> (<em class="calibre7">x</em>) 的导数，也就是 <em class="calibre7">y</em> 关于 <em class="calibre7">x</em> 的导数 <img src="../images/00155.gif" alt="(\frac{\partial y}{\partial x})" class="calibre24"/>。比如，假设 <img src="../images/00156.gif" alt="y=f(x)=x^2" class="calibre24"/>，则局部导数为 <img src="../images/00157.gif" alt="\frac{\partial y}{\partial x}=2x" class="calibre24"/>。把这个局部导数乘以上游传过来的值（本例中为 <em class="calibre7">E</em>），然后传递给前面的节点。</p>
+<p class="calibre1">这就是反向传播的计算顺序。通过这样的计算，可以高效地求出导数的值，这是反向传播的要点。那么这是如何实现的呢？我们可以从链式法则的原理进行解释。下面我们就来介绍链式法则。</p>
+<h3 id="nav_point_120" class="calibre17">5.2.2　什么是链式法则</h3>
+<p class="calibre1">介绍链式法则时，我们需要先从<strong class="calibre2">复合函数</strong>说起。复合函数是由多个函数构成的函数。比如，<img src="../images/00158.gif" alt="z=(x+y)^2" class="calibre24"/> 是由式（5.1）所示的两个式子构成的。</p>
+<p class="tu"><img src="../images/00159.gif" alt="\begin{aligned}&amp;~z=t^2\\t&amp;=x+y\end{aligned}\quad\quad\quad\quad\quad(5.1)" class="calibre24"/></p>
+<p class="calibre1">链式法则是关于复合函数的导数的性质，定义如下。</p>
+<blockquote class="calibre10">
+<p class="calibre1">如果某个函数由复合函数表示，则该复合函数的导数可以用构成复合函数的各个函数的导数的乘积表示。</p>
+</blockquote>
+<p class="calibre1">这就是链式法则的原理，乍一看可能比较难理解，但实际上它是一个非常简单的性质。以式（5.1）为例，<img src="../images/00160.gif" alt="\frac{\partial z}{\partial x}" class="calibre24"/>（<em class="calibre7">z</em> 关于 <em class="calibre7">x</em> 的导数）可以用 <img src="../images/00161.gif" alt="\frac{\partial z}{\partial t}" class="calibre24"/>（<em class="calibre7">z</em> 关于 <em class="calibre7">t</em> 的导数）和 <img src="../images/00162.gif" alt="\frac{\partial t}{\partial x}" class="calibre24"/>（<em class="calibre7">t</em> 关于 <em class="calibre7">x</em> 的导数）的乘积表示。用数学式表示的话，可以写成式（5.2）。</p>
+<p class="tu"><img src="../images/00163.gif" alt="\frac{\partial z}{\partial x}=\frac{\partial z}{\partial t}\frac{\partial t}{\partial x}\quad\quad\quad\quad\quad(5.2)" class="calibre24"/></p>
+<p class="calibre1">式（5.2）中的 <img src="../images/00164.gif" alt="\partial t" class="calibre24"/> 正好可以像下面这样“互相抵消”，所以记起来很简单。</p>
+<p class="tu"><img src="../images/00165.jpeg" alt="" width="21%" class="calibre46"/></p>
+<p class="calibre1">现在我们使用链式法则，试着求式（5.2）的导数 <img src="../images/00160.gif" alt="\frac{\partial z}{\partial x}" class="calibre24"/>。为此，我们要先求式（5.1）中的局部导数（偏导数）。</p>
+<p class="tu"><img src="../images/00166.gif" alt="\begin{aligned}\frac{\partial z}{\partial t}&amp;=2t\\\frac{\partial t}{\partial x}&amp;=1\end{aligned}\quad\quad\quad\quad\quad(5.3)" class="calibre24"/></p>
+<p class="calibre1">如式（5.3）所示，<img src="../images/00161.gif" alt="\frac{\partial z}{\partial t}" class="calibre24"/> 等于 2<em class="calibre7">t</em>，<img src="../images/00162.gif" alt="\frac{\partial t}{\partial x}" class="calibre24"/> 等于 1。这是基于导数公式的解析解。然后，最后要计算的 <img src="../images/00160.gif" alt="\frac{\partial z}{\partial x}" class="calibre24"/> 可由式（5.3）求得的导数的乘积计算出来。</p>
+<p class="tu"><img src="../images/00167.gif" alt="\frac{\partial z}{\partial x}=\frac{\partial z}{\partial t}\frac{\partial t}{\partial x}=2t\cdot1=2(x+y)\quad\quad\quad\quad\quad(5.4)" class="calibre24"/></p>
+<h3 id="nav_point_121" class="calibre17">5.2.3　链式法则和计算图</h3>
+<p class="calibre1">现在我们尝试将式（5.4）的链式法则的计算用计算图表示出来。如果用“<code class="calibre15">**2</code>”节点表示平方运算的话，则计算图如图 5-7 所示。</p>
+<p class="tu"><img src="../images/00168.jpeg" alt="" width="88%" class="calibre32"/></p>
+<p class="calibre1"><strong class="calibre2">图 5-7　式（5.4）的计算图：沿着与正方向相反的方向，乘上局部导数后传递</strong></p>
+<p class="calibre1">如图所示，计算图的反向传播从右到左传播信号。反向传播的计算顺序是，先将节点的输入信号乘以节点的局部导数（偏导数），然后再传递给下一个节点。比如，反向传播时，“<code class="calibre15">**2</code>”节点的输入是 <img src="../images/00160.gif" alt="\frac{\partial z}{\partial x}" class="calibre24"/>，将其乘以局部导数 <img src="../images/00161.gif" alt="\frac{\partial z}{\partial t}" class="calibre24"/>（因为正向传播时输入是 <em class="calibre7">t</em>、输出是 <em class="calibre7">z</em>，所以这个节点的局部导数是 <img src="../images/00161.gif" alt="\frac{\partial z}{\partial t}" class="calibre24"/>），然后传递给下一个节点。另外，图 5-7 中反向传播最开始的信号 <img src="../images/00169.gif" alt="\frac{\partial z}{\partial z}" class="calibre24"/> 在前面的数学式中没有出现，这是因为 <img src="../images/00170.gif" alt="\frac{\partial z}{\partial z}=1" class="calibre24"/>，所以在刚才的式子中被省略了。</p>
+<p class="calibre1">图 5-7 中需要注意的是最左边的反向传播的结果。根据链式法则，<img src="../images/00171.gif" alt="\frac{\partial z}{\partial z}\frac{\partial z}{\partial t}\frac{\partial t}{\partial x}=\frac{\partial z}{\partial t}\frac{\partial t}{\partial x}=\frac{\partial z}{\partial x}" class="calibre24"/> 成立，对应“<em class="calibre7">z</em> 关于 <em class="calibre7">x</em> 的导数”。也就是说，反向传播是基于链式法则的。</p>
+<p class="calibre1">把式（5.3）的结果代入到图 5-7 中，结果如图 5-8 所示，<img src="../images/00160.gif" alt="\frac{\partial z}{\partial x}" class="calibre24"/> 的结果为 2(<em class="calibre7">x</em> + <em class="calibre7">y</em>)。</p>
+<p class="tu"><img src="../images/00172.jpeg" alt="" width="88%" class="calibre32"/></p>
+<p class="calibre1"><strong class="calibre2">图 5-8　根据计算图的反向传播的结果，<img src="../images/00173.gif" alt="\boldsymbol{\frac{\partial z}{\partial x}}" class="calibre24"/> 等于 2(<em class="calibre7">x</em> + <em class="calibre7">y</em>)</strong></p>
+</body></html>

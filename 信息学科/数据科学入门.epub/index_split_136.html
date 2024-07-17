@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>数据科学入门</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="stylesheet.css" rel="stylesheet" type="text/css"/>
+<link href="page_styles1.css" rel="stylesheet" type="text/css"/>
+</head>
+  <body class="calibre">
+<p id="filepos577222" class="calibre_"><span class="calibre6"><span class="bold"> 19.4　选择聚类数目</span></span><span class="calibre6"><span class="italic"><span class="bold">k</span></span></span><span class="calibre6"><span class="bold">  </span></span></p><p class="calibre_">在前一个例子中，聚类数目 <span class="italic">k</span> 的选择是由外部因素决定的，我们无法控制。但是通常情况下，事情并非如此。<span class="italic">k</span> 的选择方法可谓五花八门，一个比较易于理解的方法是以误差（即每个数据点到所在聚类的中心的距离）的平方之和作为 <span class="italic">k</span> 的函数，画出该函数的图像，并在其“弯曲”的地方寻找合适的取值：</p><blockquote class="calibre_14"><span class="calibre11"><tt class="calibre7"><br class="calibre12"/>def squared_clustering_errors(inputs, k):<br class="calibre12"/>    """finds the total squared error from k-means clustering the inputs"""<br class="calibre12"/>    clusterer = KMeans(k)<br class="calibre12"/>    clusterer.train(inputs)<br class="calibre12"/>    means = clusterer.means<br class="calibre12"/>    assignments = map(clusterer.classify, inputs)<br class="calibre12"/><br class="calibre12"/>    return sum(squared_distance(input, means[cluster])<br class="calibre12"/>               for input, cluster in zip(inputs, assignments))<br class="calibre12"/><br class="calibre12"/># 现在画出1至len（输入）的聚类图<br class="calibre12"/>ks = range(1, len(inputs) + 1)<br class="calibre12"/>errors = [squared_clustering_errors(inputs, k) for k in ks]<br class="calibre12"/><br class="calibre12"/>plt.plot(ks, errors)<br class="calibre12"/>plt.xticks(ks)<br class="calibre12"/>plt.xlabel("k")<br class="calibre12"/>plt.ylabel("误差的平方之和")<br class="calibre12"/>plt.title("总误差与聚类数目")<br class="calibre12"/>plt.show()<br class="calibre12"/><br class="calibre12"/><br class="calibre12"/><br class="calibre12"/></tt></span></blockquote><p class="calibre_19"><img src="images/00063.jpg" class="calibre_142"/>
+</p><p class="calibre_">
+<span class="bold">图 19-4：选择聚类数目 </span><span class="italic"><span class="bold">k</span></span><span class="bold">
+</span>
+</p><p class="calibre_">从图 19-4 可以看出，这种方法得到的结果与我们最初的目测值是相符的，也就是说 3 是一个“合适”的聚类数目。</p><div class="mbp_pagebreak" id="calibre_pb_136"></div>
+<div class="calibre5">本书由「<a href="https://epubw.com" class="calibre3">ePUBw.COM</a>」整理，<a href="https://epubw.com" class="calibre3">ePUBw.COM</a> 提供最新最全的优质电子书下载！！！</div></body></html>
